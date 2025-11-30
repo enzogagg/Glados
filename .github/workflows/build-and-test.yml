@@ -36,7 +36,7 @@ jobs:
       - uses: haskell-actions/setup@v2
         with: { enable-stack: true }
       - name: Unit Tests
-        run: stack test --coverage
+        run: stack test --coverage --allow-different-user
       - name: Functional Tests
         run: |
           make
