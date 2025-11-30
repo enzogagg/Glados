@@ -1,0 +1,13 @@
+.stack-work/
+*~
+
+stack.yaml.lock
+
+# executable
+glados
+
+# LISP files
+example/*
+*.scm
+
+*.pdf
