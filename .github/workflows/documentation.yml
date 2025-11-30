@@ -13,7 +13,6 @@ jobs:
         with:
           enable-stack: true
       
-      # 1. Generate Haddock (Documentation du code)
       - name: Build Haddock
         run: stack haddock --no-haddock-deps
 
@@ -28,7 +27,6 @@ jobs:
 
           cp -r "$DOC_PATH"/. documentation/static/api/
 
-      # 2. Build Docusaurus (Site Web)
       - uses: actions/setup-node@v3
         with:
           node-version: 'latest'
@@ -39,7 +37,6 @@ jobs:
           npm ci
           npm run build
 
-      # 3. Deploy to GitHub Pages
       - uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
