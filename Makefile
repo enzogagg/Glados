@@ -5,7 +5,7 @@
 ## Makefile
 ##
 
-BINARY_PATH 	:=	$(shell stack path --local-install-root)/bin/
+BINARY_PATH 	:=	$(shell stack path --local-install-root --allow-different-user)/bin/
 NAME 			= 	glados
 
 all		:
