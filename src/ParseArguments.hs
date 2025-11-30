@@ -15,7 +15,7 @@ module ParseArguments
 
 import Types
 import System.Directory (doesFileExist)
-import System.IO (stdin, hIsTerminalDevice, hIsEOF, hFlush, stdout)
+import System.IO (stdin, hIsTerminalDevice, isEOF, hFlush, stdout)
 import Text.Megaparsec (parse, errorBundlePretty)
 import ParseToExpr (parseProgram)
 import ParseValue (parseValue, runExprs, builtins)
@@ -80,14 +80,14 @@ replLoop :: Env -> IO (Either String ())
 replLoop env = do
     putStr "> "
     hFlush stdout
-    eof <- hIsEOF stdin
+    eof <- isEOF
     if eof
         then return (Right ())
     else do
         line <- getLine
         case parse parseProgram "" line of
             Left errBundle -> do
-                putStr ("*** ERROR : ")
+                putStr "*** ERROR : "
                 putStrLn (errorBundlePretty errBundle)
                 replLoop env
             Right exprs -> do
