@@ -10,13 +10,31 @@ jobs:
       - uses: haskell-actions/setup@v2
         with: { enable-stack: true }
       
+<<<<<<< Updated upstream
       # 1. Generate Haddock
       - run: stack haddock --no-haddock-deps
       - run: |
+=======
+      - name: Build Haddock
+        run: stack haddock --no-haddock-deps
+
+      - name: Move API Docs to Docusaurus
+        run: |
+          DOC_PATH=$(stack path --local-doc-root)
+          echo "Documentation found at: $DOC_PATH"
+          
+          ls -la "$DOC_PATH" || echo "Folder not found!"
+
+>>>>>>> Stashed changes
           mkdir -p documentation/static/api
           cp -r $(stack path --local-doc-root)/* documentation/static/api/
 
+<<<<<<< Updated upstream
       # 2. Build Docusaurus
+=======
+          cp -r "$DOC_PATH"/. documentation/static/api/
+
+>>>>>>> Stashed changes
       - uses: actions/setup-node@v3
       - name: Build Site
         working-directory: ./documentation
@@ -24,7 +42,10 @@ jobs:
           npm ci
           npm run build
 
+<<<<<<< Updated upstream
       # 3. Deploy
+=======
+>>>>>>> Stashed changes
       - uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
