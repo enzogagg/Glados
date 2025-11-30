@@ -8,6 +8,8 @@ jobs:
   build_and_check:
     runs-on: ubuntu-latest
     container: epitechcontent/epitest-docker
+    env:
+      STACK_ROOT: /tmp/.stack
     steps:
       - uses: actions/checkout@v4
       - name: Check useless files
@@ -27,6 +29,8 @@ jobs:
     needs: build_and_check
     runs-on: ubuntu-latest
     container: epitechcontent/epitest-docker
+    env:
+      STACK_ROOT: /tmp/.stack
     steps:
       - uses: actions/checkout@v4
       - uses: haskell-actions/setup@v2
