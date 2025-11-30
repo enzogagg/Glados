@@ -14,6 +14,7 @@ module ParseValue (
 
 import Types
 import System.IO (hFlush, stdout)
+import Control.Monad (when)
 
 
 -- Execute Expr and display results
@@ -30,11 +31,9 @@ parseValueRun (x:xs) env = do
     case evalExprForDisplay x env of
         Left err -> return (Left err)
         Right (newEnv, shouldDisplay, val) -> do
-            if shouldDisplay
-                then do
-                    putStrLn (showValue val)
-                    hFlush stdout
-                else return ()
+            when shouldDisplay $ do
+                putStrLn (showValue val)
+                hFlush stdout
             parseValueRun xs newEnv
 
 
@@ -81,7 +80,7 @@ evalValue (List [Symbol "lambda", List params, body]) env = do
 
 evalValue (List (func : args)) env = do
     funcVal <- evalValue func env
-    argVals <- mapM (\arg -> evalValue arg env) args
+    argVals <- mapM (`evalValue` env) args
     applyFunc funcVal argVals env
 
 evalValue (List []) _ = Left "empty list is not a valid expression"
@@ -176,7 +175,7 @@ showValue (BoolVal True) = "#t"
 
 showValue (BoolVal False) = "#f"
 
-showValue (FuncVal _ _ _) = "#<procedure>"
+showValue FuncVal {} = "#<procedure>"
 
 showValue (Primitive _) = "#<primitive-procedure>"
 

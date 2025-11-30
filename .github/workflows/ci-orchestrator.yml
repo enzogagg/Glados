@@ -9,24 +9,25 @@ on: [push, pull_request]
 jobs:
   # 1. Linting
   call-lint:
-    uses: ./.github/workflows/modules/linting.yml
+    # MODIFIÉ : plus de /modules/ dans le chemin
+    uses: ./.github/workflows/linting.yml
 
   # 2. Build & Test
   call-tests:
     needs: call-lint
-    uses: ./.github/workflows/modules/build-and-test.yml
+    uses: ./.github/workflows/build-and-test.yml
     with:
       executable_name: glados
 
-  # 3. Mirroring
+  # 3. Mirroring (Main only)
   call-mirror:
     needs: call-tests
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    uses: ./.github/workflows/modules/mirroring.yml
+    uses: ./.github/workflows/mirroring.yml
     secrets: inherit
 
-  # 4. Documentation
+  # 4. Documentation (Main only)
   call-docs:
     needs: call-tests
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    uses: ./.github/workflows/modules/documentation.yml
+    uses: ./.github/workflows/documentation.yml

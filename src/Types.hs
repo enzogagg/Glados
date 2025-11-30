@@ -29,7 +29,7 @@ instance Show Value where
     show (IntVal n) = show n
     show (BoolVal True) = "#t"
     show (BoolVal False) = "#f"
-    show (FuncVal _ _ _) = "#<procedure>"
+    show FuncVal {} = "#<procedure>"
     show (Primitive _) = "#<primitive-procedure>"
     show Void = "#<void>"
 
@@ -37,7 +37,7 @@ instance Show Value where
 instance Eq Value where
     IntVal a == IntVal b = a == b
     BoolVal a == BoolVal b = a == b
-    FuncVal _ _ _ == FuncVal _ _ _ = True     -- approximation : toutes les fonctions sont égales
+    FuncVal {} == FuncVal {} = True     -- approximation : toutes les fonctions sont égales
     Primitive _ == Primitive _ = True         -- approximation : tous les primitives sont égales
     Void == Void = True
     _ == _ = False
