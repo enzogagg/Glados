@@ -4,27 +4,42 @@ on: workflow_call
 jobs:
   deploy_docs:
     runs-on: ubuntu-latest
-    permissions: { contents: write }
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
-      - uses: haskell-actions/setup@v2
-        with: { enable-stack: true }
-      
-      # 1. Generate Haddock
-      - run: stack haddock --no-haddock-deps
-      - run: |
-          mkdir -p documentation/static/api
-          cp -r $(stack path --local-doc-root)/* documentation/static/api/
 
-      # 2. Build Docusaurus
+      - uses: haskell-actions/setup@v2
+        with:
+          enable-stack: true
+      
+      # 1. Generate Haddock (Documentation du code)
+      - name: Build Haddock
+        run: stack haddock --no-haddock-deps
+
+      - name: Move API Docs to Docusaurus
+        run: |
+          DOC_PATH=$(stack path --local-doc-root)
+          echo "Documentation found at: $DOC_PATH"
+          
+          ls -la "$DOC_PATH" || echo "Folder not found!"
+
+          mkdir -p documentation/static/api
+
+          cp -r "$DOC_PATH"/. documentation/static/api/
+
+      # 2. Build Docusaurus (Site Web)
       - uses: actions/setup-node@v3
+        with:
+          node-version: 'latest'
+
       - name: Build Site
         working-directory: ./documentation
         run: |
           npm ci
           npm run build
 
-      # 3. Deploy
+      # 3. Deploy to GitHub Pages
       - uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
