@@ -9,7 +9,8 @@ module ParseValue (
     parseValue,
     evalValue,
     showValue,
-    builtins
+    builtins,
+    runExprs
 ) where
 
 import Types
@@ -36,6 +37,22 @@ parseValueRun (x:xs) env = do
                 hFlush stdout
             parseValueRun xs newEnv
 
+runExprs :: Env -> [Expr] -> IO (Either String Env)
+runExprs _c [] =
+    return (Left "no expressions to evaluate")
+
+runExprs env (expr:_) = do
+    let f oldEnv e =
+            case evalExprForDisplay e oldEnv of
+                Left err -> Left err
+                Right (newEnv, shouldDisplay, val) ->
+                    Right (newEnv, shouldDisplay, val)
+
+    case f env expr of
+        Left err -> return (Left err)
+        Right (newEnv, shouldDisplay, val) -> do
+            when shouldDisplay (putStrLn (showValue val))
+            return (Right newEnv)
 
 -- Evaluating an Expr for display or not
 evalExprForDisplay :: Expr -> Env -> Either String (Env, Bool, Value)

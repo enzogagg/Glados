@@ -13,17 +13,19 @@ module ParseArguments
   , debugParse
   ) where
 
+import Types
 import System.Directory (doesFileExist)
-import System.IO (stdin, hIsTerminalDevice)
+import System.IO (stdin, hIsTerminalDevice, hIsEOF, hFlush, stdout)
 import Text.Megaparsec (parse, errorBundlePretty)
 import ParseToExpr (parseProgram)
-import ParseValue (parseValue)
+import ParseValue (parseValue, runExprs, builtins)
 
 parseContent :: [String] -> IO (Either String ())
 parseContent args = do
     result <- parseArgs args
     case result of
         Left err -> return (Left err)
+        Right "__REPL__" -> startRepl
         Right content -> debugParse content
 
 debugParse :: String -> IO (Either String ())
@@ -36,10 +38,10 @@ debugParse content =
 
 parseArgs :: [String] -> IO (Either String String)
 parseArgs args = case args of
-    [] ->  do
+    [] -> do
         isTerm <- hIsTerminalDevice stdin
         if isTerm
-            then return (Left "no input and no arguments")
+            then return (Right "__REPL__")
         else do
             content <- getContents
             if null content
@@ -64,3 +66,35 @@ handleInput input = do
             content <- readFile input
             return (Right content)
     else return (Left ("file does not exist: " ++ input))
+
+-- =========================
+-- REPL MODE
+-- =========================
+
+startRepl :: IO (Either String ())
+startRepl = do
+    putStrLn "Glados REPL. Press Ctrl+D to exit."
+    replLoop builtins
+
+replLoop :: Env -> IO (Either String ())
+replLoop env = do
+    putStr "> "
+    hFlush stdout
+    eof <- hIsEOF stdin
+    if eof
+        then return (Right ())
+    else do
+        line <- getLine
+        case parse parseProgram "" line of
+            Left errBundle -> do
+                putStr ("*** ERROR : ")
+                putStrLn (errorBundlePretty errBundle)
+                replLoop env
+            Right exprs -> do
+                result <- runExprs env exprs
+                case result of
+                    Left err -> do
+                        putStrLn ("*** ERROR : " ++ err)
+                        replLoop env
+                    Right newEnv ->
+                        replLoop newEnv
