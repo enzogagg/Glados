@@ -9,21 +9,21 @@ BINARY_PATH 	:=	$(shell stack path --local-install-root)/bin/
 NAME 			= 	glados
 
 all		:
-			stack build
+			stack build --allow-different-user
 			cp $(BINARY_PATH)$(NAME)-exe $(NAME)
 
 clean	:
-			stack clean
+			stack clean --allow-different-user
 			rm -rf .stack
 			rm -f coding-style-reports.log
 
 fclean	:	clean
-			stack purge
+			stack purge --allow-different-user
 			rm -f $(NAME)
 
 re		:	fclean all
 
 tests_run	:
-			stack test
+			stack test --allow-different-user
 
 .PHONY	:	all clean fclean re tests_run
