@@ -4,17 +4,15 @@ on: workflow_call
 jobs:
   deploy_docs:
     runs-on: ubuntu-latest
-    permissions: { contents: write }
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+
       - uses: haskell-actions/setup@v2
-        with: { enable-stack: true }
+        with:
+          enable-stack: true
       
-<<<<<<< Updated upstream
-      # 1. Generate Haddock
-      - run: stack haddock --no-haddock-deps
-      - run: |
-=======
       - name: Build Haddock
         run: stack haddock --no-haddock-deps
 
@@ -25,27 +23,20 @@ jobs:
           
           ls -la "$DOC_PATH" || echo "Folder not found!"
 
->>>>>>> Stashed changes
           mkdir -p documentation/static/api
-          cp -r $(stack path --local-doc-root)/* documentation/static/api/
 
-<<<<<<< Updated upstream
-      # 2. Build Docusaurus
-=======
           cp -r "$DOC_PATH"/. documentation/static/api/
 
->>>>>>> Stashed changes
       - uses: actions/setup-node@v3
+        with:
+          node-version: 'latest'
+
       - name: Build Site
         working-directory: ./documentation
         run: |
           npm ci
           npm run build
 
-<<<<<<< Updated upstream
-      # 3. Deploy
-=======
->>>>>>> Stashed changes
       - uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
