@@ -88,7 +88,7 @@ const config = {
                         items: [
                             {
                                 label: 'User Manual',
-                                to: '/docs/intro',
+                                to: '/docs/Introduction',
                             },
                             {
                                 label: 'Developer API',

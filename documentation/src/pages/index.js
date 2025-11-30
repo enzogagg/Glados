@@ -19,7 +19,7 @@ function HomepageHeader() {
                 <div style={{ marginTop: '2rem' }}>
                     <Link
                         className="button button--secondary button--lg"
-                        to="/docs/intro">
+                        to="/docs/Introduction">
                         Accéder au Manuel Utilisateur 📚
                     </Link>
                 </div>
