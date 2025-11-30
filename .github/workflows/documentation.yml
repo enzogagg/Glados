@@ -14,14 +14,22 @@ jobs:
           enable-stack: true
       
       - name: Build Haddock
-        run: stack haddock --no-haddock-deps
+        run: stack haddock --no-haddock-deps --force
 
       - name: Move API Docs to Docusaurus
         run: |
-          DOC_PATH=$(stack path --local-doc-root)
-          echo "Documentation found at: $DOC_PATH"
+          echo "🔍 Searching for generated documentation..."
           
-          ls -la "$DOC_PATH" || echo "Folder not found!"
+          DOC_INDEX=$(find .stack-work -name index.html | grep "/doc/index.html" | head -n 1)
+          
+          if [ -z "$DOC_INDEX" ]; then
+             echo "::error::❌ No documentation found! Listing .stack-work for debug:"
+             find .stack-work -maxdepth 4
+             exit 1
+          fi
+
+          DOC_PATH=$(dirname "$DOC_INDEX")
+          echo "✅ Documentation found at: $DOC_PATH"
 
           mkdir -p documentation/static/api
 
