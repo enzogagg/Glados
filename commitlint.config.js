@@ -24,7 +24,8 @@ module.exports = {
                 'DOC',
                 'REFACTOR',
                 'TEST',
-                'CI'
+                'CI',
+                'MERGE'
             ],
         ],
         // The type must be in uppercase (ex: ADD, not add)

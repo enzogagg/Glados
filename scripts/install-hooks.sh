@@ -7,7 +7,7 @@ cat <<EOT > .git/hooks/commit-msg
 #!/bin/bash
 INPUT_FILE=\$1
 COMMIT_MSG=\`head -n1 \$INPUT_FILE\`
-PATTERN="^\[(ADD|FIX|UPDATE|REMOVE|DOC|REFACTOR|TEST|CI|CONFIG)\] .+"
+PATTERN="^\[(ADD|FIX|UPDATE|REMOVE|DOC|REFACTOR|TEST|CI|CONFIG|MERGE)\] .+"
 
 if ! [[ "\$COMMIT_MSG" =~ \$PATTERN ]]; then
   echo "Error : Invalid commit message."
