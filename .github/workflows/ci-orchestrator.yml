@@ -9,7 +9,6 @@ on: [push, pull_request]
 jobs:
   # 1. Linting
   call-lint:
-    # MODIFIÉ : plus de /modules/ dans le chemin
     uses: ./.github/workflows/linting.yml
 
   # 2. Build & Test
