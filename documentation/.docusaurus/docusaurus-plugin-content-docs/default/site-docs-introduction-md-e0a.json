@@ -1,16 +1,25 @@
 {
-  "id": "Introduction",
-  "title": "Introduction à la bibliothèque standard de **MegaScript**",
-  "description": "La bibliothèque standard de MegaScript regroupe tous les outils essentiels fournis avec le langage.",
+  "id": "introduction",
+  "title": "Introduction",
+  "description": "Bienvenue dans la documentation développeur du projet GLaDOS.",
   "source": "@site/docs/Introduction.md",
   "sourceDirName": ".",
-  "slug": "/Introduction",
-  "permalink": "/Glados/docs/Introduction",
+  "slug": "/introduction",
+  "permalink": "/Glados/docs/introduction",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/enzogagg/Glados/tree/main/documentation/docs/Introduction.md",
   "tags": [],
   "version": "current",
-  "frontMatter": {},
-  "sidebar": "tutorialSidebar"
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "id": "introduction",
+    "title": "Introduction",
+    "sidebar_position": 1
+  },
+  "sidebar": "tutorialSidebar",
+  "next": {
+    "title": "Types et mots-clés",
+    "permalink": "/Glados/docs/types-et-mots-cles"
+  }
 }

@@ -8,11 +8,16 @@
           "label": "Next",
           "isLast": true,
           "path": "/Glados/docs",
-          "mainDocId": "Introduction",
+          "mainDocId": "introduction",
           "docs": [
             {
-              "id": "Introduction",
-              "path": "/Glados/docs/Introduction",
+              "id": "introduction",
+              "path": "/Glados/docs/introduction",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "types-et-mots-cles",
+              "path": "/Glados/docs/types-et-mots-cles",
               "sidebar": "tutorialSidebar"
             }
           ],
@@ -20,8 +25,8 @@
           "sidebars": {
             "tutorialSidebar": {
               "link": {
-                "path": "/Glados/docs/Introduction",
-                "label": "Introduction"
+                "path": "/Glados/docs/introduction",
+                "label": "introduction"
               }
             }
           }

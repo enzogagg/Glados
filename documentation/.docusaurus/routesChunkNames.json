@@ -42,22 +42,26 @@
       "plugin": "plugin---glados-docusaurus-debugb-38-cc2"
     }
   },
-  "/Glados/docs-60e": {
+  "/Glados/docs-22a": {
     "__comp": "__comp---theme-docs-root-5-e-9-0b6",
     "__context": {
       "plugin": "plugin---glados-docsaba-86e"
     }
   },
-  "/Glados/docs-685": {
+  "/Glados/docs-bc6": {
     "__comp": "__comp---theme-doc-version-roota-7-b-5de",
     "__props": "__props---glados-docsedc-5b3"
   },
-  "/Glados/docs-fa4": {
+  "/Glados/docs-cfe": {
     "__comp": "__comp---theme-doc-roota-94-67a"
   },
-  "/Glados/docs/Introduction-508": {
+  "/Glados/docs/introduction-37a": {
     "__comp": "__comp---theme-doc-item-178-a40",
-    "content": "content---glados-docs-introductione-0-a-359"
+    "content": "content---glados-docs-introductione-0-a-724"
+  },
+  "/Glados/docs/types-et-mots-cles-8c2": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---glados-docs-types-et-mots-clesfa-6-394"
   },
   "/Glados/-1cd": {
     "__comp": "__comp---site-src-pages-index-jsc-4-f-f99",

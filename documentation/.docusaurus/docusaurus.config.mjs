@@ -27,12 +27,12 @@ export default {
       "classic",
       {
         "docs": {
-          "sidebarPath": "/Users/enzogaggiotti/Documents/Delivery/Glados/documentation/sidebars.js",
+          "sidebarPath": "/home/claurie9/deliveryy/tek3/Glados/Glados/documentation/sidebars.js",
           "editUrl": "https://github.com/enzogagg/Glados/tree/main/documentation/"
         },
         "blog": false,
         "theme": {
-          "customCss": "/Users/enzogaggiotti/Documents/Delivery/Glados/documentation/src/css/custom.css"
+          "customCss": "/home/claurie9/deliveryy/tek3/Glados/Glados/documentation/src/css/custom.css"
         }
       }
     ]
@@ -73,7 +73,7 @@ export default {
           "items": [
             {
               "label": "User Manual",
-              "to": "/docs/intro"
+              "to": "/docs/Introduction"
             },
             {
               "label": "Developer API",
