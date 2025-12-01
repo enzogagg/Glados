@@ -30,6 +30,7 @@ parseValue :: [Expr] -> IO (Either String ())
 evalValue :: Expr -> Env -> Either String Value
 showValue :: Value -> String
 builtins :: Env
+runExprs :: Env -> [Expr] -> IO (Either String Env)
 
 module ParseToExpr
 parseExpr :: Parser Expr
