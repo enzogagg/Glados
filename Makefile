@@ -24,6 +24,6 @@ fclean	:	clean
 re		:	fclean all
 
 tests_run	:
-			stack test --allow-different-user
+			stack test --allow-different-user --coverage
 
 .PHONY	:	all clean fclean re tests_run
