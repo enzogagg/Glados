@@ -145,6 +145,7 @@ builtins =
     , ("car", Primitive primCar)
     , ("cdr", Primitive primCdr)
     , ("list", Primitive primList)
+    , ("null?", Primitive primNull)
     ]
 
 
@@ -240,3 +241,9 @@ primCdr _ = Left "cdr requires one argument"
 
 primList :: [Value] -> Either String Value
 primList xs = Right (ListVal xs)
+
+primNull :: [Value] -> Either String Value
+primNull [ListVal []] = Right (BoolVal True)
+primNull [ListVal _] = Right (BoolVal False)
+primNull [_] = Left "null? requires a list"
+primNull _ = Left "null? requires one argument"
