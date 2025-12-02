@@ -138,6 +138,13 @@ run_general_tests() {
     assert_file "Superior" "test/functional/general/superior.scm" 0 "3628800"
 }
 
+run_float_tests() {
+    echo -e "\n${BLUE}--- Float Tests ---${NC}"
+    assert_file "Float1" "test/functional/float/float1.scm" 0 "2.0"
+    assert_file "Float2" "test/functional/float/float2.scm" 0 "0.5"
+    assert_file "Float3" "test/functional/float/float3.scm" 0 "0.3333333333333333"
+}
+
 # --- MAIN ---
 
 setup
@@ -148,7 +155,7 @@ run_function_tests
 run_conditional_tests
 run_builtin_tests
 run_general_tests
-run_symbol_tests
+run_float_tests
 
 if [ $RET -eq 0 ]; then
     echo -e "\n${GREEN}All tests passed!${NC}"
