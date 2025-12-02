@@ -1,0 +1,10 @@
+(define x (list 1 2 3 4 5))
+(if (eq? (car x) 1)
+    (if (eq? (car (cdr x)) 2)
+        (if (null? (list))
+            (if (eq? (null? x) #f)
+                x
+                0)
+            0)
+        0)
+    0)

@@ -10,12 +10,25 @@ module ParseValue (
     evalValue,
     showValue,
     builtins,
-    runExprs
+    runExprs,
+    primAdd,
+    primSub,
+    primMul,
+    primDiv,
+    primMod,
+    primLt,
+    primEq,
+    primCons,
+    primCar,
+    primCdr,
+    primList,
+    primNull
 ) where
 
 import Types
 import System.IO (hFlush, stdout)
 import Control.Monad (when)
+import Data.Fixed (mod')
 
 
 -- Execute Expr and display results
@@ -77,7 +90,11 @@ evalExprForDisplay expr env = do
 evalValue :: Expr -> Env -> Either String Value
 evalValue (Number n) _ = Right (IntVal n)
 
+evalValue (FloatLiteral n) _ = Right (FloatVal n)
+
 evalValue (Boolean b) _ = Right (BoolVal b)
+
+evalValue (String s) _ = Right (StringVal s)
 
 evalValue (Symbol s) env =
     case lookup s env of
@@ -95,12 +112,22 @@ evalValue (List [Symbol "lambda", List params, body]) env = do
     paramNames <- mapM extractSymbol params
     return (FuncVal paramNames body env)
 
+evalValue (List [Symbol "quote", expr]) _ = Right (exprToValue expr)
+
 evalValue (List (func : args)) env = do
     funcVal <- evalValue func env
     argVals <- mapM (`evalValue` env) args
     applyFunc funcVal argVals env
 
 evalValue (List []) _ = Left "empty list is not a valid expression"
+
+exprToValue :: Expr -> Value
+exprToValue (Number n) = IntVal n
+exprToValue (FloatLiteral n) = FloatVal n
+exprToValue (Boolean b) = BoolVal b
+exprToValue (Symbol s) = SymbolVal s
+exprToValue (String s) = StringVal s
+exprToValue (List xs) = ListVal (map exprToValue xs)
 
 
 -- Apply a function to its arguments
@@ -120,7 +147,6 @@ applyFunc _ _ _ = Left "attempt to call a non-function value"
 
 extractSymbol :: Expr -> Either String String
 extractSymbol (Symbol s) = Right s
-
 extractSymbol _ = Left "expected symbol"
 
 
@@ -134,11 +160,18 @@ builtins =
     , ("mod", Primitive primMod)
     , ("<", Primitive primLt)
     , ("eq?", Primitive primEq)
+    , ("cons", Primitive primCons)
+    , ("car", Primitive primCar)
+    , ("cdr", Primitive primCdr)
+    , ("list", Primitive primList)
+    , ("null?", Primitive primNull)
     ]
 
 
 primAdd :: [Value] -> Either String Value
 primAdd [IntVal a, IntVal b] = Right (IntVal (a + b))
+
+primAdd [FloatVal a, FloatVal b] = Right (FloatVal (a + b))
 
 primAdd _ = Left "+ requires two integer arguments"
 
@@ -146,11 +179,15 @@ primAdd _ = Left "+ requires two integer arguments"
 primSub :: [Value] -> Either String Value
 primSub [IntVal a, IntVal b] = Right (IntVal (a - b))
 
+primSub [FloatVal a, FloatVal b] = Right (FloatVal (a - b))
+
 primSub _ = Left "- requires two integer arguments"
 
 
 primMul :: [Value] -> Either String Value
 primMul [IntVal a, IntVal b] = Right (IntVal (a * b))
+
+primMul [FloatVal a, FloatVal b] = Right (FloatVal (a * b))
 
 primMul _ = Left "* requires two integer arguments"
 
@@ -158,7 +195,11 @@ primMul _ = Left "* requires two integer arguments"
 primDiv :: [Value] -> Either String Value
 primDiv [IntVal _, IntVal 0] = Left "division by zero"
 
+primDiv [FloatVal _, FloatVal 0] = Left "division by zero"
+
 primDiv [IntVal a, IntVal b] = Right (IntVal (a `div` b))
+
+primDiv [FloatVal a, FloatVal b] = Right (FloatVal (a / b))
 
 primDiv _ = Left "div requires two integer arguments"
 
@@ -166,19 +207,29 @@ primDiv _ = Left "div requires two integer arguments"
 primMod :: [Value] -> Either String Value
 primMod [IntVal _, IntVal 0] = Left "modulo by zero"
 
+primMod [FloatVal _, FloatVal 0] = Left "modulo by zero"
+
 primMod [IntVal a, IntVal b] = Right (IntVal (a `mod` b))
+
+primMod [FloatVal a, FloatVal b] = Right (FloatVal (mod' a b))
 
 primMod _ = Left "mod requires two integer arguments"
 
 
+
+
 primLt :: [Value] -> Either String Value
 primLt [IntVal a, IntVal b] = Right (BoolVal (a < b))
+
+primLt [FloatVal a, FloatVal b] = Right (BoolVal (a < b))
 
 primLt _ = Left "< requires two integer arguments"
 
 
 primEq :: [Value] -> Either String Value
 primEq [IntVal a, IntVal b] = Right (BoolVal (a == b))
+
+primEq [FloatVal a, FloatVal b] = Right (BoolVal (a == b))
 
 primEq [BoolVal a, BoolVal b] = Right (BoolVal (a == b))
 
@@ -188,6 +239,8 @@ primEq _ = Left "eq? requires two arguments of the same type"
 showValue :: Value -> String
 showValue (IntVal n) = show n
 
+showValue (FloatVal n) = show n
+
 showValue (BoolVal True) = "#t"
 
 showValue (BoolVal False) = "#f"
@@ -196,4 +249,44 @@ showValue FuncVal {} = "#<procedure>"
 
 showValue (Primitive _) = "#<primitive-procedure>"
 
+showValue (ListVal xs) = "(" ++ unwords (map show xs) ++ ")"
+
+showValue (SymbolVal s) = s
+
+showValue (StringVal s) = s
+
 showValue Void = "#<void>"
+
+primCons :: [Value] -> Either String Value
+primCons [x, ListVal xs] = Right (ListVal (x : xs))
+
+primCons [_, _] = Left "cons requires a list as the second argument"
+
+primCons _ = Left "cons requires two arguments"
+
+primCar :: [Value] -> Either String Value
+primCar [ListVal (x:_)] = Right x
+
+primCar [ListVal []] = Left "car of empty list"
+
+primCar [_] = Left "car requires a list"
+
+primCar _ = Left "car requires one argument"
+
+primCdr :: [Value] -> Either String Value
+primCdr [ListVal (_:xs)] = Right (ListVal xs)
+
+primCdr [ListVal []] = Left "cdr of empty list"
+
+primCdr [_] = Left "cdr requires a list"
+
+primCdr _ = Left "cdr requires one argument"
+
+primList :: [Value] -> Either String Value
+primList xs = Right (ListVal xs)
+
+primNull :: [Value] -> Either String Value
+primNull [ListVal []] = Right (BoolVal True)
+primNull [ListVal _] = Right (BoolVal False)
+primNull [_] = Left "null? requires a list"
+primNull _ = Left "null? requires one argument"

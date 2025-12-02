@@ -7,3 +7,7 @@ src/          @Yaya6mgt
 # Configuration CI/CD
 .github/      @enzogagg
 Makefile      @enzogagg
+
+# Tests
+scripts/      @enzogagg
+test/functional/ @enzogagg
