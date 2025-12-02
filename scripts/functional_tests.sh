@@ -107,6 +107,12 @@ run_lambda_tests() {
     assert_file "Lambda Define & Call" "test/functional/lambdas/lambda3.scm" 0 "7"
 }
 
+run_list_tests() {
+    echo -e "\n${BLUE}--- List Tests ---${NC}"
+    assert_file "List1" "test/functional/lists/list1.scm" 0 "(1 2 3 4 5)"
+    assert_file "List2" "test/functional/lists/list2.scm" 0 "1"
+}
+
 run_function_tests() {
     echo -e "\n${BLUE}--- Function Tests ---${NC}"
     assert_file "Function Definition" "test/functional/function/function1.scm" 0 "7"
@@ -137,10 +143,12 @@ run_general_tests() {
 setup
 run_basic_tests
 run_lambda_tests
+run_list_tests
 run_function_tests
 run_conditional_tests
 run_builtin_tests
 run_general_tests
+run_symbol_tests
 
 if [ $RET -eq 0 ]; then
     echo -e "\n${GREEN}All tests passed!${NC}"

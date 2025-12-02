@@ -10,7 +10,19 @@ module ParseValue (
     evalValue,
     showValue,
     builtins,
-    runExprs
+    runExprs,
+    primAdd,
+    primSub,
+    primMul,
+    primDiv,
+    primMod,
+    primLt,
+    primEq,
+    primCons,
+    primCar,
+    primCdr,
+    primList,
+    primNull
 ) where
 
 import Types
@@ -95,12 +107,20 @@ evalValue (List [Symbol "lambda", List params, body]) env = do
     paramNames <- mapM extractSymbol params
     return (FuncVal paramNames body env)
 
+evalValue (List [Symbol "quote", expr]) _ = Right (exprToValue expr)
+
 evalValue (List (func : args)) env = do
     funcVal <- evalValue func env
     argVals <- mapM (`evalValue` env) args
     applyFunc funcVal argVals env
 
 evalValue (List []) _ = Left "empty list is not a valid expression"
+
+exprToValue :: Expr -> Value
+exprToValue (Number n) = IntVal n
+exprToValue (Boolean b) = BoolVal b
+exprToValue (Symbol s) = SymbolVal s
+exprToValue (List xs) = ListVal (map exprToValue xs)
 
 
 -- Apply a function to its arguments
@@ -120,7 +140,6 @@ applyFunc _ _ _ = Left "attempt to call a non-function value"
 
 extractSymbol :: Expr -> Either String String
 extractSymbol (Symbol s) = Right s
-
 extractSymbol _ = Left "expected symbol"
 
 
@@ -134,6 +153,11 @@ builtins =
     , ("mod", Primitive primMod)
     , ("<", Primitive primLt)
     , ("eq?", Primitive primEq)
+    , ("cons", Primitive primCons)
+    , ("car", Primitive primCar)
+    , ("cdr", Primitive primCdr)
+    , ("list", Primitive primList)
+    , ("null?", Primitive primNull)
     ]
 
 
@@ -196,4 +220,42 @@ showValue FuncVal {} = "#<procedure>"
 
 showValue (Primitive _) = "#<primitive-procedure>"
 
+showValue (ListVal xs) = "(" ++ unwords (map show xs) ++ ")"
+
+showValue (SymbolVal s) = s
+
 showValue Void = "#<void>"
+
+primCons :: [Value] -> Either String Value
+primCons [x, ListVal xs] = Right (ListVal (x : xs))
+
+primCons [_, _] = Left "cons requires a list as the second argument"
+
+primCons _ = Left "cons requires two arguments"
+
+primCar :: [Value] -> Either String Value
+primCar [ListVal (x:_)] = Right x
+
+primCar [ListVal []] = Left "car of empty list"
+
+primCar [_] = Left "car requires a list"
+
+primCar _ = Left "car requires one argument"
+
+primCdr :: [Value] -> Either String Value
+primCdr [ListVal (_:xs)] = Right (ListVal xs)
+
+primCdr [ListVal []] = Left "cdr of empty list"
+
+primCdr [_] = Left "cdr requires a list"
+
+primCdr _ = Left "cdr requires one argument"
+
+primList :: [Value] -> Either String Value
+primList xs = Right (ListVal xs)
+
+primNull :: [Value] -> Either String Value
+primNull [ListVal []] = Right (BoolVal True)
+primNull [ListVal _] = Right (BoolVal False)
+primNull [_] = Left "null? requires a list"
+primNull _ = Left "null? requires one argument"

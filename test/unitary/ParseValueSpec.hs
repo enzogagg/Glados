@@ -54,5 +54,62 @@ spec = describe "ParseValue" $ do
             showValue (FuncVal [] (Number 0) []) `shouldBe` "#<procedure>"
             showValue (Primitive (\_ -> Right (IntVal 0))) `shouldBe` "#<primitive-procedure>"
 
+        it "shows lists" $ do
+            showValue (ListVal [IntVal 1, IntVal 2, IntVal 3]) `shouldBe` "(1 2 3)"
+
+        it "shows symbols" $ do
+            showValue (SymbolVal "x") `shouldBe` "x"
+
         it "shows void" $ do
             showValue Void `shouldBe` "#<void>"
+
+    describe "primAdd" $ do
+        it "adds two integers" $ do
+            primAdd [IntVal 2, IntVal 3] `shouldBe` Right (IntVal 5)
+    
+    describe "primSub" $ do
+        it "subtracts two integers" $ do
+            primSub [IntVal 2, IntVal 3] `shouldBe` Right (IntVal (-1))
+    
+    describe "primMul" $ do
+        it "multiplies two integers" $ do
+            primMul [IntVal 2, IntVal 3] `shouldBe` Right (IntVal 6)
+    
+    describe "primDiv" $ do
+        it "divides two integers" $ do
+            primDiv [IntVal 2, IntVal 3] `shouldBe` Right (IntVal 0)
+    
+    describe "primMod" $ do
+        it "modulates two integers" $ do
+            primMod [IntVal 2, IntVal 3] `shouldBe` Right (IntVal 2)
+    
+    describe "primLt" $ do
+        it "returns true if the first integer is less than the second" $ do
+            primLt [IntVal 2, IntVal 3] `shouldBe` Right (BoolVal True)
+    
+    describe "primEq" $ do
+        it "returns true if the two integers are equal" $ do
+            primEq [IntVal 2, IntVal 2] `shouldBe` Right (BoolVal True)
+    
+    describe "primCons" $ do
+        it "cons a list" $ do
+            primCons [IntVal 4, ListVal [IntVal 1, IntVal 2, IntVal 3]] `shouldBe` Right (ListVal [IntVal 4, IntVal 1, IntVal 2, IntVal 3])
+        
+    describe "primCar" $ do
+        it "returns the first element of a list" $ do
+            primCar [ListVal [IntVal 1, IntVal 2, IntVal 3]] `shouldBe` Right (IntVal 1)
+    
+    describe "primCdr" $ do
+        it "returns the rest of the list" $ do
+            primCdr [ListVal [IntVal 1, IntVal 2, IntVal 3]] `shouldBe` Right (ListVal [IntVal 2, IntVal 3])
+    
+    describe "primList" $ do
+        it "returns a list" $ do
+            primList [IntVal 1, IntVal 2, IntVal 3] `shouldBe` Right (ListVal [IntVal 1, IntVal 2, IntVal 3])
+    
+    describe "primNull" $ do
+        it "returns true if the list is empty" $ do
+            primNull [ListVal []] `shouldBe` Right (BoolVal True)
+        it "returns false if the list is not empty" $ do
+            primNull [ListVal [IntVal 1, IntVal 2, IntVal 3]] `shouldBe` Right (BoolVal False)
+        
