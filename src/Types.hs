@@ -15,6 +15,7 @@ data Expr
     | FloatLiteral Double
     | Boolean Bool
     | Symbol String
+    | String String
     | List [Expr]
     deriving (Show, Eq)
 
@@ -26,6 +27,7 @@ data Value
     | Primitive ([Value] -> Either String Value)
     | ListVal [Value]
     | SymbolVal String
+    | StringVal String
     | Void
 
 -- Instance Show personnalisée
@@ -38,6 +40,7 @@ instance Show Value where
     show (Primitive _) = "#<primitive-procedure>"
     show (ListVal list) = "(" ++ unwords (map show list) ++ ")"
     show (SymbolVal s) = s
+    show (StringVal s) = s
     show Void = "#<void>"
 
 -- Instance Eq personnalisée
@@ -49,6 +52,7 @@ instance Eq Value where
     Primitive _ == Primitive _ = True         -- approximation : tous les primitives sont égales
     ListVal a == ListVal b = a == b
     SymbolVal a == SymbolVal b = a == b
+    StringVal a == StringVal b = a == b
     Void == Void = True
     _ == _ = False
 
