@@ -37,6 +37,7 @@ parseExpr =
     <|> parseList
     <|> parseFloat
     <|> parseNumber
+    <|> parseString
     <|> parseSymbol
 
 parseNumber :: Parser Expr
@@ -66,6 +67,13 @@ parseSymbol = lexeme $ do
     first <- letterChar <|> oneOf "+-*/=<>?!"
     rest  <- many (alphaNumChar <|> oneOf "+-*/=<>?!")
     return (Symbol (first : rest))
+
+parseString :: Parser Expr
+parseString = lexeme $ do
+    _ <- char '"'
+    xs <- many (noneOf ['"'])
+    _ <- char '"'
+    return (String xs)
 
 parseList :: Parser Expr
 parseList = do
