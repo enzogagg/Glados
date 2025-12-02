@@ -145,6 +145,13 @@ run_float_tests() {
     assert_file "Float3" "test/functional/float/float3.scm" 0 "0.3333333333333333"
 }
 
+run_string_tests() {
+    echo -e "\n${BLUE}--- String Tests ---${NC}"
+    assert_file "String1" "test/functional/string/string1.scm" 0 "Hello, World!"
+    assert_file "String2" "test/functional/string/string2.scm" 0 "This is a test"
+    assert_file "String3" "test/functional/string/string3.scm" 0 "Hello, Glados is the best project ever!"
+}
+
 # --- MAIN ---
 
 setup
@@ -156,6 +163,7 @@ run_conditional_tests
 run_builtin_tests
 run_general_tests
 run_float_tests
+run_string_tests
 
 if [ $RET -eq 0 ]; then
     echo -e "\n${GREEN}All tests passed!${NC}"
