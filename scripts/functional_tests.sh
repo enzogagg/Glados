@@ -140,6 +140,7 @@ run_lambda_tests
 run_function_tests
 run_conditionnal_tests
 run_builtin_tests
+run_general_tests
 
 if [ $RET -eq 0 ]; then
     echo -e "\n${GREEN}All tests passed!${NC}"
