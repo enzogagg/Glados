@@ -144,6 +144,7 @@ builtins =
     , ("cons", Primitive primCons)
     , ("car", Primitive primCar)
     , ("cdr", Primitive primCdr)
+    , ("list", Primitive primList)
     ]
 
 
@@ -236,3 +237,6 @@ primCdr [ListVal []] = Left "cdr of empty list"
 primCdr [_] = Left "cdr requires a list"
 
 primCdr _ = Left "cdr requires one argument"
+
+primList :: [Value] -> Either String Value
+primList xs = Right (ListVal xs)
