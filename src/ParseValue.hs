@@ -211,8 +211,6 @@ primMod [FloatVal _, FloatVal 0] = Left "modulo by zero"
 
 primMod [IntVal a, IntVal b] = Right (IntVal (a `mod` b))
 
-primMod [FloatVal a, FloatVal b] = Right (FloatVal (mod' a b))
-
 primMod _ = Left "mod requires two integer arguments"
 
 

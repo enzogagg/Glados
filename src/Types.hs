@@ -46,7 +46,6 @@ instance Show Value where
 -- Instance Eq personnalisée
 instance Eq Value where
     IntVal a == IntVal b = a == b
-    FloatVal a == FloatVal b = a == b
     BoolVal a == BoolVal b = a == b
     FuncVal {} == FuncVal {} = True     -- approximation : toutes les fonctions sont égales
     Primitive _ == Primitive _ = True         -- approximation : tous les primitives sont égales
