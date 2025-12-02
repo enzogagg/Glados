@@ -136,6 +136,7 @@ run_general_tests() {
 
 setup
 run_basic_tests
+run_lambda_tests
 
 
 if [ $RET -eq 0 ]; then
