@@ -141,6 +141,7 @@ builtins =
     , ("mod", Primitive primMod)
     , ("<", Primitive primLt)
     , ("eq?", Primitive primEq)
+    , ("cons", Primitive primCons)
     ]
 
 
@@ -208,3 +209,12 @@ showValue (ListVal xs) = "(" ++ unwords (map show xs) ++ ")"
 showValue (SymbolVal s) = s
 
 showValue Void = "#<void>"
+
+primCons :: [Value] -> Either String Value
+primCons [x, ListVal xs] = Right (ListVal (x : xs))
+
+primCons [x, ListVal []] = Right (ListVal [x])
+
+primCons [_, _] = Left "cons requires a list as the second argument"
+
+primCons _ = Left "cons requires two arguments"
