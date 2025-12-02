@@ -10,14 +10,20 @@
 module Types
 data Expr
 Number :: Integer -> Expr
+FloatLiteral :: Double -> Expr
 Boolean :: Bool -> Expr
 Symbol :: String -> Expr
+String :: String -> Expr
 List :: [Expr] -> Expr
 data Value
 IntVal :: Integer -> Value
+FloatVal :: Double -> Value
 BoolVal :: Bool -> Value
 FuncVal :: [String] -> Expr -> Env -> Value
 Primitive :: ([Value] -> Either String Value) -> Value
+ListVal :: [Value] -> Value
+SymbolVal :: String -> Value
+StringVal :: String -> Value
 Void :: Value
 type Env = [(String, Value)]
 instance GHC.Classes.Eq Types.Expr
@@ -31,6 +37,18 @@ evalValue :: Expr -> Env -> Either String Value
 showValue :: Value -> String
 builtins :: Env
 runExprs :: Env -> [Expr] -> IO (Either String Env)
+primAdd :: [Value] -> Either String Value
+primSub :: [Value] -> Either String Value
+primMul :: [Value] -> Either String Value
+primDiv :: [Value] -> Either String Value
+primMod :: [Value] -> Either String Value
+primLt :: [Value] -> Either String Value
+primEq :: [Value] -> Either String Value
+primCons :: [Value] -> Either String Value
+primCar :: [Value] -> Either String Value
+primCdr :: [Value] -> Either String Value
+primList :: [Value] -> Either String Value
+primNull :: [Value] -> Either String Value
 
 module ParseToExpr
 parseExpr :: Parser Expr
