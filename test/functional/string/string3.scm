@@ -1,0 +1,1 @@
+"Hello, Glados is the best project ever!"
