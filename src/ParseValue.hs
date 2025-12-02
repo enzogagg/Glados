@@ -10,7 +10,19 @@ module ParseValue (
     evalValue,
     showValue,
     builtins,
-    runExprs
+    runExprs,
+    primAdd,
+    primSub,
+    primMul,
+    primDiv,
+    primMod,
+    primLt,
+    primEq,
+    primCons,
+    primCar,
+    primCdr,
+    primList,
+    primNull
 ) where
 
 import Types
