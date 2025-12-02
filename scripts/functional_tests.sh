@@ -137,7 +137,7 @@ run_general_tests() {
 setup
 run_basic_tests
 run_lambda_tests
-
+run_function_tests
 
 if [ $RET -eq 0 ]; then
     echo -e "\n${GREEN}All tests passed!${NC}"
