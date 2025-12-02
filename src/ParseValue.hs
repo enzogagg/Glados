@@ -28,6 +28,7 @@ module ParseValue (
 import Types
 import System.IO (hFlush, stdout)
 import Control.Monad (when)
+import Data.Fixed (mod')
 
 
 -- Execute Expr and display results
@@ -89,6 +90,8 @@ evalExprForDisplay expr env = do
 evalValue :: Expr -> Env -> Either String Value
 evalValue (Number n) _ = Right (IntVal n)
 
+evalValue (FloatLiteral n) _ = Right (FloatVal n)
+
 evalValue (Boolean b) _ = Right (BoolVal b)
 
 evalValue (Symbol s) env =
@@ -118,6 +121,7 @@ evalValue (List []) _ = Left "empty list is not a valid expression"
 
 exprToValue :: Expr -> Value
 exprToValue (Number n) = IntVal n
+exprToValue (FloatLiteral n) = FloatVal n
 exprToValue (Boolean b) = BoolVal b
 exprToValue (Symbol s) = SymbolVal s
 exprToValue (List xs) = ListVal (map exprToValue xs)
@@ -164,11 +168,15 @@ builtins =
 primAdd :: [Value] -> Either String Value
 primAdd [IntVal a, IntVal b] = Right (IntVal (a + b))
 
+primAdd [FloatVal a, FloatVal b] = Right (FloatVal (a + b))
+
 primAdd _ = Left "+ requires two integer arguments"
 
 
 primSub :: [Value] -> Either String Value
 primSub [IntVal a, IntVal b] = Right (IntVal (a - b))
+
+primSub [FloatVal a, FloatVal b] = Right (FloatVal (a - b))
 
 primSub _ = Left "- requires two integer arguments"
 
@@ -176,13 +184,19 @@ primSub _ = Left "- requires two integer arguments"
 primMul :: [Value] -> Either String Value
 primMul [IntVal a, IntVal b] = Right (IntVal (a * b))
 
+primMul [FloatVal a, FloatVal b] = Right (FloatVal (a * b))
+
 primMul _ = Left "* requires two integer arguments"
 
 
 primDiv :: [Value] -> Either String Value
 primDiv [IntVal _, IntVal 0] = Left "division by zero"
 
+primDiv [FloatVal _, FloatVal 0] = Left "division by zero"
+
 primDiv [IntVal a, IntVal b] = Right (IntVal (a `div` b))
+
+primDiv [FloatVal a, FloatVal b] = Right (FloatVal (a / b))
 
 primDiv _ = Left "div requires two integer arguments"
 
@@ -190,19 +204,29 @@ primDiv _ = Left "div requires two integer arguments"
 primMod :: [Value] -> Either String Value
 primMod [IntVal _, IntVal 0] = Left "modulo by zero"
 
+primMod [FloatVal _, FloatVal 0] = Left "modulo by zero"
+
 primMod [IntVal a, IntVal b] = Right (IntVal (a `mod` b))
+
+primMod [FloatVal a, FloatVal b] = Right (FloatVal (mod' a b))
 
 primMod _ = Left "mod requires two integer arguments"
 
 
+
+
 primLt :: [Value] -> Either String Value
 primLt [IntVal a, IntVal b] = Right (BoolVal (a < b))
+
+primLt [FloatVal a, FloatVal b] = Right (BoolVal (a < b))
 
 primLt _ = Left "< requires two integer arguments"
 
 
 primEq :: [Value] -> Either String Value
 primEq [IntVal a, IntVal b] = Right (BoolVal (a == b))
+
+primEq [FloatVal a, FloatVal b] = Right (BoolVal (a == b))
 
 primEq [BoolVal a, BoolVal b] = Right (BoolVal (a == b))
 
@@ -211,6 +235,8 @@ primEq _ = Left "eq? requires two arguments of the same type"
 
 showValue :: Value -> String
 showValue (IntVal n) = show n
+
+showValue (FloatVal n) = show n
 
 showValue (BoolVal True) = "#t"
 

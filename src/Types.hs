@@ -12,6 +12,7 @@ module Types (
 
 data Expr
     = Number Integer
+    | FloatLiteral Double
     | Boolean Bool
     | Symbol String
     | List [Expr]
@@ -19,6 +20,7 @@ data Expr
 
 data Value
     = IntVal Integer
+    | FloatVal Double
     | BoolVal Bool
     | FuncVal [String] Expr Env
     | Primitive ([Value] -> Either String Value)
@@ -29,6 +31,7 @@ data Value
 -- Instance Show personnalisée
 instance Show Value where
     show (IntVal n) = show n
+    show (FloatVal n) = show n
     show (BoolVal True) = "#t"
     show (BoolVal False) = "#f"
     show FuncVal {} = "#<procedure>"
@@ -40,6 +43,7 @@ instance Show Value where
 -- Instance Eq personnalisée
 instance Eq Value where
     IntVal a == IntVal b = a == b
+    FloatVal a == FloatVal b = a == b
     BoolVal a == BoolVal b = a == b
     FuncVal {} == FuncVal {} = True     -- approximation : toutes les fonctions sont égales
     Primitive _ == Primitive _ = True         -- approximation : tous les primitives sont égales
