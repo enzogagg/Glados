@@ -28,7 +28,7 @@ module ParseValue (
 import Types
 import System.IO (hFlush, stdout)
 import Control.Monad (when)
-import Data.Fixed (mod')
+
 
 
 -- Execute Expr and display results
