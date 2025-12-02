@@ -28,7 +28,7 @@ module ParseValue (
 import Types
 import System.IO (hFlush, stdout)
 import Control.Monad (when)
-import Data.Fixed (mod')
+
 
 
 -- Execute Expr and display results
@@ -210,8 +210,6 @@ primMod [IntVal _, IntVal 0] = Left "modulo by zero"
 primMod [FloatVal _, FloatVal 0] = Left "modulo by zero"
 
 primMod [IntVal a, IntVal b] = Right (IntVal (a `mod` b))
-
-primMod [FloatVal a, FloatVal b] = Right (FloatVal (mod' a b))
 
 primMod _ = Left "mod requires two integer arguments"
 

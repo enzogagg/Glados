@@ -35,6 +35,7 @@ jobs:
 
           cp -r "$DOC_PATH"/. documentation/static/api/
 
+      # 2. Build Docusaurus
       - uses: actions/setup-node@v3
         with:
           node-version: 'latest'
@@ -45,6 +46,7 @@ jobs:
           npm ci
           npm run build
 
+      # 3. Deploy
       - uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
