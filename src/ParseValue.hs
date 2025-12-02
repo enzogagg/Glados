@@ -94,6 +94,8 @@ evalValue (FloatLiteral n) _ = Right (FloatVal n)
 
 evalValue (Boolean b) _ = Right (BoolVal b)
 
+evalValue (String s) _ = Right (StringVal s)
+
 evalValue (Symbol s) env =
     case lookup s env of
         Just val -> Right val
@@ -124,6 +126,7 @@ exprToValue (Number n) = IntVal n
 exprToValue (FloatLiteral n) = FloatVal n
 exprToValue (Boolean b) = BoolVal b
 exprToValue (Symbol s) = SymbolVal s
+exprToValue (String s) = StringVal s
 exprToValue (List xs) = ListVal (map exprToValue xs)
 
 
@@ -249,6 +252,8 @@ showValue (Primitive _) = "#<primitive-procedure>"
 showValue (ListVal xs) = "(" ++ unwords (map show xs) ++ ")"
 
 showValue (SymbolVal s) = s
+
+showValue (StringVal s) = s
 
 showValue Void = "#<void>"
 
