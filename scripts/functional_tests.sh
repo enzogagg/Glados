@@ -112,11 +112,11 @@ run_function_tests() {
     assert_file "Function Definition" "test/functional/function/function1.scm" 0 "7"
 }
 
-run_conditionnal_tests() {
-    echo -e "\n${BLUE}--- Conditionnal Tests ---${NC}"
-    assert_file "If True" "test/functional/conditionnal/if1.scm" 0 "1"
-    assert_file "If False" "test/functional/conditionnal/if2.scm" 0 "2"
-    assert_file "If Else" "test/functional/conditionnal/if3.scm" 0 "21"
+run_conditional_tests() {
+    echo -e "\n${BLUE}--- Conditional Tests ---${NC}"
+    assert_file "If True" "test/functional/conditional/if1.scm" 0 "1"
+    assert_file "If False" "test/functional/conditional/if2.scm" 0 "2"
+    assert_file "If Else" "test/functional/conditional/if3.scm" 0 "21"
 }
 
 run_builtin_tests() {
@@ -138,7 +138,7 @@ setup
 run_basic_tests
 run_lambda_tests
 run_function_tests
-run_conditionnal_tests
+run_conditional_tests
 run_builtin_tests
 run_general_tests
 
