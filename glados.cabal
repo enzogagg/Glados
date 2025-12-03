@@ -28,6 +28,7 @@ library
       ParseArguments
       ParseToExpr
       ParseValue
+      TailCallOptimization
       Types
   other-modules:
       Paths_glados
