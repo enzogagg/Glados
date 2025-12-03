@@ -19,6 +19,7 @@ const sidebars = {
     'Types',
     'Tests',
     'Ci-cd',
+    'Struct',
   ],
 };
 
