@@ -202,5 +202,3 @@ fin
 Cette structure permet d’écrire des programmes lisibles, cohérents et pleinement adaptés aux tests.
 
 Vous pouvez maintenant définir vos modules, fonctions et expériences en toute sécurité.
-
-(Sécurité non garantie.)
