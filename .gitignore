@@ -1,6 +1,5 @@
 .stack-work/
 *~
-
 stack.yaml.lock
 
 # executable
@@ -10,5 +9,7 @@ glados
 example/*
 
 # *.scm
-
 *.pdf
+
+# Documentation
+documentation/node_modules
