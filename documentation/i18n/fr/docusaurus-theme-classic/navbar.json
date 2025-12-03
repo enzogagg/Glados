@@ -1,0 +1,22 @@
+{
+  "title": {
+    "message": "GLaDOS",
+    "description": "The title in the navbar"
+  },
+  "logo.alt": {
+    "message": "GLaDOS Logo",
+    "description": "The alt text of navbar logo"
+  },
+  "item.label.User Manual": {
+    "message": "User Manual",
+    "description": "Navbar item with label User Manual"
+  },
+  "item.label.Developer API (Haddock)": {
+    "message": "Developer API (Haddock)",
+    "description": "Navbar item with label Developer API (Haddock)"
+  },
+  "item.label.GitHub": {
+    "message": "GitHub",
+    "description": "Navbar item with label GitHub"
+  }
+}

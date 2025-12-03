@@ -16,6 +16,11 @@
               "sidebar": "tutorialSidebar"
             },
             {
+              "id": "types-and-keywords",
+              "path": "/Glados/docs/types-and-keywords",
+              "sidebar": "tutorialSidebar"
+            },
+            {
               "id": "types-et-mots-cles",
               "path": "/Glados/docs/types-et-mots-cles",
               "sidebar": "tutorialSidebar"

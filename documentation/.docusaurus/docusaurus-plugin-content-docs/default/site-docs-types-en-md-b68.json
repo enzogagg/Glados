@@ -1,0 +1,29 @@
+{
+  "id": "types-and-keywords",
+  "title": "Types and Keywords",
+  "description": "Basic Types",
+  "source": "@site/docs/types_en.md",
+  "sourceDirName": ".",
+  "slug": "/types-and-keywords",
+  "permalink": "/Glados/docs/types-and-keywords",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/enzogagg/Glados/tree/main/documentation/docs/types_en.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 2,
+  "frontMatter": {
+    "id": "types-and-keywords",
+    "title": "Types and Keywords",
+    "sidebar_position": 2
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Introduction",
+    "permalink": "/Glados/docs/introduction"
+  },
+  "next": {
+    "title": "Types et mots-clés",
+    "permalink": "/Glados/docs/types-et-mots-cles"
+  }
+}

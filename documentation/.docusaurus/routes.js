@@ -39,15 +39,15 @@ export default [
   },
   {
     path: '/Glados/docs',
-    component: ComponentCreator('/Glados/docs', '22a'),
+    component: ComponentCreator('/Glados/docs', 'a5c'),
     routes: [
       {
         path: '/Glados/docs',
-        component: ComponentCreator('/Glados/docs', 'bc6'),
+        component: ComponentCreator('/Glados/docs', '444'),
         routes: [
           {
             path: '/Glados/docs',
-            component: ComponentCreator('/Glados/docs', 'cfe'),
+            component: ComponentCreator('/Glados/docs', '103'),
             routes: [
               {
                 path: '/Glados/docs/introduction',
@@ -56,8 +56,14 @@ export default [
                 sidebar: "tutorialSidebar"
               },
               {
+                path: '/Glados/docs/types-and-keywords',
+                component: ComponentCreator('/Glados/docs/types-and-keywords', '147'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
                 path: '/Glados/docs/types-et-mots-cles',
-                component: ComponentCreator('/Glados/docs/types-et-mots-cles', '8c2'),
+                component: ComponentCreator('/Glados/docs/types-et-mots-cles', '881'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               }
