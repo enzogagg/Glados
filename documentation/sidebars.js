@@ -16,6 +16,7 @@ const sidebars = {
   tutorialSidebar: [
     'Introduction',
     'Installation',
+    'Types',
     'Tests',
     'Ci-cd',
   ],
