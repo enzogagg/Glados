@@ -7,12 +7,15 @@ const darkCodeTheme = themes.dracula;
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-    title: 'GLaDOS',
+    title: 'ClaD',
     tagline: 'Generic Language and Data Operand Syntax',
     favicon: 'img/favicon.ico',
 
     url: 'https://enzogagg.github.io', // Your GitHub Pages base URL
-    baseUrl: '/Glados/',              // The exact name of your repository (ex: /G-FUN-500.../)
+    // For local development use '/' and for GitHub Pages use '/Glados/'.
+    // Make it configurable with the DOCS_BASE_URL env var so you can run
+    // `DOCS_BASE_URL=/Glados/ npm run build` when deploying.
+    baseUrl: process.env.DOCS_BASE_URL || '/',
 
     // GitHub Pages deployment config
     organizationName: 'enzogagg', // Your GitHub username
@@ -51,12 +54,20 @@ const config = {
         /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
         ({
             // Social image
-            image: 'img/docusaurus-social-card.jpg',
+            image: 'img/logo.png',
+            announcementBar: {
+                id: 'cake_is_a_lie',
+                content:
+                    '🍰 <strong>Welcome to the GLaDOS Documentation.</strong> 🍰',
+                backgroundColor: '#245d88',
+                textColor: '#fff',
+                isCloseable: true,
+            },
             navbar: {
                 title: 'GLaDOS',
                 logo: {
                     alt: 'GLaDOS Logo',
-                    src: 'img/logo.svg',
+                    src: 'img/logo.png',
                 },
                 items: [
                     // User Manual
@@ -64,12 +75,12 @@ const config = {
                         type: 'docSidebar',
                         sidebarId: 'tutorialSidebar',
                         position: 'left',
-                        label: 'User Manual',
+                        label: 'Manual',
                     },
                     // Developer API (Haddock)
                     {
                         to: 'pathname:///api/index.html',
-                        label: 'Developer API (Haddock)',
+                        label: 'API Reference',
                         position: 'left',
                     },
                     // GitHub
@@ -84,14 +95,14 @@ const config = {
                 style: 'dark',
                 links: [
                     {
-                        title: 'Docs',
+                        title: 'Documentation',
                         items: [
                             {
                                 label: 'User Manual',
                                 to: '/docs/Introduction',
                             },
                             {
-                                label: 'Developer API',
+                                label: 'API Reference',
                                 href: 'pathname:///api/index.html',
                             },
                         ],
@@ -103,10 +114,14 @@ const config = {
                                 label: 'Epitech',
                                 href: 'https://epitech.eu',
                             },
+                            {
+                                label: 'GitHub',
+                                href: 'https://github.com/enzogagg/Glados',
+                            },
                         ],
                     },
                 ],
-                copyright: `Copyright © ${new Date().getFullYear()} GLaDOS Project. Built with Docusaurus & Haskell.`,
+                copyright: `Copyright © ${new Date().getFullYear()} CLaD Project. Built with Docusaurus & Haskell.`,
             },
             prism: {
                 theme: lightCodeTheme,

@@ -1,57 +1,69 @@
-# Introduction à la bibliothèque standard de **MegaScript**
+---
+id: Introduction
+title: Introduction
+sidebar_position: 1
+---
 
-La bibliothèque standard de MegaScript regroupe tous les outils essentiels fournis avec le langage.  
-Elle est organisée en plusieurs catégories pour faciliter la découverte et la compréhension.
+# Introduction à la bibliothèque standard de **CLaD**
+
+Bienvenue, sujet de test.
+
+La bibliothèque standard de CLaD (Generic Language and Data Operand Syntax) regroupe tous les outils essentiels fournis avec le langage pour faciliter vos tests dans le Centre d'Enrichissement Assisté par Ordinateur.
+
+Elle est organisée en plusieurs catégories pour optimiser votre flux de travail et garantir une science de qualité.
 
 ---
 
 ## Types de base
 
-MegaScript inclut des **types fondamentaux** tels que :
+CLaD inclut des **types fondamentaux** calibrés pour une précision maximale :
 
-- **Nombres**
-- **Chaînes de caractères**
-- **Listes**
+- **Nombres** (Entiers et Flottants) : Pour calculer la trajectoire des portails.
+- **Chaînes de caractères** : Pour communiquer avec les tourelles (ou insulter l'IA).
+- **Listes** : Pour organiser vos résultats de test.
+- **Booléens** (#t et #f) : La vérité est binaire. Le gâteau est un mensonge.
 
-Ces types sont intégrés au langage :  
-MegaScript définit leur *syntaxe*, leur *comportement général* et leurs *opérations principales*.  
-Bien que le cœur du langage impose certaines règles, leur fonctionnement complet est détaillé dans la bibliothèque.
+Ces types sont intégrés au cœur du système. CLaD définit leur *syntaxe*, leur *comportement* et leurs *opérations*.
 
 ---
 
 ## Fonctions natives & exceptions intégrées
 
-MegaScript fournit également :
+Pour votre sécurité (et celle de la science), CLaD fournit :
 
-- un ensemble de **fonctions natives**,
-- des **exceptions intégrées**,
+- un ensemble de **fonctions natives** (builtins) hautement optimisées,
+- des **exceptions intégrées** pour gérer les erreurs inattendues (comme la neurotoxine).
 
-toutes accessibles **sans aucun import**.  
-Certaines sont fondamentales, d’autres sont simplement pratiques au quotidien.
+Elles sont accessibles **immédiatement**, sans formulaire administratif.
 
 ---
 
 ## Structure de la documentation
 
-La documentation présente les modules **du plus simple au plus avancé**, en commençant par :
+La documentation est structurée pour un apprentissage rapide :
 
-1. **Les fonctions natives**
-2. **Les types de base**
-3. Les modules, organisés **par thèmes**
+1. **Les fonctions natives** : Les briques élémentaires.
+2. **Les types de base** : Les matériaux de construction.
+3. **Modules thématiques** : Des outils avancés pour des tests avancés.
 
 ---
 
-## Comment naviguer dans cette documentation ?
+## Navigation
 
 Vous pouvez :
 
-- parcourir le contenu **dans l’ordre** pour obtenir une vue d’ensemble,
-- accéder directement à une section précise,
-- utiliser **l’index** pour rechercher un terme,
-- ou explorer librement, page après page.
+- Suivre le protocole **séquentiel** pour une formation complète.
+- Accéder **directement** aux données nécessaires via l'index.
+- Explorer librement (à vos risques et périls).
 
-*Quel que soit votre chemin, commencez par les Fonctions natives, car tout le reste s’appuie dessus.*
+:::tip Conseil du superviseur
+Commencez par les Fonctions natives.
+:::
 
 ---
 
-**Bonne découverte de MegaScript !**
+**Bonne chance pour vos tests avec CLaD.**
+
+:::danger Rappel
+Le Centre d'Enrichissement décline toute responsabilité en cas de désintégration.
+:::
