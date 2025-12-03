@@ -1,3 +1,9 @@
+---
+id: Bytecode
+title: Bytecode Specification
+sidebar_position: 7
+---
+
 # CLaD Bytecode Specification v1.0
 
 ## Table des matières

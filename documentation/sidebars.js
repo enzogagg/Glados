@@ -20,6 +20,7 @@ const sidebars = {
     'Tests',
     'Ci-cd',
     'Struct',
+    'Bytecode',
   ],
 };
 
