@@ -2,6 +2,11 @@
 *~
 stack.yaml.lock
 
+#documentation
+/documentation/.docusaurus
+/documentation/node_modules
+/documentation/build
+
 # executable
 glados
 
