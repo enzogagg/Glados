@@ -1,0 +1,20 @@
+{
+  "id": "Builtins",
+  "title": "Fonctions Natives",
+  "description": "Voici la liste des fonctions natives (built-ins) disponibles dans l'environnement standard de GLaDOS. Ces fonctions sont optimisées pour le traitement rapide des données de test.",
+  "source": "@site/docs/Builtins.md",
+  "sourceDirName": ".",
+  "slug": "/Builtins",
+  "permalink": "/docs/Builtins",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/enzogagg/Glados/tree/main/documentation/docs/Builtins.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Types de Données",
+    "permalink": "/docs/Types"
+  }
+}

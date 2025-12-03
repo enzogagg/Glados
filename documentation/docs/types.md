@@ -1,58 +1,61 @@
 ---
-id: types-et-mots-cles
-title: Types et mots-clés
-sidebar_position: 2
+id: Types
+title: Types de Données
+sidebar_position: 3
 ---
 
-# Types et mots-clés avec exemples LISP-like
+# Types de Données
 
-## Types de base
+GLaDOS supporte plusieurs types de données fondamentaux pour représenter l'information dans le Centre d'Enrichissement.
 
-**Booléen — pileouface** : représente un état binaire (1 = pile, 0 = face).  
-Exemple : `(def resultat 1)` ; si `resultat` vaut 1, c’est pile, sinon face.
+## Nombres
 
-**String — phrase** : chaîne de caractères.  
-Exemple : `(def message "Bonjour GLaDOS")` ; variable `message` contient du texte.
+GLaDOS gère deux types de nombres :
 
-**Int — chiffre** : nombre entier.  
-Exemple : `(def compteur 42)` ; variable `compteur` contient un entier.
+- **Entiers (Integer)** : Nombres sans partie décimale.
+  - Exemples : `42`, `-1`, `0`
+- **Flottants (Float)** : Nombres à virgule flottante pour une précision accrue.
+  - Exemples : `3.14`, `-0.001`, `2.0`
 
-**Float — flottant** : nombre décimal.  
-Exemple : `(def temperature 3.14)` ; variable `temperature` contient un flottant.
+## Booléens
 
-**Char — car** : caractère unique.  
-Exemple : `(def lettre #\G)` ; variable `lettre` contient le caractère `G`.
+Les valeurs de vérité sont représentées par :
 
-**Define — définis** : constante ou macro.  
-Exemple : `(définis MAX_VIES 3)` ; définit une constante `MAX_VIES`.
+- `#t` : Vrai (True)
+- `#f` : Faux (False)
 
-**Void — vide** : fonction ne renvoyant aucune valeur.  
-Exemple : `(defun afficher-message () (print "Message sans retour"))` ; fonction qui affiche un message.
+## Symboles
 
-## Commandes conditionnelles
+Les symboles sont des identifiants uniques, souvent utilisés comme noms de variables ou comme étiquettes.
 
-**If — si** : condition simple.  
-Exemple : `(si (= resultat 1) (print "Pile") (print "Face"))`
+- Syntaxe : `'identifiant` ou simplement `identifiant` (si évalué).
+- Exemples : `'x`, `'test-result`, `lambda`
 
-**Else — sinon** : alternative à une condition.  
-Exemple : `(si (> score 100) (print "Niveau supérieur") sinon
- (print "Continuez à jouer"))`
+## Chaînes de Caractères
 
-**While — pendant** : boucle tant que.  
-Exemple : `(pendant (> energie 0) (progn (dec energie) (print energie)))`
+Les chaînes de caractères sont des séquences de texte délimitées par des guillemets doubles.
 
-**For — pour** : boucle contrôlée.  
-Exemple : `(pour (def i 0) (< i 5) (inc i) (print i))`
+- Syntaxe : `"texte"`
+- Exemple : `"Le gâteau est un mensonge"`
 
-**Return — renvoie** : renvoie une valeur.  
-Exemple : `(defun scoreMax (a b) (renvoie (if (> a b) a b)))`
+## Listes
 
-**Break — coupe** : sort d’une boucle.  
-Exemple : `(pendant (< i 10) (si erreur (coupe)))`
+Les listes sont des collections ordonnées d'éléments, pouvant contenir n'importe quel type de données (y compris d'autres listes).
 
-## Opérateurs
+- Syntaxe : `(élément1 élément2 ...)`
+- Construction : Via la fonction `list` ou `cons`.
+- Exemple : `(1 2 "trois" #t)`
 
-**+** : addition. Exemple : `(+ x y)`  
-**-** : soustraction. Exemple : `(- x y)`  
-**/** : division. Exemple : `(/ x y)`  
-**= — vaut** : assignation. Exemple : `(- 2 3) vaut 1`
+## Fonctions
+
+Les fonctions sont des citoyens de première classe. Elles peuvent être :
+
+- **Natives (Primitives)** : Intégrées au langage (ex: `+`, `car`).
+- **Définies par l'utilisateur (Lambda)** : Créées avec le mot-clé `lambda`.
+  - Syntaxe : `(lambda (paramètres) corps)`
+
+---
+
+:::warning Attention
+Ne regardez pas directement le code opérationnel des fonctions primitives.
+:::

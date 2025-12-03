@@ -1,0 +1,29 @@
+{
+  "id": "Installation",
+  "title": "Installation",
+  "description": "Bienvenue dans le programme d'installation du GLaDOS (Generic Language and Data Operand Syntax).",
+  "source": "@site/docs/Installation.md",
+  "sourceDirName": ".",
+  "slug": "/Installation",
+  "permalink": "/docs/Installation",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/enzogagg/Glados/tree/main/documentation/docs/Installation.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 2,
+  "frontMatter": {
+    "id": "Installation",
+    "title": "Installation",
+    "sidebar_position": 2
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Introduction",
+    "permalink": "/docs/Introduction"
+  },
+  "next": {
+    "title": "Types de Données",
+    "permalink": "/docs/Types"
+  }
+}

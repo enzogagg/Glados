@@ -3,6 +3,10 @@
 
 stack.yaml.lock
 
+#documentation
+/documentation/node_modules
+/documentation/build
+
 # executable
 glados
 

@@ -1,23 +1,28 @@
 {
   "docusaurus-plugin-content-docs": {
     "default": {
-      "path": "/Glados/docs",
+      "path": "/docs",
       "versions": [
         {
           "name": "current",
           "label": "Next",
           "isLast": true,
-          "path": "/Glados/docs",
-          "mainDocId": "introduction",
+          "path": "/docs",
+          "mainDocId": "Introduction",
           "docs": [
             {
-              "id": "introduction",
-              "path": "/Glados/docs/introduction",
+              "id": "Installation",
+              "path": "/docs/Installation",
               "sidebar": "tutorialSidebar"
             },
             {
-              "id": "types-et-mots-cles",
-              "path": "/Glados/docs/types-et-mots-cles",
+              "id": "Introduction",
+              "path": "/docs/Introduction",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "Types",
+              "path": "/docs/Types",
               "sidebar": "tutorialSidebar"
             }
           ],
@@ -25,8 +30,8 @@
           "sidebars": {
             "tutorialSidebar": {
               "link": {
-                "path": "/Glados/docs/introduction",
-                "label": "introduction"
+                "path": "/docs/Introduction",
+                "label": "Introduction"
               }
             }
           }

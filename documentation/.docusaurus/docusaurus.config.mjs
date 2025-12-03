@@ -4,11 +4,11 @@
  * Modify the docusaurus.config.js file at your site's root instead.
  */
 export default {
-  "title": "GLaDOS",
+  "title": "ClaD",
   "tagline": "Generic Language and Data Operand Syntax",
   "favicon": "img/favicon.ico",
   "url": "https://enzogagg.github.io",
-  "baseUrl": "/Glados/",
+  "baseUrl": "/",
   "organizationName": "enzogagg",
   "projectName": "Glados",
   "deploymentBranch": "gh-pages",
@@ -27,34 +27,41 @@ export default {
       "classic",
       {
         "docs": {
-          "sidebarPath": "/home/claurie9/deliveryy/tek3/Glados/Glados/documentation/sidebars.js",
+          "sidebarPath": "/Users/enzogaggiotti/Documents/Delivery/Glados/documentation/sidebars.js",
           "editUrl": "https://github.com/enzogagg/Glados/tree/main/documentation/"
         },
         "blog": false,
         "theme": {
-          "customCss": "/home/claurie9/deliveryy/tek3/Glados/Glados/documentation/src/css/custom.css"
+          "customCss": "/Users/enzogaggiotti/Documents/Delivery/Glados/documentation/src/css/custom.css"
         }
       }
     ]
   ],
   "themeConfig": {
-    "image": "img/docusaurus-social-card.jpg",
+    "image": "img/logo.png",
+    "announcementBar": {
+      "id": "cake_is_a_lie",
+      "content": "🍰 <strong>Welcome to the GLaDOS Documentation.</strong> 🍰",
+      "backgroundColor": "#245d88",
+      "textColor": "#fff",
+      "isCloseable": true
+    },
     "navbar": {
       "title": "GLaDOS",
       "logo": {
         "alt": "GLaDOS Logo",
-        "src": "img/logo.svg"
+        "src": "img/logo.png"
       },
       "items": [
         {
           "type": "docSidebar",
           "sidebarId": "tutorialSidebar",
           "position": "left",
-          "label": "User Manual"
+          "label": "Manual"
         },
         {
           "to": "pathname:///api/index.html",
-          "label": "Developer API (Haddock)",
+          "label": "API Reference",
           "position": "left"
         },
         {
@@ -69,14 +76,14 @@ export default {
       "style": "dark",
       "links": [
         {
-          "title": "Docs",
+          "title": "Documentation",
           "items": [
             {
               "label": "User Manual",
               "to": "/docs/Introduction"
             },
             {
-              "label": "Developer API",
+              "label": "API Reference",
               "href": "pathname:///api/index.html"
             }
           ]
@@ -87,11 +94,15 @@ export default {
             {
               "label": "Epitech",
               "href": "https://epitech.eu"
+            },
+            {
+              "label": "GitHub",
+              "href": "https://github.com/enzogagg/Glados"
             }
           ]
         }
       ],
-      "copyright": "Copyright © 2025 GLaDOS Project. Built with Docusaurus & Haskell."
+      "copyright": "Copyright © 2025 CLaD Project. Built with Docusaurus & Haskell."
     },
     "prism": {
       "theme": {

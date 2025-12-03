@@ -3,61 +3,72 @@ import ComponentCreator from '@docusaurus/ComponentCreator';
 
 export default [
   {
-    path: '/Glados/__docusaurus/debug',
-    component: ComponentCreator('/Glados/__docusaurus/debug', 'd76'),
+    path: '/__docusaurus/debug',
+    component: ComponentCreator('/__docusaurus/debug', '5ff'),
     exact: true
   },
   {
-    path: '/Glados/__docusaurus/debug/config',
-    component: ComponentCreator('/Glados/__docusaurus/debug/config', '5a8'),
+    path: '/__docusaurus/debug/config',
+    component: ComponentCreator('/__docusaurus/debug/config', '5ba'),
     exact: true
   },
   {
-    path: '/Glados/__docusaurus/debug/content',
-    component: ComponentCreator('/Glados/__docusaurus/debug/content', '2d0'),
+    path: '/__docusaurus/debug/content',
+    component: ComponentCreator('/__docusaurus/debug/content', 'a2b'),
     exact: true
   },
   {
-    path: '/Glados/__docusaurus/debug/globalData',
-    component: ComponentCreator('/Glados/__docusaurus/debug/globalData', '1a8'),
+    path: '/__docusaurus/debug/globalData',
+    component: ComponentCreator('/__docusaurus/debug/globalData', 'c3c'),
     exact: true
   },
   {
-    path: '/Glados/__docusaurus/debug/metadata',
-    component: ComponentCreator('/Glados/__docusaurus/debug/metadata', 'f29'),
+    path: '/__docusaurus/debug/metadata',
+    component: ComponentCreator('/__docusaurus/debug/metadata', '156'),
     exact: true
   },
   {
-    path: '/Glados/__docusaurus/debug/registry',
-    component: ComponentCreator('/Glados/__docusaurus/debug/registry', '7b0'),
+    path: '/__docusaurus/debug/registry',
+    component: ComponentCreator('/__docusaurus/debug/registry', '88c'),
     exact: true
   },
   {
-    path: '/Glados/__docusaurus/debug/routes',
-    component: ComponentCreator('/Glados/__docusaurus/debug/routes', 'bc0'),
+    path: '/__docusaurus/debug/routes',
+    component: ComponentCreator('/__docusaurus/debug/routes', '000'),
     exact: true
   },
   {
-    path: '/Glados/docs',
-    component: ComponentCreator('/Glados/docs', '22a'),
+    path: '/404',
+    component: ComponentCreator('/404', '5c5'),
+    exact: true
+  },
+  {
+    path: '/docs',
+    component: ComponentCreator('/docs', '434'),
     routes: [
       {
-        path: '/Glados/docs',
-        component: ComponentCreator('/Glados/docs', 'bc6'),
+        path: '/docs',
+        component: ComponentCreator('/docs', 'bb7'),
         routes: [
           {
-            path: '/Glados/docs',
-            component: ComponentCreator('/Glados/docs', 'cfe'),
+            path: '/docs',
+            component: ComponentCreator('/docs', '9a4'),
             routes: [
               {
-                path: '/Glados/docs/introduction',
-                component: ComponentCreator('/Glados/docs/introduction', '37a'),
+                path: '/docs/Installation',
+                component: ComponentCreator('/docs/Installation', '12e'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/Glados/docs/types-et-mots-cles',
-                component: ComponentCreator('/Glados/docs/types-et-mots-cles', '8c2'),
+                path: '/docs/Introduction',
+                component: ComponentCreator('/docs/Introduction', '7bf'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/docs/Types',
+                component: ComponentCreator('/docs/Types', '0eb'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               }
@@ -68,8 +79,8 @@ export default [
     ]
   },
   {
-    path: '/Glados/',
-    component: ComponentCreator('/Glados/', '1cd'),
+    path: '/',
+    component: ComponentCreator('/', '2e1'),
     exact: true
   },
   {

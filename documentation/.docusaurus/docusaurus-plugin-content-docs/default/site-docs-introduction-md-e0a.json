@@ -1,11 +1,11 @@
 {
-  "id": "introduction",
+  "id": "Introduction",
   "title": "Introduction",
-  "description": "Bienvenue dans la documentation développeur du projet GLaDOS.",
+  "description": "Bienvenue, sujet de test.",
   "source": "@site/docs/Introduction.md",
   "sourceDirName": ".",
-  "slug": "/introduction",
-  "permalink": "/Glados/docs/introduction",
+  "slug": "/Introduction",
+  "permalink": "/docs/Introduction",
   "draft": false,
   "unlisted": false,
   "editUrl": "https://github.com/enzogagg/Glados/tree/main/documentation/docs/Introduction.md",
@@ -13,13 +13,13 @@
   "version": "current",
   "sidebarPosition": 1,
   "frontMatter": {
-    "id": "introduction",
+    "id": "Introduction",
     "title": "Introduction",
     "sidebar_position": 1
   },
   "sidebar": "tutorialSidebar",
   "next": {
-    "title": "Types et mots-clés",
-    "permalink": "/Glados/docs/types-et-mots-cles"
+    "title": "Installation",
+    "permalink": "/docs/Installation"
   }
 }

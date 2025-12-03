@@ -1,73 +1,84 @@
 {
-  "/Glados/__docusaurus/debug-d76": {
+  "/__docusaurus/debug-5ff": {
     "__comp": "__comp---theme-debug-config-23-a-2ff",
     "__context": {
-      "plugin": "plugin---glados-docusaurus-debugb-38-cc2"
+      "plugin": "plugin---docusaurus-debugb-38-ad3"
     }
   },
-  "/Glados/__docusaurus/debug/config-5a8": {
+  "/__docusaurus/debug/config-5ba": {
     "__comp": "__comp---theme-debug-config-23-a-2ff",
     "__context": {
-      "plugin": "plugin---glados-docusaurus-debugb-38-cc2"
+      "plugin": "plugin---docusaurus-debugb-38-ad3"
     }
   },
-  "/Glados/__docusaurus/debug/content-2d0": {
+  "/__docusaurus/debug/content-a2b": {
     "__comp": "__comp---theme-debug-contentba-8-ce7",
     "__context": {
-      "plugin": "plugin---glados-docusaurus-debugb-38-cc2"
+      "plugin": "plugin---docusaurus-debugb-38-ad3"
     },
-    "__props": "__props---glados-docusaurus-debug-content-184-1d9"
+    "__props": "__props---docusaurus-debug-content-3-c-0-be2"
   },
-  "/Glados/__docusaurus/debug/globalData-1a8": {
+  "/__docusaurus/debug/globalData-c3c": {
     "__comp": "__comp---theme-debug-global-dataede-0fa",
     "__context": {
-      "plugin": "plugin---glados-docusaurus-debugb-38-cc2"
+      "plugin": "plugin---docusaurus-debugb-38-ad3"
     }
   },
-  "/Glados/__docusaurus/debug/metadata-f29": {
+  "/__docusaurus/debug/metadata-156": {
     "__comp": "__comp---theme-debug-site-metadata-68-e-3d4",
     "__context": {
-      "plugin": "plugin---glados-docusaurus-debugb-38-cc2"
+      "plugin": "plugin---docusaurus-debugb-38-ad3"
     }
   },
-  "/Glados/__docusaurus/debug/registry-7b0": {
+  "/__docusaurus/debug/registry-88c": {
     "__comp": "__comp---theme-debug-registry-679-501",
     "__context": {
-      "plugin": "plugin---glados-docusaurus-debugb-38-cc2"
+      "plugin": "plugin---docusaurus-debugb-38-ad3"
     }
   },
-  "/Glados/__docusaurus/debug/routes-bc0": {
+  "/__docusaurus/debug/routes-000": {
     "__comp": "__comp---theme-debug-routes-946-699",
     "__context": {
-      "plugin": "plugin---glados-docusaurus-debugb-38-cc2"
+      "plugin": "plugin---docusaurus-debugb-38-ad3"
     }
   },
-  "/Glados/docs-22a": {
+  "/404-5c5": {
+    "__comp": "__comp---site-src-pages-404-js-6-bb-277",
+    "__context": {
+      "plugin": "plugin---404-a-74-27e"
+    },
+    "config": "config---4045-e-9-90e"
+  },
+  "/docs-434": {
     "__comp": "__comp---theme-docs-root-5-e-9-0b6",
     "__context": {
-      "plugin": "plugin---glados-docsaba-86e"
+      "plugin": "plugin---docsaba-d7c"
     }
   },
-  "/Glados/docs-bc6": {
+  "/docs-bb7": {
     "__comp": "__comp---theme-doc-version-roota-7-b-5de",
-    "__props": "__props---glados-docsedc-5b3"
+    "__props": "__props---docs-005-788"
   },
-  "/Glados/docs-cfe": {
+  "/docs-9a4": {
     "__comp": "__comp---theme-doc-roota-94-67a"
   },
-  "/Glados/docs/introduction-37a": {
+  "/docs/Installation-12e": {
     "__comp": "__comp---theme-doc-item-178-a40",
-    "content": "content---glados-docs-introductione-0-a-724"
+    "content": "content---docs-installation-1-ff-9fd"
   },
-  "/Glados/docs/types-et-mots-cles-8c2": {
+  "/docs/Introduction-7bf": {
     "__comp": "__comp---theme-doc-item-178-a40",
-    "content": "content---glados-docs-types-et-mots-clesfa-6-394"
+    "content": "content---docs-introductione-0-a-085"
   },
-  "/Glados/-1cd": {
+  "/docs/Types-0eb": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-typesa-88-6c4"
+  },
+  "/-2e1": {
     "__comp": "__comp---site-src-pages-index-jsc-4-f-f99",
     "__context": {
-      "plugin": "plugin---glados-a-74-b4c"
+      "plugin": "plugin---404-a-74-27e"
     },
-    "config": "config---glados-5-e-9-b7c"
+    "config": "config---4045-e-9-90e"
   }
 }
