@@ -67,14 +67,14 @@ Les chaînes permettent de manipuler du texte – utile pour menacer les sujets 
 
 Deux valeurs possibles :
 
-* `#t` — vrai
-* `#f` — faux
+* `vrai` — vrai
+* `faux` — faux
 
 ### Fonctions natives
 
-* `and a b`
-* `or a b`
-* `not a`
+* `et a b`
+* `ou a b`
+* `non a`
 * `=` — Égalité
 * `>` `<` `>=` `<=` — Comparaisons
 
@@ -118,7 +118,7 @@ Collections ordonnées d’éléments, souvent utilisées pour stocker des résu
 
 ---
 
-## 5. Le type `Unit`
+## 5. Le type `Neant`
 
 Type spécial indiquant l'absence de valeur.
 Similaire à `null`, `none` ou `void` dans d'autres langages.
@@ -126,48 +126,19 @@ Similaire à `null`, `none` ou `void` dans d'autres langages.
 ### Exemple
 
 ```glados
-(print "Test en cours...")  ;; => retourne :unit
+(print "Test en cours...")  ;; => retourne :Neant
 ```
 
 ---
 
 ## 6. Le type `Erreur`
 
-Toutes les exceptions internes (ex : division par zéro, accès hors liste, surcharge de tourelles) retournent un objet de type `Error`.
+Toutes les exceptions internes (ex : division par zéro, accès hors liste, surcharge de tourelles) retournent un objet de type `Erreur`.
 
 ### Exemple
 
 ```glados
-(/ 1 0)  ;; => Erreur: DivisionByZero
-```
-
----
-
-## 7. Types composés
-
-### 7.1 Paires (`Paire`)
-
-Deux valeurs groupées.
-
-```glados
-(paire 1 2) ;; => (1 . 2)
-```
-
-### 7.2 Dictionnaires (`Dict`)
-
-Associations clé → valeur.
-
-#### Fonctions
-
-* `dict` — Création
-* `dict-get d k`
-* `dict-set d k v`
-
-#### Exemple
-
-```glados
-'test (dict "nom" "Chell" "niveau" 42)
-(dict-get test "nom") ;; => "Chell"
+(/ 1 0)  ;; => Erreur: DivisionParZero
 ```
 
 ---
