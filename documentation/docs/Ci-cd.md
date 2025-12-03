@@ -1,6 +1,6 @@
 ---
-id: Installation
-title: Installation
+id: Ci-cd
+title: CI/CD
 sidebar_position: 5
 ---
 
