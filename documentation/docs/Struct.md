@@ -20,6 +20,8 @@ Un fichier CLaD peut contenir :
 
 Exemple minimal :
 
+Ce petit programme montre comment déclarer une constante, définir une fonction simple et appeler cette fonction depuis le bloc principal.
+
 ```glados
 # Ceci est un commentaire
 
@@ -59,6 +61,8 @@ Normalement.
 
 ## 3.1 Constantes
 
+Les constantes permettent de définir des valeurs fixes qui ne changent jamais au cours de l’exécution.
+
 Syntaxe déclarative, en français :
 
 ```clad
@@ -66,6 +70,8 @@ constante VITESSE_LUMIERE 299792458
 ```
 
 ## 3.2 Variables
+
+Les variables servent à stocker des valeurs modifiables tout au long de l’exécution du programme.
 
 Déclaration facultative, mais possible pour clarifier le type :
 
@@ -80,6 +86,7 @@ variable nom "CLaD"
 
 ## 4.1 Déclaration
 
+Les fonctions regroupent du code réutilisable afin d’éviter les répétitions et d'organiser la logique du programme.
 Une fonction se déclare comme suit :
 
 ```clad
@@ -101,7 +108,7 @@ fin
 
 ## 4.2 Valeurs de retour
 
-Si aucune valeur n’est retournée, la fonction retourne `:unit` par défaut.
+Les fonctions peuvent renvoyer une valeur. Si aucune valeur n’est retournée, la fonction retourne `:unit` par défaut.
 
 ```clad
 fonction log(msg)
@@ -113,7 +120,7 @@ fin
 
 # 5. Indentation et blocs
 
-L’indentation est **significative**.
+L’indentation structure la logique du code et délimite les blocs, rendant la lecture claire et intuitive.
 Chaque bloc commence implicitement après un mot‑clé (`fonction`, `si`, `tantque`, `principal`, etc.) et se termine par `fin`.
 
 Exemple :
@@ -127,6 +134,8 @@ fin
 ---
 
 # 6. Structures de contrôle
+
+Les conditions permettent d’exécuter différentes parties du code selon les situations rencontrées.
 
 ## 6.1 Conditionnel
 
@@ -142,6 +151,8 @@ fin
 
 ## 6.2 Boucle "tant que"
 
+La boucle tant que répète un bloc d’instructions tant que la condition est vraie.
+
 ```clad
 tantque x < 10
     afficher(x)
@@ -150,6 +161,8 @@ fin
 ```
 
 ## 6.3 Boucle "pour"
+
+La boucle pour permet d’itérer facilement sur une plage de valeurs.
 
 Exemple:
 
@@ -163,7 +176,7 @@ fin
 
 # 7. Programme principal
 
-Il s’agit du point d’entrée du programme.
+Le bloc principal est le point d’entrée du programme : c’est ici que l’exécution commence.
 Un fichier peut contenir plusieurs fonctions, mais un seul bloc `principal`.
 
 ```clad
@@ -175,6 +188,8 @@ fin
 ---
 
 # 8. Exemple complet
+
+Cet exemple regroupe toutes les notions vues précédemment dans un programme complet et fonctionnel.
 
 ```clad
 ### Programme de test CLaD ###
