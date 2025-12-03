@@ -4,9 +4,9 @@ title: Types
 sidebar_position: 3
 ---
 
-# Types de base de **GLaDOS**
+# Types de base de **CLaD**
 
-Ce document décrit l’ensemble des **types fondamentaux** du langage GLaDOS, leurs opérations natives, ainsi que des exemples d’utilisation..
+Ce document décrit l’ensemble des **types fondamentaux** du langage CLaD, leurs opérations natives, ainsi que des exemples d’utilisation..
 
 ---
 
@@ -30,7 +30,7 @@ Les nombres sont divisés en deux catégories :
 
 ### Exemples
 
-```glados
+```clad
 (+ 2 3)        ;; => 5
 (/ 7 2)        ;; => 3.5
 (div 7 2)      ;; => 3
@@ -54,8 +54,8 @@ Les chaînes permettent de manipuler du texte – utile pour menacer les sujets 
 
 ### Exemples
 
-```glados
-(phr-long "GLaDOS")         ;; => 6
+```clad
+(phr-long "CLaD")         ;; => 6
 (phr-ajout "Bonjour, " "Sujet 17")  ;; => "Bonjour, Sujet 17"
 (phr-coupe "a,b,c" ",")        ;; => ["a" "b" "c"]
 (phr-cherche? "neurotoxine" "tox") ;; => #t
@@ -106,7 +106,7 @@ Collections ordonnées d’éléments, souvent utilisées pour stocker des résu
 
 ### Exemples
 
-```glados
+```clad
 (list 1 2 3)            ;; => [1 2 3]
 (Premier [1 2 3])         ;; => 1
 (rest [1 2 3])          ;; => [2 3]
@@ -137,7 +137,7 @@ Toutes les exceptions internes (ex : division par zéro, accès hors liste, surc
 
 ### Exemple
 
-```glados
+```clad
 (/ 1 0)  ;; => Erreur: DivisionParZero
 ```
 
@@ -145,6 +145,6 @@ Toutes les exceptions internes (ex : division par zéro, accès hors liste, surc
 
 ## Conclusion
 
-Cette section détaille tous les types fondamentaux disponibles dans le langage GLaDOS. Ils constituent les blocs essentiels pour l’écriture de programmes fiables, reproductibles et scientifiquement cruels.
+Cette section détaille tous les types fondamentaux disponibles dans le langage CLaD. Ils constituent les blocs essentiels pour l’écriture de programmes fiables, reproductibles et scientifiquement cruels.
 
 Bonne expérimentation.

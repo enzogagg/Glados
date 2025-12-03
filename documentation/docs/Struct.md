@@ -40,13 +40,13 @@ fin
 
 Les commentaires commencent par `#` et vont jusqu’à la fin de la ligne.
 
-```glados
+```clad
 # Programme de test
 ```
 
 Les blocs de documentation multi‑ligne utilisent `###` :
 
-```glados
+```clad
 ###
 Ce test ne devrait PAS exploser.
 Normalement.
@@ -61,7 +61,7 @@ Normalement.
 
 Syntaxe déclarative, en français :
 
-```glados
+```clad
 constante VITESSE_LUMIERE 299792458
 ```
 
@@ -69,7 +69,7 @@ constante VITESSE_LUMIERE 299792458
 
 Déclaration facultative, mais possible pour clarifier le type :
 
-```glados
+```clad
 variable compteur 0
 variable nom "CLaD"
 ```
@@ -82,7 +82,7 @@ variable nom "CLaD"
 
 Une fonction se déclare comme suit :
 
-```glados
+```clad
 fonction NomDeLaFonction(param1, param2)
     # corps
 fin
@@ -93,7 +93,7 @@ Les paramètres sont séparés par des virgules.
 
 ### Exemple
 
-```glados
+```clad
 fonction addition(a, b)
     retourner a + b
 fin
@@ -103,7 +103,7 @@ fin
 
 Si aucune valeur n’est retournée, la fonction retourne `:unit` par défaut.
 
-```glados
+```clad
 fonction log(msg)
     afficher(msg)
 fin
@@ -118,7 +118,7 @@ Chaque bloc commence implicitement après un mot‑clé (`fonction`, `si`, `tant
 
 Exemple :
 
-```glados
+```clad
 si x > 10
     afficher("Trop grand")
 fin
@@ -130,7 +130,7 @@ fin
 
 ## 6.1 Conditionnel
 
-```glados
+```clad
 si condition
     ...
 sinon si autre
@@ -142,7 +142,7 @@ fin
 
 ## 6.2 Boucle "tant que"
 
-```glados
+```clad
 tantque x < 10
     afficher(x)
     x = x + 1
@@ -153,7 +153,7 @@ fin
 
 Exemple:
 
-```glados
+```clad
 pour i de 0 à 10
     afficher(i)
 fin
@@ -166,7 +166,7 @@ fin
 Il s’agit du point d’entrée du programme.
 Un fichier peut contenir plusieurs fonctions, mais un seul bloc `principal`.
 
-```glados
+```clad
 principal
     afficher("Test en cours...")
 fin
@@ -176,8 +176,8 @@ fin
 
 # 8. Exemple complet
 
-```glados
-### Programme de test GLaDOS ###
+```clad
+### Programme de test CLaD ###
 
 constante BASE 10
 

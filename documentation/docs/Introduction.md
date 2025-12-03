@@ -4,11 +4,11 @@ title: Introduction
 sidebar_position: 1
 ---
 
-# Introduction à la bibliothèque standard de **GLaDOS**
+# Introduction à la bibliothèque standard de **CLaD**
 
 Bienvenue, sujet de test.
 
-La bibliothèque standard de GLaDOS (Generic Language and Data Operand Syntax) regroupe tous les outils essentiels fournis avec le langage pour faciliter vos tests dans le Centre d'Enrichissement Assisté par Ordinateur.
+La bibliothèque standard de CLaD (Generic Language and Data Operand Syntax) regroupe tous les outils essentiels fournis avec le langage pour faciliter vos tests dans le Centre d'Enrichissement Assisté par Ordinateur.
 
 Elle est organisée en plusieurs catégories pour optimiser votre flux de travail et garantir une science de qualité.
 
@@ -16,20 +16,20 @@ Elle est organisée en plusieurs catégories pour optimiser votre flux de travai
 
 ## Types de base
 
-GLaDOS inclut des **types fondamentaux** calibrés pour une précision maximale :
+CLaD inclut des **types fondamentaux** calibrés pour une précision maximale :
 
 - **Nombres** (Entiers et Flottants) : Pour calculer la trajectoire des portails.
 - **Chaînes de caractères** : Pour communiquer avec les tourelles (ou insulter l'IA).
 - **Listes** : Pour organiser vos résultats de test.
 - **Booléens** (#t et #f) : La vérité est binaire. Le gâteau est un mensonge.
 
-Ces types sont intégrés au cœur du système. GLaDOS définit leur *syntaxe*, leur *comportement* et leurs *opérations*.
+Ces types sont intégrés au cœur du système. CLaD définit leur *syntaxe*, leur *comportement* et leurs *opérations*.
 
 ---
 
 ## Fonctions natives & exceptions intégrées
 
-Pour votre sécurité (et celle de la science), GLaDOS fournit :
+Pour votre sécurité (et celle de la science), CLaD fournit :
 
 - un ensemble de **fonctions natives** (builtins) hautement optimisées,
 - des **exceptions intégrées** pour gérer les erreurs inattendues (comme la neurotoxine).
@@ -62,7 +62,7 @@ Commencez par les Fonctions natives.
 
 ---
 
-**Bonne chance pour vos tests avec GLaDOS.**
+**Bonne chance pour vos tests avec CLaD.**
 
 :::danger Rappel
 Le Centre d'Enrichissement décline toute responsabilité en cas de désintégration.
