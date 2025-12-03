@@ -44,16 +44,22 @@ export default [
   },
   {
     path: '/docs',
-    component: ComponentCreator('/docs', '434'),
+    component: ComponentCreator('/docs', '1c1'),
     routes: [
       {
         path: '/docs',
-        component: ComponentCreator('/docs', 'bb7'),
+        component: ComponentCreator('/docs', 'c95'),
         routes: [
           {
             path: '/docs',
-            component: ComponentCreator('/docs', '9a4'),
+            component: ComponentCreator('/docs', 'b89'),
             routes: [
+              {
+                path: '/docs/Ci-cd',
+                component: ComponentCreator('/docs/Ci-cd', 'e86'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
               {
                 path: '/docs/Installation',
                 component: ComponentCreator('/docs/Installation', '12e'),
@@ -67,8 +73,8 @@ export default [
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/docs/Types',
-                component: ComponentCreator('/docs/Types', '0eb'),
+                path: '/docs/Tests',
+                component: ComponentCreator('/docs/Tests', 'd53'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               }

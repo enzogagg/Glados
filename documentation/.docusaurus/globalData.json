@@ -11,6 +11,11 @@
           "mainDocId": "Introduction",
           "docs": [
             {
+              "id": "Ci-cd",
+              "path": "/docs/Ci-cd",
+              "sidebar": "tutorialSidebar"
+            },
+            {
               "id": "Installation",
               "path": "/docs/Installation",
               "sidebar": "tutorialSidebar"
@@ -21,8 +26,8 @@
               "sidebar": "tutorialSidebar"
             },
             {
-              "id": "Types",
-              "path": "/docs/Types",
+              "id": "Tests",
+              "path": "/docs/Tests",
               "sidebar": "tutorialSidebar"
             }
           ],
