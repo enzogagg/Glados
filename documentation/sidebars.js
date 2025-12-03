@@ -17,6 +17,8 @@ const sidebars = {
     'Introduction',
     'Installation',
     'Types',
+    'Tests',
+    'Ci-cd',
   ],
 };
 
