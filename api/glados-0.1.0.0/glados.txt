@@ -31,9 +31,15 @@ instance GHC.Classes.Eq Types.Value
 instance GHC.Internal.Show.Show Types.Expr
 instance GHC.Internal.Show.Show Types.Value
 
+module TailCallOptimization
+data Bounce
+Done :: Either String Value -> Bounce
+Call :: (Env -> IO Bounce) -> Env -> Bounce
+runTrampoline :: Bounce -> IO (Either String Value)
+
 module ParseValue
 parseValue :: [Expr] -> IO (Either String ())
-evalValue :: Expr -> Env -> Either String Value
+evalValue :: Expr -> Env -> IO Bounce
 showValue :: Value -> String
 builtins :: Env
 runExprs :: Env -> [Expr] -> IO (Either String Env)
