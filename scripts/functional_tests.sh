@@ -152,6 +152,11 @@ run_string_tests() {
     assert_file "String3" "test/functional/string/string3.scm" 0 "Hello, Glados is the best project ever!"
 }
 
+run_tco_tests() {
+    echo -e "\n${BLUE}--- TCO Tests ---${NC}"
+    assert_file "TCO1" "test/functional/tco/tco1.scm" 0 "0"
+}
+
 # --- MAIN ---
 
 setup
@@ -164,6 +169,7 @@ run_builtin_tests
 run_general_tests
 run_float_tests
 run_string_tests
+run_tco_tests
 
 if [ $RET -eq 0 ]; then
     echo -e "\n${GREEN}All tests passed!${NC}"
