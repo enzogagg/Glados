@@ -26,6 +26,7 @@ module ParseValue (
 ) where
 
 import Types
+import TailCallOptimization (Bounce(..), runTrampoline)
 import System.IO (hFlush, stdout)
 import Control.Monad (when)
 
@@ -42,7 +43,8 @@ parseValueRun :: [Expr] -> Env -> IO (Either String ())
 parseValueRun [] _ = return (Right ())
 
 parseValueRun (x:xs) env = do
-    case evalExprForDisplay x env of
+    res <- evalExprForDisplay x env
+    case res of
         Left err -> return (Left err)
         Right (newEnv, shouldDisplay, val) -> do
             when shouldDisplay $ do
@@ -55,71 +57,94 @@ runExprs _c [] =
     return (Left "no expressions to evaluate")
 
 runExprs env (expr:_) = do
-    let f oldEnv e =
-            case evalExprForDisplay e oldEnv of
-                Left err -> Left err
+    let f oldEnv e = do
+            res <- evalExprForDisplay e oldEnv
+            case res of
+                Left err -> return (Left err)
                 Right (newEnv, shouldDisplay, val) ->
-                    Right (newEnv, shouldDisplay, val)
+                    return (Right (newEnv, shouldDisplay, val))
 
-    case f env expr of
+    res <- f env expr
+    case res of
         Left err -> return (Left err)
         Right (newEnv, shouldDisplay, val) -> do
             when shouldDisplay (putStrLn (showValue val))
             return (Right newEnv)
 
 -- Evaluating an Expr for display or not
-evalExprForDisplay :: Expr -> Env -> Either String (Env, Bool, Value)
+evalExprForDisplay :: Expr -> Env -> IO (Either String (Env, Bool, Value))
 evalExprForDisplay (List [Symbol "define", Symbol name, value]) env = do
-    val <- evalValue value env
-    return ((name, val) : env, False, Void)
+    bounce <- evalValue value env
+    res <- runTrampoline bounce
+    case res of
+        Right val -> return (Right ((name, val) : env, False, Void))
+        Left err -> return (Left err)
 
 evalExprForDisplay (List (Symbol "define" : List (Symbol fname : params) : body)) env = do
-    paramNames <- mapM extractSymbol params
-    case body of
-        [bodyExpr] ->
-            let newEnv = (fname, FuncVal paramNames bodyExpr newEnv) : env
-            in return (newEnv, False, Void)
-        _ -> Left "function body must be a single expression"
+    case mapM extractSymbol params of
+        Right paramNames ->
+            case body of
+                [bodyExpr] ->
+                    let newEnv = (fname, FuncVal paramNames bodyExpr newEnv) : env
+                    in return (Right (newEnv, False, Void))
+                _ -> return (Left "function body must be a single expression")
+        Left err -> return (Left err)
 
 evalExprForDisplay expr env = do
-    val <- evalValue expr env
-    return (env, True, val)
+    bounce <- evalValue expr env
+    res <- runTrampoline bounce
+    case res of
+        Right val -> return (Right (env, True, val))
+        Left err -> return (Left err)
 
 
 -- Evaluate an expression and return its value
-evalValue :: Expr -> Env -> Either String Value
-evalValue (Number n) _ = Right (IntVal n)
+evalValue :: Expr -> Env -> IO Bounce
+evalValue (Number n) _ = return (Done (Right (IntVal n)))
 
-evalValue (FloatLiteral n) _ = Right (FloatVal n)
+evalValue (FloatLiteral n) _ = return (Done (Right (FloatVal n)))
 
-evalValue (Boolean b) _ = Right (BoolVal b)
+evalValue (Boolean b) _ = return (Done (Right (BoolVal b)))
 
-evalValue (String s) _ = Right (StringVal s)
+evalValue (String s) _ = return (Done (Right (StringVal s)))
 
 evalValue (Symbol s) env =
     case lookup s env of
-        Just val -> Right val
-        Nothing -> Left ("unbound symbol: " ++ s)
+        Just val -> return (Done (Right val))
+        Nothing -> return (Done (Left ("unbound symbol: " ++ s)))
 
 evalValue (List [Symbol "if", cond, thenExpr, elseExpr]) env = do
-    condVal <- evalValue cond env
-    case condVal of
-        BoolVal True -> evalValue thenExpr env
-        BoolVal False -> evalValue elseExpr env
-        _ -> Left "if condition must be a boolean"
+    condBounce <- evalValue cond env
+    condRes <- runTrampoline condBounce
+    case condRes of
+        Right (BoolVal True) -> return (Call (\_ -> evalValue thenExpr env) env)
+        Right (BoolVal False) -> return (Call (\_ -> evalValue elseExpr env) env)
+        Right _ -> return (Done (Left "if condition must be a boolean"))
+        Left err -> return (Done (Left err))
 
 evalValue (List [Symbol "lambda", List params, body]) env = do
-    paramNames <- mapM extractSymbol params
-    return (FuncVal paramNames body env)
+    case mapM extractSymbol params of
+        Right names -> return (Done (Right (FuncVal names body env)))
+        Left err -> return (Done (Left err))
 
-evalValue (List [Symbol "quote", expr]) _ = Right (exprToValue expr)
+evalValue (List [Symbol "quote", expr]) _ = return (Done (Right (exprToValue expr)))
 
 evalValue (List (func : args)) env = do
-    funcVal <- evalValue func env
-    argVals <- mapM (`evalValue` env) args
-    applyFunc funcVal argVals env
+    funcBounce <- evalValue func env
+    funcRes <- runTrampoline funcBounce
+    case funcRes of
+        Right funcVal -> do
+            argVals <- mapM (\arg -> evalValue arg env >>= runTrampoline) args
+            -- Check for errors in arguments
+            let (errors, vals) = foldr (\res (es, vs) -> case res of
+                                            Left e -> (e:es, vs)
+                                            Right v -> (es, v:vs)) ([], []) argVals
+            case errors of
+                [] -> applyFunc funcVal vals env
+                (err:_) -> return (Done (Left err))
+        Left err -> return (Done (Left err))
 
-evalValue (List []) _ = Left "empty list is not a valid expression"
+evalValue (List []) _ = return (Done (Left "empty list is not a valid expression"))
 
 exprToValue :: Expr -> Value
 exprToValue (Number n) = IntVal n
@@ -131,18 +156,18 @@ exprToValue (List xs) = ListVal (map exprToValue xs)
 
 
 -- Apply a function to its arguments
-applyFunc :: Value -> [Value] -> Env -> Either String Value
-applyFunc (Primitive f) args _ = f args
+applyFunc :: Value -> [Value] -> Env -> IO Bounce
+applyFunc (Primitive f) args _ = return (Done (f args))
 
 applyFunc (FuncVal params body closureEnv) args _ = do
     if length params /= length args
-        then Left $ "function expects " ++ show (length params) ++
-                    " arguments, got " ++ show (length args)
+        then return (Done (Left $ "function expects " ++ show (length params) ++
+                    " arguments, got " ++ show (length args)))
     else do
         let newEnv = zip params args ++ closureEnv
-        evalValue body newEnv
+        return (Call (\_ -> evalValue body newEnv) newEnv)
 
-applyFunc _ _ _ = Left "attempt to call a non-function value"
+applyFunc _ _ _ = return (Done (Left "attempt to call a non-function value"))
 
 
 extractSymbol :: Expr -> Either String String
