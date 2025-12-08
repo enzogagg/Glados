@@ -3,9 +3,8 @@
 module MainSpec (spec) where
 
 import Test.Hspec
-import ParseArguments (parseContent, getScmExtension, parseArgs, handleInput)
+import ParseArguments (parseContent, getScmExtension)
 import ParseValue (parseValue)
-import Types
 
 spec :: Spec
 spec = do
