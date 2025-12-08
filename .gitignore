@@ -1,14 +1,25 @@
 .stack-work/
 *~
-
 stack.yaml.lock
+
+#documentation
+/documentation/.docusaurus
+/documentation/node_modules
+/documentation/build
 
 # executable
 glados
 
 # LISP files
 example/*
+<<<<<<< HEAD
 
 # *.scm
+=======
+>>>>>>> main
 
+# *.scm
 *.pdf
+
+# Documentation
+documentation/node_modules
