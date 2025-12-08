@@ -7,6 +7,7 @@
 
 module Types (
     Expr(..),
+    IAST(..),
     Value(..),
     Env) where
 
@@ -19,11 +20,27 @@ data Expr
     | List [Expr]
     deriving (Show, Eq)
 
+-- Le nouvel Abstract Syntax Tree Intermédiaire
+data IAST
+    = IANumber Integer
+    | IAFloatLiteral Double
+    | IABoolean Bool
+    | IASymbol String
+    | IAString String
+    | IAList [IAST] -- Pour les appels de fonction génériques
+
+    -- Formes spéciales explicites:
+    | IAIf IAST IAST IAST
+    | IALambda [String] IAST
+    | IADefine String IAST
+    | IAQuote IAST
+    deriving (Show, Eq)
+
 data Value
     = IntVal Integer
     | FloatVal Double
     | BoolVal Bool
-    | FuncVal [String] Expr Env
+    | FuncVal [String] IAST Env -- ⚠️ UPDATED: Stocke l'IAST (corps de fonction)
     | Primitive ([Value] -> Either String Value)
     | ListVal [Value]
     | SymbolVal String
@@ -46,6 +63,7 @@ instance Show Value where
 -- Instance Eq personnalisée
 instance Eq Value where
     IntVal a == IntVal b = a == b
+    FloatVal a == FloatVal b = a == b
     BoolVal a == BoolVal b = a == b
     FuncVal {} == FuncVal {} = True     -- approximation : toutes les fonctions sont égales
     Primitive _ == Primitive _ = True         -- approximation : tous les primitives sont égales
