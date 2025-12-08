@@ -15,6 +15,16 @@ spec = describe "ParseToExpr" $ do
         it "parses integer numbers" $ do
             parse parseExpr "" "42" `shouldBe` Right (Number 42)
             parse parseExpr "" "-10" `shouldBe` Right (Number (-10))
+            parse parseExpr "" "5" `shouldBe` Right (Number 5)
+
+        it "parses float numbers" $ do
+            parse parseExpr "" "3.14" `shouldBe` Right (FloatLiteral 3.14)
+            parse parseExpr "" "-2.5" `shouldBe` Right (FloatLiteral (-2.5))
+            parse parseExpr "" "1.0" `shouldBe` Right (FloatLiteral 1.0)
+
+        it "parses strings" $ do
+            parse parseExpr "" "\"hello\"" `shouldBe` Right (String "hello")
+            parse parseExpr "" "\"\"" `shouldBe` Right (String "")
 
         it "parses booleans" $ do
             parse parseExpr "" "#t" `shouldBe` Right (Boolean True)
