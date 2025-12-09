@@ -1,6 +1,6 @@
 cabal-version: 2.2
 
--- This file has been generated from package.yaml by hpack version 0.38.2.
+-- This file has been generated from package.yaml by hpack version 0.38.1.
 --
 -- see: https://github.com/sol/hpack
 
@@ -45,6 +45,23 @@ library
     , parser-combinators
   default-language: Haskell2010
 
+executable glados-compiler
+  main-is: Main.hs
+  other-modules:
+      Paths_glados
+  autogen-modules:
+      Paths_glados
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , directory
+    , glados
+    , megaparsec
+    , parser-combinators
+  default-language: Haskell2010
+
 executable glados-exe
   main-is: Main.hs
   other-modules:
@@ -62,6 +79,26 @@ executable glados-exe
     , parser-combinators
   default-language: Haskell2010
 
+executable glados-vm
+  main-is: Main.hs
+  other-modules:
+      Types
+      Paths_glados
+  autogen-modules:
+      Paths_glados
+  hs-source-dirs:
+      vm/src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base
+    , binary
+    , bytestring
+    , containers
+    , directory
+    , megaparsec
+    , parser-combinators
+  default-language: Haskell2010
+
 test-suite glados-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
@@ -69,6 +106,7 @@ test-suite glados-test
       MainSpec
       ParseToExprSpec
       ParseValueSpec
+      TranslateASTSpec
       Paths_glados
   autogen-modules:
       Paths_glados
