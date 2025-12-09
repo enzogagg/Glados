@@ -29,6 +29,7 @@ library
       ParseToExpr
       ParseValue
       TailCallOptimization
+      TranslateAST
       Types
   other-modules:
       Paths_glados
