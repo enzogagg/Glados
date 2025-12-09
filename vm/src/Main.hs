@@ -20,4 +20,3 @@ main = do
             exitWith (ExitFailure 84)
         else do
             BL.putStr input
-            exitWith (ExitSuccess)
