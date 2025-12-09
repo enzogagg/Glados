@@ -9,7 +9,7 @@ stack.yaml.lock
 /documentation/build
 
 # executable
-glados
+glados-*
 
 # LISP files
 example/*
