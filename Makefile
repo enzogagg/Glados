@@ -8,9 +8,15 @@
 BINARY_PATH 	:=	$(shell stack path --local-install-root --allow-different-user)/bin/
 NAME 			= 	glados
 
-all		:
+all		:	compiler vm
+
+compiler	:
 			stack build --allow-different-user
-			cp $(BINARY_PATH)$(NAME)-exe $(NAME)
+			cp $(BINARY_PATH)$(NAME)-compiler $(NAME)
+
+vm		:
+			stack build --allow-different-user
+			cp $(BINARY_PATH)$(NAME)-vm $(NAME)-vm
 
 clean	:
 			stack clean --allow-different-user
@@ -20,10 +26,11 @@ clean	:
 fclean	:	clean
 			stack purge --allow-different-user
 			rm -f $(NAME)
+			rm -f $(NAME)-vm
 
 re		:	fclean all
 
 tests_run	:
 			stack test --allow-different-user --coverage
 
-.PHONY	:	all clean fclean re tests_run
+.PHONY	:	all clean fclean re tests_run compiler vm
