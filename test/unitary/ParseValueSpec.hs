@@ -34,13 +34,6 @@ spec = describe "ParseValue" $ do
         it "evaluates strings" $ do
             evalExprTest (String "hello") [] `shouldReturn` Right (StringVal "hello")
 
-        it "evaluates floats" $ do
-            result <- evalValue (FloatLiteral 3.14) [] >>= runTrampoline
-            result `shouldBeApprox` Right (FloatVal 3.14)
-
-        it "evaluates strings" $ do
-            (evalValue (String "hello") [] >>= runTrampoline) `shouldReturn` Right (StringVal "hello")
-
         it "evaluates booleans" $ do
             evalExprTest (Boolean True) [] `shouldReturn` Right (BoolVal True)
             evalExprTest (Boolean False) [] `shouldReturn` Right (BoolVal False)
@@ -92,31 +85,6 @@ spec = describe "ParseValue" $ do
             let env = builtins
             evalExprTest (List [Symbol "+", Symbol "unknown", Number 3]) env `shouldReturn` Left "unbound symbol: unknown"
 
-        it "evaluates quote expressions" $ do
-            let env = []
-            (evalValue (List [Symbol "quote", Symbol "x"]) env >>= runTrampoline) `shouldReturn` Right (SymbolVal "x")
-            (evalValue (List [Symbol "quote", List [Symbol "a", Symbol "b"]]) env >>= runTrampoline) `shouldReturn` Right (ListVal [SymbolVal "a", SymbolVal "b"])
-
-        it "fails on if with non-boolean condition" $ do
-            let env = []
-            (evalValue (List [Symbol "if", Number 1, Number 2, Number 3]) env >>= runTrampoline) `shouldReturn` Left "if condition must be a boolean"
-
-        it "fails on calling non-function" $ do
-            let env = [("x", IntVal 5)]
-            (evalValue (List [Symbol "x", Number 1]) env >>= runTrampoline) `shouldReturn` Left "attempt to call a non-function value"
-
-        it "fails on lambda with non-symbol parameters" $ do
-            let env = []
-            (evalValue (List [Symbol "lambda", List [Number 1], Number 5]) env >>= runTrampoline) `shouldReturn` Left "expected symbol"
-
-        it "fails on function with wrong number of arguments" $ do
-            let env = [("f", FuncVal ["x", "y"] (Number 5) [])]
-            (evalValue (List [Symbol "f", Number 1]) env >>= runTrampoline) `shouldReturn` Left "function expects 2 arguments, got 1"
-
-        it "fails on function application with error in argument" $ do
-            let env = builtins
-            (evalValue (List [Symbol "+", Symbol "unknown", Number 3]) env >>= runTrampoline) `shouldReturn` Left "unbound symbol: unknown"
-
         it "fails on empty list" $ do
             evalExprTest (List []) [] `shouldReturn` Left "empty list is not a valid function call"
 
@@ -148,33 +116,6 @@ spec = describe "ParseValue" $ do
             evalExprTest (List [Symbol "lambda", List [Number 1], Number 5]) [] `shouldReturn` Left "expected symbol"
 
 
-        it "evaluates user-defined functions" $ do
-            let env = [("add", FuncVal ["a", "b"] (List [Symbol "+", Symbol "a", Symbol "b"]) builtins)]
-            (evalValue (List [Symbol "add", Number 10, Number 20]) env >>= runTrampoline) `shouldReturn` Right (IntVal 30)
-
-        it "fails on if with error in condition" $ do
-            let env = []
-            (evalValue (List [Symbol "if", Symbol "unknown", Number 1, Number 2]) env >>= runTrampoline) `shouldReturn` Left "unbound symbol: unknown"
-
-    describe "exprToValue" $ do
-        it "converts Number to IntVal" $ do
-            (evalValue (List [Symbol "quote", Number 42]) [] >>= runTrampoline) `shouldReturn` Right (IntVal 42)
-
-        it "converts FloatLiteral to FloatVal" $ do
-            result <- evalValue (List [Symbol "quote", FloatLiteral 3.14]) [] >>= runTrampoline
-            result `shouldBeApprox` Right (FloatVal 3.14)
-
-        it "converts Boolean to BoolVal" $ do
-            (evalValue (List [Symbol "quote", Boolean True]) [] >>= runTrampoline) `shouldReturn` Right (BoolVal True)
-
-        it "converts String to StringVal" $ do
-            (evalValue (List [Symbol "quote", String "test"]) [] >>= runTrampoline) `shouldReturn` Right (StringVal "test")
-
-    describe "extractSymbol" $ do
-        it "fails on non-symbol in define" $ do
-            let env = []
-            (evalValue (List [Symbol "lambda", List [String "not-symbol"], Number 5]) env >>= runTrampoline) `shouldReturn` Left "expected symbol"
-
     describe "showValue" $ do
 
         it "shows integers" $ do
@@ -203,10 +144,7 @@ spec = describe "ParseValue" $ do
         it "shows floats" $ do
             showValue (FloatVal 3.14) `shouldBe` "3.14"
 
-<<<<<<< HEAD
 
-=======
->>>>>>> 8e702284 ([ADD] new tests for float & string)
     describe "primAdd" $ do
         it "adds two integers" $ do
             primAdd [IntVal 2, IntVal 3] `shouldBe` Right (IntVal 5)
@@ -214,11 +152,7 @@ spec = describe "ParseValue" $ do
             primAdd [FloatVal 2.5, FloatVal 3.5] `shouldBeApprox` Right (FloatVal 6.0)
         it "fails with wrong number of arguments" $ do
             primAdd [IntVal 2] `shouldBe` Left "+ requires two integer arguments"
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> 8e702284 ([ADD] new tests for float & string)
     describe "primSub" $ do
         it "subtracts two integers" $ do
             primSub [IntVal 2, IntVal 3] `shouldBe` Right (IntVal (-1))
@@ -226,11 +160,7 @@ spec = describe "ParseValue" $ do
             primSub [FloatVal 5.5, FloatVal 2.5] `shouldBeApprox` Right (FloatVal 3.0)
         it "fails with wrong arguments" $ do
             primSub [IntVal 2] `shouldBe` Left "- requires two integer arguments"
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> 8e702284 ([ADD] new tests for float & string)
     describe "primMul" $ do
         it "multiplies two integers" $ do
             primMul [IntVal 2, IntVal 3] `shouldBe` Right (IntVal 6)
@@ -238,11 +168,7 @@ spec = describe "ParseValue" $ do
             primMul [FloatVal 2.5, FloatVal 4.0] `shouldBeApprox` Right (FloatVal 10.0)
         it "fails with wrong arguments" $ do
             primMul [IntVal 2] `shouldBe` Left "* requires two integer arguments"
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> 8e702284 ([ADD] new tests for float & string)
     describe "primDiv" $ do
         it "divides two integers" $ do
             primDiv [IntVal 6, IntVal 3] `shouldBe` Right (IntVal 2)
@@ -254,11 +180,7 @@ spec = describe "ParseValue" $ do
             primDiv [FloatVal 5.0, FloatVal 0.0] `shouldBe` Left "division by zero"
         it "fails with wrong arguments" $ do
             primDiv [IntVal 2] `shouldBe` Left "div requires two integer arguments"
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> 8e702284 ([ADD] new tests for float & string)
     describe "primMod" $ do
         it "modulates two integers" $ do
             primMod [IntVal 7, IntVal 3] `shouldBe` Right (IntVal 1)
@@ -268,11 +190,7 @@ spec = describe "ParseValue" $ do
             primMod [FloatVal 5.0, FloatVal 0.0] `shouldBe` Left "modulo by zero"
         it "fails with wrong arguments" $ do
             primMod [IntVal 2] `shouldBe` Left "mod requires two integer arguments"
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> 8e702284 ([ADD] new tests for float & string)
     describe "primLt" $ do
         it "returns true if the first integer is less than the second" $ do
             primLt [IntVal 2, IntVal 3] `shouldBe` Right (BoolVal True)
@@ -284,11 +202,7 @@ spec = describe "ParseValue" $ do
             primLt [FloatVal 5.5, FloatVal 3.5] `shouldBe` Right (BoolVal False)
         it "fails with wrong arguments" $ do
             primLt [IntVal 2] `shouldBe` Left "< requires two integer arguments"
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> 8e702284 ([ADD] new tests for float & string)
     describe "primEq" $ do
         it "returns true if the two integers are equal" $ do
             primEq [IntVal 2, IntVal 2] `shouldBe` Right (BoolVal True)
@@ -304,11 +218,7 @@ spec = describe "ParseValue" $ do
             primEq [BoolVal True, BoolVal False] `shouldBe` Right (BoolVal False)
         it "fails with wrong argument types" $ do
             primEq [IntVal 2] `shouldBe` Left "eq? requires two arguments of the same type"
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> 8e702284 ([ADD] new tests for float & string)
     describe "primCons" $ do
         it "cons a list" $ do
             primCons [IntVal 4, ListVal [IntVal 1, IntVal 2, IntVal 3]] `shouldBe` Right (ListVal [IntVal 4, IntVal 1, IntVal 2, IntVal 3])
@@ -316,11 +226,7 @@ spec = describe "ParseValue" $ do
             primCons [IntVal 1, IntVal 2] `shouldBe` Left "cons requires a list as the second argument"
         it "fails with wrong number of arguments" $ do
             primCons [IntVal 1] `shouldBe` Left "cons requires two arguments"
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> 8e702284 ([ADD] new tests for float & string)
     describe "primCar" $ do
         it "returns the first element of a list" $ do
             primCar [ListVal [IntVal 1, IntVal 2, IntVal 3]] `shouldBe` Right (IntVal 1)
@@ -330,11 +236,7 @@ spec = describe "ParseValue" $ do
             primCar [IntVal 1] `shouldBe` Left "car requires a list"
         it "fails with wrong number of arguments" $ do
             primCar [] `shouldBe` Left "car requires one argument"
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> 8e702284 ([ADD] new tests for float & string)
     describe "primCdr" $ do
         it "returns the rest of the list" $ do
             primCdr [ListVal [IntVal 1, IntVal 2, IntVal 3]] `shouldBe` Right (ListVal [IntVal 2, IntVal 3])
@@ -344,11 +246,7 @@ spec = describe "ParseValue" $ do
             primCdr [IntVal 1] `shouldBe` Left "cdr requires a list"
         it "fails with wrong number of arguments" $ do
             primCdr [] `shouldBe` Left "cdr requires one argument"
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> 8e702284 ([ADD] new tests for float & string)
     describe "primList" $ do
         it "returns a list" $ do
             primList [IntVal 1, IntVal 2, IntVal 3] `shouldBe` Right (ListVal [IntVal 1, IntVal 2, IntVal 3])
@@ -361,9 +259,4 @@ spec = describe "ParseValue" $ do
         it "fails on non-list" $ do
             primNull [IntVal 1] `shouldBe` Left "null? requires a list"
         it "fails with wrong number of arguments" $ do
-<<<<<<< HEAD
             primNull [] `shouldBe` Left "null? requires one argument"
-=======
-            primNull [] `shouldBe` Left "null? requires one argument"
-        
->>>>>>> 8e702284 ([ADD] new tests for float & string)
