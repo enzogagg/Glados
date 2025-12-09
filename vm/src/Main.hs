@@ -22,5 +22,5 @@ main = do
             putStrLn "Error: No input provided"
             exitWith (ExitFailure 84)
         else do
-            let bytecode = runGet parseBytecode input
-            print bytecode
+            BL.putStr input
+            exitWith (ExitSuccess)
