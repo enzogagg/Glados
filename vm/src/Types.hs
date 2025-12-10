@@ -9,7 +9,7 @@ data Value
     | ListVal [Value]         -- Tag 05
     | SymbolVal String        -- Tag 06
     | NilVal                  -- Tag 07
-    | FunctionVal Int Int     -- Tag 08
+    | FunctionVal Int         -- Tag 08
     deriving (Show, Eq)
 
 data Instruction
