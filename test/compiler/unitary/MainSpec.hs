@@ -3,39 +3,47 @@
 module MainSpec (spec) where
 
 import Test.Hspec
-import ParseArguments (parseContent, getScmExtension)
-import ParseValue (parseValue)
+import ParseArguments (parseContent, getCladExtension, debugParse)
+-- import ParseValue (parseValue) -- RETIRÉ (temporairement, car désactivé dans ParseArguments.hs)
 
 spec :: Spec
 spec = do
     describe "parseContent - error cases" $ do
 
         it "returns error when wrong number of arguments" $ do
-            let args = ["file1.scm", "file2.scm"]
+            let args = ["file1.clad", "file2.clad"]
             result <- parseContent args
-            result `shouldBe` Left "wrong number of arguments"
+            -- CHANGÉ: Message d'erreur plus précis
+            result `shouldBe` Left "wrong number of arguments (expected one .clad file)"
 
         it "returns error when file has invalid extension" $ do
             let args = ["file.txt"]
             result <- parseContent args
-            result `shouldBe` Left "invalid type file"
+            -- CHANGÉ: Message d'erreur plus précis
+            result `shouldBe` Left "invalid file extension (expected .clad)"
 
         it "returns error when file does not exist" $ do
-            let args = ["nofile.scm"]
+            let args = ["nofile.clad"]
             result <- parseContent args
-            result `shouldBe` Left "file does not exist: nofile.scm"
+            -- CHANGÉ: Utilisation de .clad
+            result `shouldBe` Left "file does not exist: nofile.clad"
 
-    describe "getScmExtension" $ do
-        it "returns True for .scm files" $ do
-            getScmExtension "test.scm" `shouldBe` True
-            getScmExtension "path/to/file.scm" `shouldBe` True
+        it "returns error when no input file provided" $ do
+            let args = []
+            result <- parseContent args
+            -- CHANGÉ: Gère le cas où aucun argument n'est donné (anciennement REPL)
+            result `shouldBe` Left "no input file provided"
 
-        it "returns False for non-.scm files" $ do
-            getScmExtension "test.txt" `shouldBe` False
-            getScmExtension "test" `shouldBe` False
-            getScmExtension "test.scheme" `shouldBe` False
+    describe "getCladExtension" $ do -- CHANGÉ: Renommé
+        it "returns True for .clad files" $ do
+            getCladExtension "test.clad" `shouldBe` True
+            getCladExtension "path/to/file.clad" `shouldBe` True
 
-    describe "parseValue" $ do
-        it "returns error on empty program" $ do
-            result <- parseValue []
-            result `shouldBe` Left "empty program"
+        it "returns False for non-.clad files" $ do
+            getCladExtension "test.txt" `shouldBe` False
+            getCladExtension "test" `shouldBe` False
+            getCladExtension "test.scheme" `shouldBe` False
+
+    -- describe "parseValue" $ do
+    --     Suite de tests pour parseValue retirée car parseValue a été désactivé
+    --     ou nécessitera une refonte complète pour la VM (non pertinent pour l'étape de parsing).
