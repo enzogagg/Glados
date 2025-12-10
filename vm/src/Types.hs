@@ -17,9 +17,8 @@ data Instruction
     | PushInt Int             -- 02
     | PushFloat Float         -- 03
     | PushBool Bool           -- 04
-    | PushString String       -- 05
-    | PushNil                 -- 06
-    | Pop                     -- 07
+    | PushNil                 -- 05
+    | Pop                     -- 06
 
     | Add                     -- 10
     | Sub                     -- 11
