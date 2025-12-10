@@ -3,7 +3,7 @@
 module ParseToASTSpec (spec) where
 
 import Test.Hspec
-import ParseToAST (parseAST)
+import ParseToAST ()
 import CladParser (parseProgramAST)
 import Types
 import Text.Megaparsec (parse)
@@ -12,8 +12,7 @@ spec :: Spec
 spec = describe "ParseToAST" $ do
 
     -- ====================================================================
-    -- Tests des Terminaux (Parseurs de CladLexer via parseTerm)
-    -- Le parser AST peut analyser directement les littéraux si un seul est présent.
+    -- Tests des Terminaux (Littéraux)
     -- ====================================================================
 
     describe "CLaD Literals" $ do
@@ -47,19 +46,16 @@ spec = describe "ParseToAST" $ do
             parse parseProgramAST "" "1 + 2" `shouldBe` Right expected
 
         it "respects precedence (* before +)" $ do
-            -- 1 + 2 * 3  =>  IAInfix 1 + (IAInfix 2 * 3)
             let innerMul = IAInfix (IANumber 2) "*" (IANumber 3)
             let expected = IAProgram [IAInfix (IANumber 1) "+" innerMul]
             parse parseProgramAST "" "1 + 2 * 3" `shouldBe` Right expected
 
         it "handles chaining of same precedence (left associativity)" $ do
-            -- 5 - 2 + 1  =>  (5 - 2) + 1
             let innerSub = IAInfix (IANumber 5) "-" (IANumber 2)
             let expected = IAProgram [IAInfix innerSub "+" (IANumber 1)]
             parse parseProgramAST "" "5 - 2 + 1" `shouldBe` Right expected
 
         it "parses parenthesized expressions" $ do
-            -- (1 + 2) * 3  =>  (IAInfix 1 + 2) * 3
             let innerAdd = IAInfix (IANumber 1) "+" (IANumber 2)
             let expected = IAProgram [IAInfix innerAdd "*" (IANumber 3)]
             parse parseProgramAST "" "(1 + 2) * 3" `shouldBe` Right expected
@@ -71,23 +67,19 @@ spec = describe "ParseToAST" $ do
     describe "CLaD Statements" $ do
 
         it "parses constant declaration" $ do
-            -- constante PI 3.14
-            let expected = IAProgram [IADeclare "PI" Nothing (IAFloatLiteral 3.14)]
-            parse parseProgramAST "" "constante PI = 3.14" `shouldBe` Right expected
+            let expected = IAProgram [IADeclare "PI" (Just FloatT) (IAFloatLiteral 3.14)]
+            parse parseProgramAST "" "constante flottant PI = 3.14" `shouldBe` Right expected
 
         it "parses assignment" $ do
-            -- x = 10 + 5
             let value = IAInfix (IANumber 10) "+" (IANumber 5)
             let expected = IAProgram [IAAssign "x" value]
             parse parseProgramAST "" "x = 10 + 5" `shouldBe` Right expected
 
         it "parses simple function definition" $ do
-            -- fonction add(a, b) retourner a + b fin
             let body = [IAReturn (IAInfix (IASymbol "a") "+" (IASymbol "b"))]
-            let params = [("a", Nothing), ("b", Nothing)]
-            let expected = IAProgram [IAFunctionDef "add" params Nothing body]
-
-            let input = "fonction add(a, b) retourner a + b fin"
+            let params = [("a", Just IntT), ("b", Just IntT)]
+            let expected = IAProgram [IAFunctionDef "add" params (Just IntT) body]
+            let input = "fonction add(entier a, entier b) : entier retourner a + b fin"
             parse parseProgramAST "" input `shouldBe` Right expected
 
         it "parses conditional (si/fin)" $ do
@@ -104,20 +96,20 @@ spec = describe "ParseToAST" $ do
     describe "parseProgramAST (Full CLaD Program)" $ do
 
         it "parses program with declaration and main block" $ do
-            let input = "constante FOO = 42 principal retourner FOO fin"
-            let expectedDecl = IADeclare "FOO" Nothing (IANumber 42)
+            let expectedDecl = IADeclare "FOO" (Just IntT) (IANumber 42)
             let expectedMain = IAMain [IAReturn (IASymbol "FOO")]
+            let input = "constante entier FOO = 42 principal retourner FOO fin"
             let expected = IAProgram [expectedDecl, expectedMain]
             parse parseProgramAST "" input `shouldBe` Right expected
 
         it "fails on invalid syntax (unclosed function block)" $ do
-            let input = "fonction test(a) retourner a"
+            let input = "fonction test(entier a) : entier retourner a"
             case parse parseProgramAST "" input of
                 Left _ -> return ()
                 Right _ -> expectationFailure "Expected parse error on unclosed function block"
 
         it "fails on invalid syntax (misplaced operator)" $ do
-            let input = "constante x = +"
+            let input = "constante entier x = +"
             case parse parseProgramAST "" input of
                 Left _ -> return ()
                 Right _ -> expectationFailure "Expected parse error on dangling operator"
@@ -127,3 +119,9 @@ spec = describe "ParseToAST" $ do
             case parse parseProgramAST "" input of
                 Left _ -> return ()
                 Right _ -> expectationFailure "Expected parse error on misplaced expression"
+
+        it "fails on invalid syntax (no operator)" $ do
+            let input = "x 10"
+            case parse parseProgramAST "" input of
+                Left _ -> return ()
+                Right _ -> expectationFailure "Expected parse error with no operator"

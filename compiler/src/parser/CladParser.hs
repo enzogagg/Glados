@@ -14,8 +14,31 @@ module CladParser (
 import Types
 import CladLexer
 import Text.Megaparsec
-import qualified Text.Megaparsec.Char.Lexer as L
-import Data.Void
+import Data.Void()
+
+-- ====================================================================
+-- Parsing des Types (Annotations)
+-- ====================================================================
+
+-- Analyse un type de base (entier, flottant, bool, phrase, neant)
+parseBaseType :: Parser CladType
+parseBaseType =
+      (symbol "entier" >> return IntT)
+  <|> (symbol "flottant" >> return FloatT)
+  <|> (symbol "pileouface" >> return BoolT)
+  <|> (symbol "phrase" >> return StringT)
+  <|> (symbol "neant" >> return VoidT)
+
+parseExplicitType :: Parser CladType
+parseExplicitType =
+      (do
+        _ <- symbol "liste"
+        _ <- symbol "<"
+        elementType <- parseExplicitType
+        _ <- symbol ">"
+        return (ListT elementType)
+      )
+  <|> parseBaseType
 
 -- ====================================================================
 -- Parsing des Expressions (Terminaux simples et appels de fonction)
@@ -42,10 +65,10 @@ parseTerm =
     <|> parseNumber
     <|> parseBoolean
     <|> parseString
-    <|> (IASymbol <$> parseIdentifier) -- Identifiant
+    <|> (IASymbol <$> parseIdentifier)
     <|> parseCall
     <|> parseListCreation
-    <|> (symbol "(" *> parseExpression <* symbol ")") -- Expression entre parenthèses
+    <|> (symbol "(" *> parseExpression <* symbol ")")
 
 parseListCreation :: Parser AST
 parseListCreation = do
@@ -110,24 +133,34 @@ parseInstruction =
     <|> parseDeclaration
     <|> parseReturn
     <|> parseConditional
-    -- TODO: parseWhile
-    -- TODO: parseFor
+    <|> parseWhile
+    <|> parseFor
     <|> parseAssignment
     <|> parseExpression -- Un appel de fonction seul est une instruction
 
--- TODO: parseFunctionDef (nécessite de gérer les annotations de type dans Types.hs)
+parseFunctionArgument :: Parser (String, Maybe CladType)
+parseFunctionArgument = do
+    typeAnnot <- parseExplicitType
+    name <- parseIdentifier
+    return (name, Just typeAnnot)
+
+-- Définition de fonction complète
 parseFunctionDef :: Parser AST
 parseFunctionDef = do
     _ <- symbol "fonction"
     name <- parseIdentifier
+
     _ <- symbol "("
-    -- Pour l'instant on gère juste le nom du paramètre (String, Nothing)
-    params <- ((\n -> (n, Nothing)) <$> parseIdentifier) `sepBy` symbol ","
+    params <- parseFunctionArgument `sepBy` symbol ","
     _ <- symbol ")"
-    -- Pas de gestion du type de retour pour l'instant (Nothing)
+
+    _ <- symbol ":"
+    returnTypeAnnot <- parseExplicitType
+
     body <- parseBlock
     _ <- symbol "fin"
-    return (IAFunctionDef name params Nothing body)
+
+    return (IAFunctionDef name params (Just returnTypeAnnot) body)
 
 parseMain :: Parser AST
 parseMain = do
@@ -136,15 +169,17 @@ parseMain = do
     _ <- symbol "fin"
     return (IAMain body)
 
--- Déclaration de constante ou variable
 parseDeclaration :: Parser AST
 parseDeclaration = do
-    -- Commence par le mot-clé
-    keyword <- symbol "constante" <|> symbol "variable"
+    _ <- symbol "constante" <|> symbol "variable"
+
+    typeAnnot <- parseExplicitType
+
     name <- parseIdentifier
-    _ <- symbol "=" -- OBLIGATOIRE : L'opérateur d'assignation explicite
+    _ <- symbol "="
     value <- parseExpression
-    return (IADeclare name Nothing value)
+
+    return (IADeclare name (Just typeAnnot) value)
 
 -- Assignation (Modification de variable)
 parseAssignment :: Parser AST
@@ -160,18 +195,63 @@ parseReturn = do
     expr <- parseExpression
     return (IAReturn expr)
 
--- Fonction simple (simplification du 'si...sinon si...sinon')
+parseElseClause :: Parser (Maybe [AST])
+parseElseClause = optional $ do
+    maybeElseIf <- optional parseElseIf
+    case maybeElseIf of
+        Just elseIf -> return [elseIf]
+
+        Nothing -> do
+            _ <- symbol "sinon"
+            parseBlock
+
+parseElseIf :: Parser AST
+parseElseIf = do
+    _ <- symbol "sinon si"
+    cond <- parseExpression
+    bodyThen <- parseBlock
+
+    elseBody <- parseElseClause
+
+    return (IAIf cond bodyThen elseBody)
+
 parseConditional :: Parser AST
 parseConditional = do
     _ <- symbol "si"
     cond <- parseExpression
     bodyThen <- parseBlock
-    -- Simplification: gère juste 'si ... fin' ou 'si ... sinon ... fin'
-    elseBody <- optional $ do
-        _ <- symbol "sinon"
-        parseBlock
+
+    elseBody <- parseElseClause
+
     _ <- symbol "fin"
     return (IAIf cond bodyThen elseBody)
+
+parseWhile :: Parser AST
+parseWhile = do
+    _ <- symbol "tantque"
+    cond <- parseExpression
+    body <- parseBlock
+    _ <- symbol "fin"
+    return (IAWhile cond body)
+
+parseFor :: Parser AST
+parseFor = do
+    _ <- symbol "pour"
+    _ <- symbol "("
+
+    initExpr <- parseDeclaration <|> parseAssignment <|> return IAUnit
+    _ <- symbol ";"
+
+    condExpr <- parseExpression
+    _ <- symbol ";"
+
+    incExpr <- parseExpression
+    _ <- symbol ")"
+
+    body <- parseBlock
+    _ <- symbol "fin"
+
+    return (IAFor initExpr condExpr incExpr body)
 
 -- ====================================================================
 -- Point d'entrée du Programme CLaD

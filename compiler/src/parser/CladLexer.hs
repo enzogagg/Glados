@@ -31,7 +31,8 @@ reservedWords :: [String]
 reservedWords = [
     "fonction", "fin", "principal", "constante", "variable", "retourner",
     "si", "sinon", "sinon si", "tantque", "pour", "de", "à",
-    "vrai", "faux"
+    "vrai", "faux",
+    "entier", "flottant", "pileouface", "phrase", "liste", "neant"
     ]
 
 -- ====================================================================

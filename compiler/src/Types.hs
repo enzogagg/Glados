@@ -77,7 +77,7 @@ data AST
     -- Structures de Contrôle
     | IAIf AST [AST] (Maybe [AST])              -- si cond then {body} else {body}
     | IAWhile AST [AST]                         -- tantque cond {body}
-    | IAFor String AST AST [AST]                -- pour i de start à end {body}
+    | IAFor AST AST AST [AST]                -- pour i de start à end {body}
     | IAReturn AST                              -- retourner expression
 
     -- Fonctions
