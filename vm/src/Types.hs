@@ -56,3 +56,22 @@ data Instruction
 
     | Halt                    -- FF
     deriving (Show, Eq)
+
+data Header = Header {
+    magic :: Int,
+    version :: Int,
+    flags :: Int
+} deriving (Show, Eq)
+
+data FunctionMeta = FunctionMeta {
+    funcId :: Int,
+    funcAddress :: Int,
+    funcArgCount :: Int
+} deriving (Show, Eq)
+
+data BytecodeFile = BytecodeFile {
+    header :: Header,
+    constants :: [Value],
+    functions :: [FunctionMeta],
+    instructions :: [Instruction]
+} deriving (Show, Eq)
