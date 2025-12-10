@@ -10,6 +10,9 @@ module Main (main) where
 import System.Exit (exitWith, ExitCode(..))
 import qualified Data.ByteString.Lazy as BL
 
+import Parser
+import Data.Binary.Get (runGet)
+
 main :: IO ()
 main = do
     input <- BL.getContents
@@ -18,4 +21,5 @@ main = do
             putStrLn "Error: No input provided"
             exitWith (ExitFailure 84)
         else do
-            BL.putStr input
+            let bytecode = runGet parseBytecode input
+            print bytecode
