@@ -5,25 +5,28 @@
 ## Makefile
 ##
 
-BINARY_PATH 	:=	$(shell stack path --local-install-root --allow-different-user)/bin/
-NAME 			= 	glados
+COMPILER_DIR:=compiler
+VM_DIR:=vm
 
-all		:
-			stack build --allow-different-user
-			cp $(BINARY_PATH)$(NAME)-exe $(NAME)
+all: compiler vm
 
-clean	:
-			stack clean --allow-different-user
-			rm -rf .stack
-			rm -f coding-style-reports.log
+compiler:
+	$(MAKE) -C $(COMPILER_DIR)
 
-fclean	:	clean
-			stack purge --allow-different-user
-			rm -f $(NAME)
+vm:
+	$(MAKE) -C $(VM_DIR)
 
-re		:	fclean all
+clean:
+	$(MAKE) -C $(COMPILER_DIR) clean
+	$(MAKE) -C $(VM_DIR) clean
 
-tests_run	:
-			stack test --allow-different-user --coverage
+fclean:
+	$(MAKE) -C $(COMPILER_DIR) fclean
+	$(MAKE) -C $(VM_DIR) fclean
 
-.PHONY	:	all clean fclean re tests_run
+re: fclean all
+
+tests_run:
+	$(MAKE) -C $(COMPILER_DIR) tests_run
+
+.PHONY: all clean fclean re tests_run compiler vm
