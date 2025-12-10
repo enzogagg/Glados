@@ -15,6 +15,7 @@ import Types
 import CladLexer
 import Text.Megaparsec
 import Data.Void()
+import Control.Monad (void)
 
 -- ====================================================================
 -- Parsing des Types (Annotations)
@@ -122,9 +123,16 @@ parseMultiplicative = chainl1' parseTerm parseMultiplicativeOp
 -- Parsing des Instructions (Blocs, Déclarations, Control Flow)
 -- ====================================================================
 
--- Un bloc est une série d'instructions jusqu'à 'fin' ou EOF
+parseBlockEndKeywords :: Parser ()
+parseBlockEndKeywords = void $
+        symbol "fin"
+    <|> symbol "sinon"
+    <|> symbol "sinon si"
+
 parseBlock :: Parser [AST]
-parseBlock = many parseInstruction
+parseBlock = many $ try $ do
+    notFollowedBy parseBlockEndKeywords
+    parseInstruction
 
 parseInstruction :: Parser AST
 parseInstruction =
@@ -208,7 +216,10 @@ parseElseClause = optional $ do
 parseElseIf :: Parser AST
 parseElseIf = do
     _ <- symbol "sinon si"
+    _ <- symbol "("
     cond <- parseExpression
+    _ <- symbol ")"
+
     bodyThen <- parseBlock
 
     elseBody <- parseElseClause
@@ -218,7 +229,10 @@ parseElseIf = do
 parseConditional :: Parser AST
 parseConditional = do
     _ <- symbol "si"
+    _ <- symbol "("
     cond <- parseExpression
+    _ <- symbol ")"
+
     bodyThen <- parseBlock
 
     elseBody <- parseElseClause
@@ -229,7 +243,9 @@ parseConditional = do
 parseWhile :: Parser AST
 parseWhile = do
     _ <- symbol "tantque"
+    _ <- symbol "("
     cond <- parseExpression
+    _ <- symbol ")"
     body <- parseBlock
     _ <- symbol "fin"
     return (IAWhile cond body)

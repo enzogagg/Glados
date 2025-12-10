@@ -86,7 +86,7 @@ spec = describe "ParseToAST" $ do
             let cond = IAInfix (IASymbol "x") ">" (IANumber 10)
             let bodyThen = [IAReturn (IABoolean True)]
             let expected = IAProgram [IAIf cond bodyThen Nothing]
-            let input = "si x > 10 retourner vrai fin"
+            let input = "si (x > 10) retourner vrai fin"
             parse parseProgramAST "" input `shouldBe` Right expected
 
     -- ====================================================================
@@ -125,3 +125,85 @@ spec = describe "ParseToAST" $ do
             case parse parseProgramAST "" input of
                 Left _ -> return ()
                 Right _ -> expectationFailure "Expected parse error with no operator"
+
+    -- ====================================================================
+    -- Tests de Structure et de Logique (Fonctions, Boucles, Conditions)
+    -- ====================================================================
+
+    describe "CLaD Structure & Error Handling" $ do
+
+        it "fails when constant declaration misses type" $ do
+            let input = "constante X = 10"
+            case parse parseProgramAST "" input of
+                Left _ -> return ()
+                Right _ -> expectationFailure "Expected error: Type missing after 'constante'"
+
+        it "fails when constant declaration misses equals sign" $ do
+            let input = "constante entier Y 10"
+            case parse parseProgramAST "" input of
+                Left _ -> return ()
+                Right _ -> expectationFailure "Expected error: '=' missing in declaration"
+
+        it "fails when function misses return type" $ do
+            let input = "fonction test(entier a) retourner a fin"
+            case parse parseProgramAST "" input of
+                Left _ -> return ()
+                Right _ -> expectationFailure "Expected error: Return type missing"
+
+        it "fails when function misses argument type" $ do
+            let input = "fonction test(entier a, b) : entier retourner a fin"
+            case parse parseProgramAST "" input of
+                Left _ -> return ()
+                Right _ -> expectationFailure "Expected error: Argument type missing"
+
+        it "parses simple while loop (tantque)" $ do
+            let cond = IAInfix (IASymbol "x") "<" (IANumber 10)
+            let body = [IAReturn (IASymbol "x")]
+            let expected = IAProgram [IAWhile cond body]
+            let input = "tantque (x < 10) retourner x fin"
+            parse parseProgramAST "" input `shouldBe` Right expected
+
+        it "fails when while loop is missing 'fin'" $ do
+            let input = "tantque (x < 10) retourner x"
+            case parse parseProgramAST "" input of
+                Left _ -> return ()
+                Right _ -> expectationFailure "Expected error: 'fin' missing after loop body"
+
+        it "parses C-style for loop (pour)" $ do
+            let initExpr = IADeclare "i" (Just IntT) (IANumber 0)
+            let condExpr = IAInfix (IASymbol "i") "<" (IANumber 10)
+            let incExpr = IAInfix (IASymbol "i") "=" (IAInfix (IASymbol "i") "+" (IANumber 1))
+            let body = [IAReturn (IASymbol "i")]
+            let expected = IAProgram [IAFor initExpr condExpr incExpr body]
+            let input = "pour (variable entier i = 0; i < 10; i = i + 1) retourner i fin"
+            parse parseProgramAST "" input `shouldBe` Right expected
+
+        it "fails when for loop misses semicolon" $ do
+            let input = "pour (variable entier i = 0 i < 10; i = i + 1) retourner i fin"
+            case parse parseProgramAST "" input of
+                Left _ -> return ()
+                Right _ -> expectationFailure "Expected error: Semicolon missing in for loop header"
+
+        it "parses multi-clause conditional (si sinon si sinon)" $ do
+            let cond1 = IAInfix (IASymbol "x") ">" (IANumber 10)
+            let cond2 = IAInfix (IASymbol "x") ">" (IANumber 5)
+            let body1 = [IAReturn (IANumber 1)]
+            let body2 = [IAReturn (IANumber 2)]
+            let bodyElse = [IAReturn (IANumber 3)]
+            let elseIfNode = IAIf cond2 body2 (Just bodyElse)
+            let expected = IAProgram [IAIf cond1 body1 (Just [elseIfNode])]
+            let input = unlines [
+                    "si (x > 10)",
+                    "  retourner 1",
+                    "sinon si (x > 5)",
+                    "  retourner 2",
+                    "sinon",
+                    "  retourner 3",
+                    "fin"]
+            parse parseProgramAST "" input `shouldBe` Right expected
+
+        it "fails when conditional misses 'fin'" $ do
+            let input = "si (x > 10) retourner 1 sinon retourner 0"
+            case parse parseProgramAST "" input of
+                Left _ -> return ()
+                Right _ -> expectationFailure "Expected error: 'fin' missing from conditional block"
