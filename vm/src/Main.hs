@@ -16,7 +16,6 @@ import Data.Binary.Get (runGet)
 main :: IO ()
 main = do
     input <- BL.getContents
-    
     if BL.null input
         then do
             putStrLn "Error: No input provided"
