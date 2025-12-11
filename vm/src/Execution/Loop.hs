@@ -12,10 +12,10 @@ import Types (Instruction(..), Value(..))
 import Execution.Ops (opPushConst, opPushInt, opPop, opAdd, opSub, opEq)
 
 execLoop :: VMState -> IO ()
-execLoop state = 
+execLoop state =
     if ip state >= length (instructions state) || ip state < 0
     then putStrLn "Error: Instruction pointer out of bounds"
-    else case (instructions state) !! (ip state) of
+    else case instructions state !! (ip state) of
         Halt -> return ()
         PushConst idx -> nextStep (opPushConst ((constants state) !! idx) state)
         PushInt i -> nextStep (opPushInt i state)
