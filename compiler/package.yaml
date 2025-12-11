@@ -48,15 +48,6 @@ executables:
     dependencies:
     - glados
 
-  glados-compiler:
-    main:                Main.hs
-    source-dirs:         app
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - glados
 
 tests:
   glados-test:
