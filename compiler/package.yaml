@@ -52,7 +52,7 @@ executables:
 tests:
   glados-test:
     main:                Spec.hs
-    source-dirs:         test/compiler/unitary
+    source-dirs:         test/unitary
     ghc-options:
     - -threaded
     - -rtsopts
