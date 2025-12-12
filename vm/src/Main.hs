@@ -7,7 +7,7 @@
 
 module Main (main) where
 
-import System.Exit (exitWith, ExitCode(..))
+import System.Exit (exitWith, exitSuccess, ExitCode(..))
 import qualified Data.ByteString.Lazy as BL
 
 import Parser
@@ -22,4 +22,4 @@ main = do
             exitWith (ExitFailure 84)
         else do
             BL.putStr input
-            exitWith (ExitSuccess)
+            exitSuccess
