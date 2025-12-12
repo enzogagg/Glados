@@ -44,7 +44,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Unit Tests
-        run: stack test --coverage --allow-different-user
+        run: |
+          cd compiler
+          stack test --coverage --allow-different-user
       - name: Functional Tests
         run: |
           make
