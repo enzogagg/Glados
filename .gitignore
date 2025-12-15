@@ -1,6 +1,7 @@
 .stack-work/
 *~
 stack.yaml.lock
+*.cabal
 
 #documentation
 /documentation/.docusaurus
@@ -18,3 +19,7 @@ example/*
 
 # Documentation
 documentation/node_modules
+
+# OS generated files
+.DS_Store
+.vscode/

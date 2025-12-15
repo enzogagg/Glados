@@ -18,12 +18,22 @@ jobs:
         run: make
       - name: Check Binary
         run: |
-          if [ ! -f "./${{ inputs.executable_name }}" ]; then exit 1; fi
+          for exe in ${{ inputs.executable_name }}; do
+            if [ ! -f "./$exe" ]; then
+              echo "Binary $exe not found"
+              exit 1
+            fi
+          done
       - name: Check Clean
         run: |
           make clean
           make fclean
-          if [ -f "./${{ inputs.executable_name }}" ]; then exit 1; fi
+          for exe in ${{ inputs.executable_name }}; do
+            if [ -f "./$exe" ]; then
+              echo "Binary $exe still exists after fclean"
+              exit 1
+            fi
+          done
 
   run_tests:
     needs: build_and_check
@@ -34,9 +44,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Unit Tests
-        run: stack test --coverage --allow-different-user
+        run: |
+          cd compiler
+          stack test --coverage --allow-different-user
       - name: Functional Tests
         run: |
           make
-          chmod +x scripts/functional_tests.sh
-          ./scripts/functional_tests.sh
+          chmod +x scripts/functional_tests_compiler.sh
+          ./scripts/functional_tests_compiler.sh

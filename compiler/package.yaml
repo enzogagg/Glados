@@ -6,9 +6,7 @@ author:              "Author name here"
 maintainer:          "example@example.com"
 copyright:           "2025 Author name here"
 
-extra-source-files:
-- README.md
-- CHANGELOG.md
+
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
@@ -40,16 +38,6 @@ library:
   source-dirs: src
 
 executables:
-  glados-exe:
-    main:                Main.hs
-    source-dirs:         app
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - glados
-
   glados-compiler:
     main:                Main.hs
     source-dirs:         app
@@ -60,18 +48,6 @@ executables:
     dependencies:
     - glados
 
-  glados-vm:
-    main:                Main.hs
-    source-dirs:         vm/src
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - base
-    - containers
-    - bytestring
-    - binary
 
 tests:
   glados-test:

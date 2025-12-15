@@ -37,15 +37,11 @@ parseConstantEntry = do
     len <- getWord32be
     case tag of
         0x00 -> IntVal . fromIntegral <$> getInt32be
-        0x01 -> do
-            w <- getWord32be
-            return $ FloatVal (word32ToFloat w)
+        0x01 -> FloatVal . word32ToFloat <$> getWord32be
         0x02 -> do
             val <- getWord8
             return $ BoolVal (val /= 0)
-        0x03 -> do
-            val <- getWord8
-            return $ CharVal (toEnum (fromIntegral val))
+        0x03 -> CharVal . toEnum . fromIntegral <$> getWord8
         0x04 -> do
             str <- getByteString (fromIntegral len)
             return $ StringVal (map (toEnum . fromEnum) (BL.unpack (BL.fromStrict str)))
@@ -57,9 +53,7 @@ parseConstantEntry = do
             str <- getByteString (fromIntegral len)
             return $ SymbolVal (map (toEnum . fromEnum) (BL.unpack (BL.fromStrict str)))
         0x07 -> return NilVal
-        0x08 -> do
-            funcId <- getInt32be
-            return $ FunctionVal (fromIntegral funcId)
+        0x08 -> FunctionVal . fromIntegral <$> getInt32be
         _ -> fail $ "Unknown constant type tag: " ++ show tag
 
 parseFunctionTable :: Get [FunctionMeta]
@@ -71,8 +65,7 @@ parseFunctionEntry :: Get FunctionMeta
 parseFunctionEntry = do
     idx <- getWord32be
     addr <- getWord32be
-    argc <- getWord8
-    return $ FunctionMeta (fromIntegral idx) (fromIntegral addr) (fromIntegral argc)
+    FunctionMeta (fromIntegral idx) (fromIntegral addr) . fromIntegral <$> getWord8
 
 parseInstructions :: [Value] -> Get [Instruction]
 parseInstructions pool = do
@@ -94,16 +87,10 @@ parseInstruction :: [Value] -> Get Instruction
 parseInstruction pool = do
     opcode <- getWord8
     case opcode of
-        0x01 -> do
-            idx <- getInt32be
-            return $ PushConst (fromIntegral idx)
+        0x01 -> PushConst . fromIntegral <$> getInt32be
         0x02 -> PushInt . fromIntegral <$> getInt32be
-        0x03 -> do
-            w <- getWord32be
-            return $ PushFloat (word32ToFloat w)
-        0x04 -> do
-            b <- getWord8
-            return $ PushBool (b /= 0)
+        0x03 -> PushFloat . word32ToFloat <$> getWord32be
+        0x04 -> PushBool . (/= 0) <$> getWord8
         0x05 -> return PushNil
         0x06 -> return Pop
 
@@ -128,15 +115,9 @@ parseInstruction pool = do
         -- 0x33 -> TODO
         -- 0x34 -> return Len
 
-        0x50 -> do
-            idx <- getInt32be
-            return $ Load (getStringFromPool pool (fromIntegral idx))
-        0x51 -> do
-            idx <- getInt32be
-            return $ Store (getStringFromPool pool (fromIntegral idx))
-        0x52 -> do
-            idx <- getInt32be
-            return $ Define (getStringFromPool pool (fromIntegral idx))
+        0x50 -> Load . getStringFromPool pool . fromIntegral <$> getInt32be
+        0x51 -> Store . getStringFromPool pool . fromIntegral <$> getInt32be
+        0x52 -> Define . getStringFromPool pool . fromIntegral <$> getInt32be
 
         0x60 -> Jump . fromIntegral <$> getInt32be
         0x61 -> JumpIfTrue . fromIntegral <$> getInt32be
@@ -144,8 +125,7 @@ parseInstruction pool = do
 
         0x70 -> do
             fIdx <- getInt32be
-            argc <- getWord8
-            return $ Call (fromIntegral fIdx) (fromIntegral argc)
+            Call (fromIntegral fIdx) . fromIntegral <$> getWord8
         0x71 -> return Return
 
         0x80 -> return Print
