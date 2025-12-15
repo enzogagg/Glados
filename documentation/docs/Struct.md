@@ -25,7 +25,7 @@ Ce petit programme montre comment déclarer une constante, définir une fonction
 ```glados
 # Ceci est un commentaire
 
-constante PI 3.14
+constante flottant PI = 3.14
 
 fonction Bonjour(nom)
     afficher("Bonjour, " + nom)
@@ -66,7 +66,7 @@ Les constantes permettent de définir des valeurs fixes qui ne changent jamais a
 Syntaxe déclarative, en français :
 
 ```clad
-constante VITESSE_LUMIERE 299792458
+constante entier VITESSE_LUMIERE = 299792458
 ```
 
 ## 3.2 Variables
@@ -76,8 +76,8 @@ Les variables servent à stocker des valeurs modifiables tout au long de l’ex�
 Déclaration facultative, mais possible pour clarifier le type :
 
 ```clad
-variable compteur 0
-variable nom "CLaD"
+variable entier compteur = 0
+variable phrase nom = "CLaD"
 ```
 
 ---
@@ -140,9 +140,9 @@ Les conditions permettent d’exécuter différentes parties du code selon les s
 ## 6.1 Conditionnel
 
 ```clad
-si condition
+si (condition)
     ...
-sinon si autre
+sinon si (autre)
     ...
 sinon
     ...
@@ -154,7 +154,7 @@ fin
 La boucle tant que répète un bloc d’instructions tant que la condition est vraie.
 
 ```clad
-tantque x < 10
+tantque (x < 10)
     afficher(x)
     x = x + 1
 fin
@@ -167,7 +167,7 @@ La boucle pour permet d’itérer facilement sur une plage de valeurs.
 Exemple:
 
 ```clad
-pour i de 0 à 10
+pour (i = 0; 0 < 10; i = i + 1)
     afficher(i)
 fin
 ```
