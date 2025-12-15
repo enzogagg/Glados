@@ -7,7 +7,7 @@
 
 module Main (main) where
 
-import System.Exit (exitWith, ExitCode(..))
+import System.Exit (exitWith, exitSuccess, ExitCode(..))
 import qualified Data.ByteString.Lazy as BL
 
 import Parser
@@ -21,5 +21,5 @@ main = do
             putStrLn "Error: No input provided"
             exitWith (ExitFailure 84)
         else do
-            let bytecode = runGet parseBytecode input
-            print bytecode
+            BL.putStr input
+            exitSuccess
