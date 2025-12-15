@@ -82,7 +82,9 @@ executable glados-exe
 executable glados-vm
   main-is: Main.hs
   other-modules:
+      Parser
       Types
+      Utils
       Paths_glados
   autogen-modules:
       Paths_glados
