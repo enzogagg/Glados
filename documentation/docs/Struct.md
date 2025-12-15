@@ -198,7 +198,7 @@ constante BASE 10
 
 fonction puissance(x, p)
     resultat = 1
-    pour i de 0 à p
+    pour (i = 0; 0 < p; i = i + 1)
         resultat = resultat * x
     fin
     retourner resultat

@@ -19,12 +19,11 @@ Les nombres sont divisés en deux catégories :
 
 ### Fonctions natives
 
-* `+ a b` — Addition
-* `- a b` — Soustraction
-* `* a b` — Multiplication
-* `/ a b` — Division flottante
-* `div a b` — Division entière
-* `mod a b` — Modulo
+* `a + b` — Addition
+* `a - b` — Soustraction
+* `a * b` — Multiplication
+* `a / b` — Division
+* `a % b` — Modulo
 * `abs x` — Valeur absolue
 * `arrondi x` — Arrondi
 
