@@ -15,10 +15,10 @@ module CladLexer (
     parseFloat,
     parseBoolean,
     parseString,
-    parseOperator -- Exporté pour le parser de bas niveau si besoin
+    parseOperator
 ) where
 
-import Types (AST(..)) -- Assurez-vous d'utiliser AST ici
+import Types (AST(..))
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
@@ -26,7 +26,7 @@ import Data.Void
 
 type Parser = Parsec Void String
 
--- Liste des mots-clés réservés en CLaD (en français)
+-- Liste des mots-clés réservés en CLaD
 reservedWords :: [String]
 reservedWords = [
     "fonction", "fin", "principal", "constante", "variable", "retourner",
@@ -59,7 +59,7 @@ parseIdentifier = lexeme $ try $ do
         then fail $ "mot-clé réservé : " ++ name
         else return name
 
--- ⚠️ ATTENTION: L'opérateur (utilisé dans les expressions infixées)
+-- L'opérateur (utilisé dans les expressions infixées)
 parseOperator :: Parser String
 parseOperator = lexeme $ many (oneOf "+-*/=<>!%^&|")
 
