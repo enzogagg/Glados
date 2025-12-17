@@ -22,6 +22,10 @@ dependencies:
 - megaparsec
 - parser-combinators
 - directory
+- bytestring
+- binary
+- containers
+- mtl
 
 ghc-options:
 - -Wall
