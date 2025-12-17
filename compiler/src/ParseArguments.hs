@@ -33,7 +33,7 @@ debugParse content =
         Left errBundle ->
             return (Left (errorBundlePretty errBundle))
         Right ast -> do
-            putStrLn (show ast)
+            print ast
             return (Right ())
 
 parseArgs :: [String] -> IO (Either String String)

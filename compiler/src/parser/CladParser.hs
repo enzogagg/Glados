@@ -97,27 +97,27 @@ parseRelationnelle :: Parser AST
 parseRelationnelle = chainl1' parseAdditive parseRelationnelleOp
   where
     parseRelationnelleOp =
-          (symbol "="  >> return (\left right -> IAInfix left "=" right))
-      <|> (symbol "<"  >> return (\left right -> IAInfix left "<" right))
-      <|> (symbol ">"  >> return (\left right -> IAInfix left ">" right))
-      <|> (symbol ">=" >> return (\left right -> IAInfix left ">=" right))
-      <|> (symbol "<=" >> return (\left right -> IAInfix left "<=" right))
+          (symbol "="  >> return (`IAInfix` "="))
+      <|> (symbol "<"  >> return (`IAInfix` "<"))
+      <|> (symbol ">"  >> return (`IAInfix` ">"))
+      <|> (symbol ">=" >> return (`IAInfix` ">="))
+      <|> (symbol "<=" >> return (`IAInfix` "<="))
 
 parseAdditive :: Parser AST
 parseAdditive = chainl1' parseMultiplicative parseAdditiveOp
   where
     parseAdditiveOp =
-          (symbol "+" >> return (\left right -> IAInfix left "+" right))
-      <|> (symbol "-" >> return (\left right -> IAInfix left "-" right))
+          (symbol "+" >> return (`IAInfix` "+"))
+      <|> (symbol "-" >> return (`IAInfix` "-"))
 
 parseMultiplicative :: Parser AST
 parseMultiplicative = chainl1' parseTerm parseMultiplicativeOp
   where
     parseMultiplicativeOp =
-          (symbol "*"   >> return (\left right -> IAInfix left "*" right))
-      <|> (symbol "/"   >> return (\left right -> IAInfix left "/" right))
-      <|> (symbol "mod" >> return (\left right -> IAInfix left "mod" right))
-      <|> (symbol "div" >> return (\left right -> IAInfix left "div" right))
+          (symbol "*"   >> return (`IAInfix` "*"))
+      <|> (symbol "/"   >> return (`IAInfix` "/"))
+      <|> (symbol "mod" >> return (`IAInfix` "mod"))
+      <|> (symbol "div" >> return (`IAInfix` "div"))
 
 -- ====================================================================
 -- Parsing des Instructions (Blocs, Déclarations, Control Flow)
@@ -194,14 +194,12 @@ parseAssignment :: Parser AST
 parseAssignment = do
     name <- parseIdentifier
     _ <- symbol "="
-    value <- parseExpression
-    return (IAAssign name value)
+    IAAssign name <$> parseExpression
 
 parseReturn :: Parser AST
 parseReturn = do
     _ <- symbol "retourner"
-    expr <- parseExpression
-    return (IAReturn expr)
+    IAReturn <$> parseExpression
 
 parseElseClause :: Parser (Maybe [AST])
 parseElseClause = optional $ do

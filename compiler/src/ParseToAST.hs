@@ -15,4 +15,4 @@ import Text.Megaparsec (parse, ParseErrorBundle)
 import Data.Void (Void)
 
 parseAST :: String -> Either (ParseErrorBundle String Void) AST
-parseAST content = parse parseProgramAST "" content
+parseAST = parse parseProgramAST ""
