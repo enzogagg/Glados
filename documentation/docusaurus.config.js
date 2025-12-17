@@ -7,28 +7,33 @@ const darkCodeTheme = themes.dracula;
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-    title: 'ClaD',
+    title: 'GLaDOS',
     tagline: 'Generic Language and Data Operand Syntax',
     favicon: 'img/favicon.ico',
 
-    url: 'https://enzogagg.github.io', // Your GitHub Pages base URL
-    // For local development use '/' and for GitHub Pages use '/Glados/'.
-    // Make it configurable with the DOCS_BASE_URL env var so you can run
-    // `DOCS_BASE_URL=/Glados/ npm run build` when deploying.
+    // Configuration GitHub Pages
+    url: 'https://enzogagg.github.io',
     baseUrl: process.env.DOCS_BASE_URL || '/',
-
-    // GitHub Pages deployment config
-    organizationName: 'enzogagg', // Your GitHub username
-    projectName: 'Glados',       // The exact name of your repository
+    organizationName: 'enzogagg',
+    projectName: 'Glados',
     deploymentBranch: 'gh-pages',
     trailingSlash: false,
 
     onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'warn',
 
+    // --- CONFIGURATION I18N CORRIGÉE ---
     i18n: {
-        defaultLocale: 'en',
-        locales: ['en'],
+        defaultLocale: 'fr',    // Tes fichiers originaux (docs/) sont en Français
+        locales: ['fr', 'en'],  // On active le Français et l'Anglais
+        localeConfigs: {
+            fr: {
+                label: 'Français',
+            },
+            en: {
+                label: 'English',
+            },
+        },
     },
 
     presets: [
@@ -38,9 +43,10 @@ const config = {
             ({
                 docs: {
                     sidebarPath: require.resolve('./sidebars.js'),
-                    // Edit this page link
-                    editUrl:
-                        'https://github.com/enzogagg/Glados/tree/main/documentation/',
+                    // AJOUTE CETTE LIGNE JUSTE ICI :
+                    routeBasePath: '/', 
+                    // -----------------------------
+                    editUrl: 'https://github.com/enzogagg/Glados/tree/main/documentation/',
                 },
                 blog: false,
                 theme: {
@@ -53,12 +59,10 @@ const config = {
     themeConfig:
         /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
         ({
-            // Social image
             image: 'img/logo.png',
             announcementBar: {
                 id: 'cake_is_a_lie',
-                content:
-                    '🍰 <strong>Welcome to the GLaDOS Documentation.</strong> 🍰',
+                content: '🍰 <strong>Welcome to the GLaDOS Documentation.</strong> 🍰',
                 backgroundColor: '#245d88',
                 textColor: '#fff',
                 isCloseable: true,
@@ -70,20 +74,24 @@ const config = {
                     src: 'img/logo.png',
                 },
                 items: [
-                    // User Manual
+                    // --- MENU DE NAVIGATION ---
                     {
                         type: 'docSidebar',
                         sidebarId: 'tutorialSidebar',
                         position: 'left',
-                        label: 'Manual',
+                        label: 'Manuel', // Label par défaut (affiché en FR)
                     },
-                    // Developer API (Haddock)
                     {
                         to: 'pathname:///api/index.html',
                         label: 'API Reference',
                         position: 'left',
                     },
-                    // GitHub
+                    // --- BOUTON DE LANGUE (IMPORTANT) ---
+                    {
+                        type: 'localeDropdown',
+                        position: 'right',
+                    },
+                    // --- LIEN GITHUB ---
                     {
                         href: 'https://github.com/enzogagg/Glados',
                         label: 'GitHub',
@@ -98,7 +106,7 @@ const config = {
                         title: 'Documentation',
                         items: [
                             {
-                                label: 'User Manual',
+                                label: 'Manuel Utilisateur',
                                 to: '/docs/Introduction',
                             },
                             {
@@ -108,7 +116,7 @@ const config = {
                         ],
                     },
                     {
-                        title: 'Community',
+                        title: 'Communauté',
                         items: [
                             {
                                 label: 'Epitech',
@@ -126,7 +134,6 @@ const config = {
             prism: {
                 theme: lightCodeTheme,
                 darkTheme: darkCodeTheme,
-                // Add support for Haskell and Lisp/Scheme syntax highlighting
                 additionalLanguages: ['haskell', 'scheme', 'lisp', 'makefile', 'bash'],
             },
         }),
