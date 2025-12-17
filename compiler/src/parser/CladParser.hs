@@ -66,8 +66,8 @@ parseTerm =
     <|> parseNumber
     <|> parseBoolean
     <|> parseString
+    <|> try parseCall
     <|> (IASymbol <$> parseIdentifier)
-    <|> parseCall
     <|> parseListCreation
     <|> (symbol "(" *> parseExpression <* symbol ")")
 
@@ -130,21 +130,19 @@ parseBlockEndKeywords = void $
     <|> symbol "sinon si"
 
 parseBlock :: Parser [AST]
-parseBlock = many $ try $ do
-    notFollowedBy parseBlockEndKeywords
-    parseInstruction
+parseBlock = many parseInstruction
 
 parseInstruction :: Parser AST
 parseInstruction =
-        parseFunctionDef -- Doit être en premier pour reconnaître le mot-clé 'fonction'
+        parseFunctionDef
     <|> parseMain
     <|> parseDeclaration
     <|> parseReturn
     <|> parseConditional
     <|> parseWhile
     <|> parseFor
-    <|> parseAssignment
-    <|> parseExpression -- Un appel de fonction seul est une instruction
+    <|> try parseAssignment
+    <|> parseExpression
 
 parseFunctionArgument :: Parser (String, Maybe CladType)
 parseFunctionArgument = do
@@ -152,7 +150,6 @@ parseFunctionArgument = do
     name <- parseIdentifier
     return (name, Just typeAnnot)
 
--- Définition de fonction complète
 parseFunctionDef :: Parser AST
 parseFunctionDef = do
     _ <- symbol "fonction"
