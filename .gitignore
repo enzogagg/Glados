@@ -1,7 +1,12 @@
 .stack-work/
 *~
-
 stack.yaml.lock
+*.cabal
+
+#documentation
+/documentation/.docusaurus
+/documentation/node_modules
+/documentation/build
 
 #documentation
 /documentation/.docusaurus
@@ -13,6 +18,13 @@ glados
 
 # LISP files
 example/*
-*.scm
 
+# *.scm
 *.pdf
+
+# Documentation
+documentation/node_modules
+
+# OS generated files
+.DS_Store
+.vscode/

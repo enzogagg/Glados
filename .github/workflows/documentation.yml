@@ -12,16 +12,16 @@ jobs:
       - uses: haskell-actions/setup@v2
         with:
           enable-stack: true
-      
+
       - name: Build Haddock
         run: stack haddock --no-haddock-deps
 
       - name: Move API Docs to Docusaurus
         run: |
           echo "Searching for generated documentation..."
-          
+
           DOC_INDEX=$(find .stack-work -name index.html | grep "/doc/index.html" | head -n 1)
-          
+
           if [ -z "$DOC_INDEX" ]; then
              echo "::error:: No documentation found! Listing .stack-work for debug:"
              find .stack-work -maxdepth 4
@@ -35,16 +35,20 @@ jobs:
 
           cp -r "$DOC_PATH"/. documentation/static/api/
 
+      # 2. Build Docusaurus
       - uses: actions/setup-node@v3
         with:
           node-version: 'latest'
 
       - name: Build Site
         working-directory: ./documentation
+        env:
+          DOCS_BASE_URL: ${{ vars.DOCS_BASE_URL }}
         run: |
           npm ci
           npm run build
 
+      # 3. Deploy
       - uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

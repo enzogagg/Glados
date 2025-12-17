@@ -35,7 +35,9 @@ parseExpr :: Parser Expr
 parseExpr =
         parseBoolean
     <|> parseList
-    <|> try parseNumber
+    <|> parseFloat
+    <|> parseNumber
+    <|> parseString
     <|> parseSymbol
 
 parseNumber :: Parser Expr
@@ -45,6 +47,15 @@ parseNumber = lexeme $ try $ do
     rest <- many digitChar
     let n = read (maybe "" (:[]) sign ++ (firstDigit : rest)) :: Integer
     return (Number n)
+
+parseFloat :: Parser Expr
+parseFloat = lexeme $ try $ do
+    sign <- optional (oneOf "+-")
+    firstDigit <- digitChar
+    _ <- char '.'
+    rest <- many digitChar
+    let n = read (maybe "" (:[]) sign ++ (firstDigit : '.' : rest)) :: Double
+    return (FloatLiteral n)
 
 parseBoolean :: Parser Expr
 parseBoolean =
@@ -56,6 +67,13 @@ parseSymbol = lexeme $ do
     first <- letterChar <|> oneOf "+-*/=<>?!"
     rest  <- many (alphaNumChar <|> oneOf "+-*/=<>?!")
     return (Symbol (first : rest))
+
+parseString :: Parser Expr
+parseString = lexeme $ do
+    _ <- char '"'
+    xs <- many (noneOf ['"'])
+    _ <- char '"'
+    return (String xs)
 
 parseList :: Parser Expr
 parseList = do

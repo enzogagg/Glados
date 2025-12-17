@@ -7,7 +7,7 @@ const darkCodeTheme = themes.dracula;
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-    title: 'GLaDOS',
+    title: 'ClaD',
     tagline: 'Generic Language and Data Operand Syntax',
     favicon: 'img/favicon.ico',
 
@@ -43,9 +43,8 @@ const config = {
             ({
                 docs: {
                     sidebarPath: require.resolve('./sidebars.js'),
-                    // AJOUTE CETTE LIGNE JUSTE ICI :
+                    // IMPORTANT : Ceci met la doc à la racine du site
                     routeBasePath: '/', 
-                    // -----------------------------
                     editUrl: 'https://github.com/enzogagg/Glados/tree/main/documentation/',
                 },
                 blog: false,
@@ -107,7 +106,7 @@ const config = {
                         items: [
                             {
                                 label: 'Manuel Utilisateur',
-                                to: '/docs/Introduction',
+                                to: '/', // Corrigé pour pointer vers la racine
                             },
                             {
                                 label: 'API Reference',

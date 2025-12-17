@@ -9,7 +9,6 @@ on: [push, pull_request]
 jobs:
   # 1. Linting
   call-lint:
-    # MODIFIÉ : plus de /modules/ dans le chemin
     uses: ./.github/workflows/linting.yml
 
   # 2. Build & Test
@@ -17,7 +16,7 @@ jobs:
     needs: call-lint
     uses: ./.github/workflows/build-and-test.yml
     with:
-      executable_name: glados
+      executable_name: glados-compiler, glados-vm
 
   # 3. Mirroring (Main only)
   call-mirror:
