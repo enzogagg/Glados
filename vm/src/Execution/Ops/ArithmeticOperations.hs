@@ -20,8 +20,8 @@ opAdd state =
 opSub :: VMState -> Either String VMState
 opSub state =
     case stack state of
-        (IntVal a : IntVal b : rest) -> Right $ state { stack = IntVal (a - b) : rest }
-        (FloatVal a : FloatVal b : rest) -> Right $ state { stack = FloatVal (a - b) : rest }
+        (IntVal a : IntVal b : rest) -> Right $ state { stack = IntVal (b - a) : rest }
+        (FloatVal a : FloatVal b : rest) -> Right $ state { stack = FloatVal (b - a) : rest }
         _ -> Left "Error: Sub requires two numeric values of the same type on the stack"
 
 opMul :: VMState -> Either String VMState
@@ -34,17 +34,17 @@ opMul state =
 opDiv :: VMState -> Either String VMState
 opDiv state =
     case stack state of
-        (IntVal _ : IntVal 0 : _) -> Left "Error: Division by zero"
-        (FloatVal _ : FloatVal 0.0 : _) -> Left "Error: Division by zero"
-        (IntVal a : IntVal b : rest) -> Right $ state { stack = IntVal (a `div` b) : rest }
-        (FloatVal a : FloatVal b : rest) -> Right $ state { stack = FloatVal (a / b) : rest }
+        (IntVal 0 : IntVal _ : _) -> Left "Error: Division by zero"
+        (FloatVal 0.0 : FloatVal _ : _) -> Left "Error: Division by zero"
+        (IntVal a : IntVal b : rest) -> Right $ state { stack = IntVal (b `div` a) : rest }
+        (FloatVal a : FloatVal b : rest) -> Right $ state { stack = FloatVal (b / a) : rest }
         _ -> Left "Error: Div requires two numeric values of the same type on the stack"
 
 opMod :: VMState -> Either String VMState
 opMod state =
     case stack state of
-        (IntVal _ : IntVal 0 : _) -> Left "Error: Modulo by zero"
-        (IntVal a : IntVal b : rest) -> Right $ state { stack = IntVal (a `mod` b) : rest }
+        (IntVal 0 : IntVal _ : _) -> Left "Error: Modulo by zero"
+        (IntVal a : IntVal b : rest) -> Right $ state { stack = IntVal (b `mod` a) : rest }
         _ -> Left "Error: Mod requires two numeric values of the same type on the stack"
 
 opNeg :: VMState -> Either String VMState

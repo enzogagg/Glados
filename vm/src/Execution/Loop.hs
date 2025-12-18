@@ -25,7 +25,10 @@ execLoop state =
     then putStrLn "Error: Instruction pointer out of bounds"
     else case instructions state !! ip state of
         Halt -> return ()
-        PushConst idx -> nextStep (opPushConst (constants state !! idx) state)
+        PushConst idx ->
+            if idx < 0 || idx >= length (constants state)
+            then nextStep (Left ("Error: Constant index out of bounds: " ++ show idx))
+            else nextStep (opPushConst (constants state !! idx) state)
         PushInt i -> nextStep (opPushInt i state)
         PushFloat f -> nextStep (opPushFloat f state)
         PushBool b -> nextStep (opPushBool b state)
