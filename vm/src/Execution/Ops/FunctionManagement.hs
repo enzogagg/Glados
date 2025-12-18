@@ -6,7 +6,7 @@ import Data.List (find)
 
 -- Helper to find function by ID
 findFunction :: Int -> [FunctionMeta] -> Maybe FunctionMeta
-findFunction fid funcs = find (\f -> funcId f == fid) funcs
+findFunction fid = find (\f -> funcId f == fid)
 
 opCall :: Int -> Int -> VMState -> Either String VMState
 opCall funcIndex argCount state =
@@ -23,7 +23,7 @@ opCall funcIndex argCount state =
                     newCallStack = (savedIp, savedArgs) : callStack state
                 in Right $ state {
                     stack = remainingStack,
-                    ip = funcAddress func - 1, -- Decrement by 1 because loop increments
+                    ip = funcAddress func - 1,
                     curArgs = args,
                     callStack = newCallStack
                 }
