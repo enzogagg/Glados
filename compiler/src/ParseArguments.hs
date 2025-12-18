@@ -9,7 +9,7 @@ module ParseArguments
   ( parseContent
   , parseArgs
   , handleInput
-  , getScmExtension
+  , getCladExtension
   , debugParse
   ) where
 
@@ -48,15 +48,16 @@ parseArgs args = case args of
                 then return (Left "empty stdin")
             else return (Right content)
     [file] -> do
-        if getScmExtension file
+        if getCladExtension file
             then handleInput file
+
         else return (Left "invalid type file")
     _ -> return (Left "wrong number of arguments")
 
-getScmExtension :: String -> Bool
-getScmExtension file = case reverse (takeWhile (/= '.') (reverse file)) of
-    "scm" -> True
-    _     -> False
+getCladExtension :: String -> Bool
+getCladExtension file = case reverse (takeWhile (/= '.') (reverse file)) of
+    "clad" -> True
+    _      -> False
 
 handleInput :: String -> IO (Either String String)
 handleInput input = do
