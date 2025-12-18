@@ -16,11 +16,7 @@ jobs:
     needs: call-lint
     uses: ./.github/workflows/build-and-test.yml
     with:
-<<<<<<< HEAD
-      executable_name: glados-compiler, glados-vm
-=======
       executable_name: glados-compiler glados-vm
->>>>>>> 742dd532 ([MERGE] Vm execution)
 
   # 3. Mirroring (Main only)
   call-mirror:
