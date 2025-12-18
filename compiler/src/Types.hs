@@ -8,6 +8,7 @@
 module Types (
     Expr(..),
     IAST(..),
+    CladType(..),
     Value(..),
     Env) where
 
@@ -34,6 +35,29 @@ data IAST
     | IALambda [String] IAST
     | IADefine String IAST
     | IAQuote IAST
+
+    -- CLaD Extensions
+    | IAInfix IAST String IAST
+    | IACall String [IAST]
+    | IAFunctionDef String [(String, Maybe CladType)] (Maybe CladType) [IAST]
+    | IAMain [IAST]
+    | IADeclare String (Maybe CladType) IAST
+    | IAAssign String IAST
+    | IAReturn IAST
+    | IAConditional IAST [IAST] (Maybe [IAST])
+    | IAWhile IAST [IAST]
+    | IAFor IAST IAST IAST [IAST]
+    | IAProgram [IAST]
+    | IAUnit
+    deriving (Show, Eq)
+
+data CladType
+    = IntT
+    | FloatT
+    | BoolT
+    | StringT
+    | VoidT
+    | ListT CladType
     deriving (Show, Eq)
 
 data Value

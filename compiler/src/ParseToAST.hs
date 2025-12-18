@@ -14,5 +14,5 @@ import CladParser (parseProgramAST)
 import Text.Megaparsec (parse, ParseErrorBundle)
 import Data.Void (Void)
 
-parseAST :: String -> Either (ParseErrorBundle String Void) AST
+parseAST :: String -> Either (ParseErrorBundle String Void) IAST
 parseAST = parse parseProgramAST ""

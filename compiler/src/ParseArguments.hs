@@ -9,18 +9,6 @@ module ParseArguments
   ( parseContent
   , parseArgs
   , handleInput
-<<<<<<< HEAD
-  , getCladExtension
-  , debugParse
-  ) where
-
-import Types()
-import System.Directory (doesFileExist)
-import System.IO()
-import Text.Megaparsec (errorBundlePretty)
-import ParseToAST (parseAST)
--- import ParseValue (parseValue)
-=======
   , getScmExtension
   , debugParse
   ) where
@@ -31,17 +19,13 @@ import System.IO (stdin, hIsTerminalDevice, isEOF, hFlush, stdout)
 import Text.Megaparsec (parse, errorBundlePretty)
 import ParseToExpr (parseProgram)
 import ParseValue (parseValue, runExprs, builtins)
->>>>>>> 742dd532 ([MERGE] Vm execution)
 
 parseContent :: [String] -> IO (Either String ())
 parseContent args = do
     result <- parseArgs args
     case result of
         Left err -> return (Left err)
-<<<<<<< HEAD
-=======
         Right "__REPL__" -> startRepl
->>>>>>> 742dd532 ([MERGE] Vm execution)
         Right content -> debugParse content
 
 debugParse :: String -> IO (Either String ())

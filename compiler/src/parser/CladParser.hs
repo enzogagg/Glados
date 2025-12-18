@@ -60,7 +60,7 @@ chainl1' p op = do
         <|> return a
 
 -- Analyseur de base pour les éléments qui ne nécessitent pas de priorité (littéraux, identifiants, appels)
-parseTerm :: Parser AST
+parseTerm :: Parser IAST
 parseTerm =
         parseFloat
     <|> parseNumber
@@ -71,14 +71,14 @@ parseTerm =
     <|> parseListCreation
     <|> (symbol "(" *> parseExpression <* symbol ")")
 
-parseListCreation :: Parser AST
+parseListCreation :: Parser IAST
 parseListCreation = do
     _ <- symbol "["
     elements <- parseExpression `sepBy` symbol ","
     _ <- symbol "]"
     return (IAList elements)
 
-parseCall :: Parser AST
+parseCall :: Parser IAST
 parseCall = do
     name <- parseIdentifier
     _ <- symbol "("
@@ -90,10 +90,10 @@ parseCall = do
 -- Parsing de la Grammaire (Précédence des Opérateurs)
 -- ====================================================================
 
-parseExpression :: Parser AST
+parseExpression :: Parser IAST
 parseExpression = parseRelationnelle
 
-parseRelationnelle :: Parser AST
+parseRelationnelle :: Parser IAST
 parseRelationnelle = chainl1' parseAdditive parseRelationnelleOp
   where
     parseRelationnelleOp =
@@ -103,14 +103,14 @@ parseRelationnelle = chainl1' parseAdditive parseRelationnelleOp
       <|> (symbol ">=" >> return (`IAInfix` ">="))
       <|> (symbol "<=" >> return (`IAInfix` "<="))
 
-parseAdditive :: Parser AST
+parseAdditive :: Parser IAST
 parseAdditive = chainl1' parseMultiplicative parseAdditiveOp
   where
     parseAdditiveOp =
           (symbol "+" >> return (`IAInfix` "+"))
       <|> (symbol "-" >> return (`IAInfix` "-"))
 
-parseMultiplicative :: Parser AST
+parseMultiplicative :: Parser IAST
 parseMultiplicative = chainl1' parseTerm parseMultiplicativeOp
   where
     parseMultiplicativeOp =
@@ -129,12 +129,12 @@ parseBlockEndKeywords = void $
     <|> symbol "sinon"
     <|> symbol "sinon si"
 
-parseBlock :: Parser [AST]
+parseBlock :: Parser [IAST]
 parseBlock = many $ try $ do
     notFollowedBy parseBlockEndKeywords
     parseInstruction
 
-parseInstruction :: Parser AST
+parseInstruction :: Parser IAST
 parseInstruction =
         parseFunctionDef -- Doit être en premier pour reconnaître le mot-clé 'fonction'
     <|> parseMain
@@ -153,7 +153,7 @@ parseFunctionArgument = do
     return (name, Just typeAnnot)
 
 -- Définition de fonction complète
-parseFunctionDef :: Parser AST
+parseFunctionDef :: Parser IAST
 parseFunctionDef = do
     _ <- symbol "fonction"
     name <- parseIdentifier
@@ -170,14 +170,14 @@ parseFunctionDef = do
 
     return (IAFunctionDef name params (Just returnTypeAnnot) body)
 
-parseMain :: Parser AST
+parseMain :: Parser IAST
 parseMain = do
     _ <- symbol "principal"
     body <- parseBlock
     _ <- symbol "fin"
     return (IAMain body)
 
-parseDeclaration :: Parser AST
+parseDeclaration :: Parser IAST
 parseDeclaration = do
     _ <- symbol "constante" <|> symbol "variable"
 
@@ -190,18 +190,18 @@ parseDeclaration = do
     return (IADeclare name (Just typeAnnot) value)
 
 -- Assignation (Modification de variable)
-parseAssignment :: Parser AST
+parseAssignment :: Parser IAST
 parseAssignment = do
     name <- parseIdentifier
     _ <- symbol "="
     IAAssign name <$> parseExpression
 
-parseReturn :: Parser AST
+parseReturn :: Parser IAST
 parseReturn = do
     _ <- symbol "retourner"
     IAReturn <$> parseExpression
 
-parseElseClause :: Parser (Maybe [AST])
+parseElseClause :: Parser (Maybe [IAST])
 parseElseClause = optional $ do
     maybeElseIf <- optional parseElseIf
     case maybeElseIf of
@@ -211,7 +211,7 @@ parseElseClause = optional $ do
             _ <- symbol "sinon"
             parseBlock
 
-parseElseIf :: Parser AST
+parseElseIf :: Parser IAST
 parseElseIf = do
     _ <- symbol "sinon si"
     _ <- symbol "("
@@ -222,9 +222,9 @@ parseElseIf = do
 
     elseBody <- parseElseClause
 
-    return (IAIf cond bodyThen elseBody)
+    return (IAConditional cond bodyThen elseBody)
 
-parseConditional :: Parser AST
+parseConditional :: Parser IAST
 parseConditional = do
     _ <- symbol "si"
     _ <- symbol "("
@@ -236,9 +236,9 @@ parseConditional = do
     elseBody <- parseElseClause
 
     _ <- symbol "fin"
-    return (IAIf cond bodyThen elseBody)
+    return (IAConditional cond bodyThen elseBody)
 
-parseWhile :: Parser AST
+parseWhile :: Parser IAST
 parseWhile = do
     _ <- symbol "tantque"
     _ <- symbol "("
@@ -248,7 +248,7 @@ parseWhile = do
     _ <- symbol "fin"
     return (IAWhile cond body)
 
-parseFor :: Parser AST
+parseFor :: Parser IAST
 parseFor = do
     _ <- symbol "pour"
     _ <- symbol "("
@@ -271,7 +271,7 @@ parseFor = do
 -- Point d'entrée du Programme CLaD
 -- ====================================================================
 
-parseProgramAST :: Parser AST
+parseProgramAST :: Parser IAST
 parseProgramAST = between sc eof $ do
     instructions <- many parseInstruction
     return (IAProgram instructions)
