@@ -185,9 +185,7 @@ parseDeclaration = do
 
     name <- parseIdentifier
     _ <- symbol "="
-    value <- parseExpression
-
-    return (IADeclare name (Just typeAnnot) value)
+    IADeclare name (Just typeAnnot) <$> parseExpression
 
 -- Assignation (Modification de variable)
 parseAssignment :: Parser IAST
@@ -219,10 +217,7 @@ parseElseIf = do
     _ <- symbol ")"
 
     bodyThen <- parseBlock
-
-    elseBody <- parseElseClause
-
-    return (IAConditional cond bodyThen elseBody)
+    IAConditional cond bodyThen <$> parseElseClause
 
 parseConditional :: Parser IAST
 parseConditional = do
