@@ -13,6 +13,7 @@ all: compiler vm
 compiler:
 	$(MAKE) -C $(COMPILER_DIR)
 
+
 vm:
 	$(MAKE) -C $(VM_DIR)
 
@@ -23,6 +24,7 @@ clean:
 fclean:
 	$(MAKE) -C $(COMPILER_DIR) fclean
 	$(MAKE) -C $(VM_DIR) fclean
+
 
 re: fclean all
 
