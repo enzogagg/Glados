@@ -9,42 +9,72 @@ module Execution.Loop where
 
 import Execution.State (VMState(..))
 import Types (Instruction(..), Value(..))
-import Execution.Ops (opPushConst, opPushInt, opPop, opAdd, opSub, opEq)
-
-import System.IO (hPutStrLn, stderr)
+import Execution.Ops.ArithmeticOperations(opAdd, opSub, opMul, opDiv, opMod, opNeg)
+import Execution.Ops.AssetManagement(opPushConst, opPushInt, opPushFloat, opPushBool, opPushString, opPushNil, opPop)
+import Execution.Ops.ComparisonOperations(opEq, opNeq, opLt, opGt, opLte, opGte)
+import Execution.Ops.ListOperations (opCons, opHead, opTail, opList, opLen)
+import Execution.Ops.SymbolsAndEvaluation(opMakeSymbol, opQuote, opEval)
+import Execution.Ops.VariableManagement(opLoad, opStore, opDefine)
+import Execution.Ops.FlowControl (opJump, opJumpIfTrue, opJumpIfFalse)
+import Execution.Ops.FunctionManagement (opCall, opReturn, opClosure, opLoadArg)
+import Execution.Ops.Input (opInput)
 
 execLoop :: VMState -> IO ()
 execLoop state =
-    if ip state == length (instructions state)
-    then return ()
-    else if ip state > length (instructions state) || ip state < 0
-    then hPutStrLn stderr "Error: Instruction pointer out of bounds"
+    if ip state >= length (instructions state) || ip state < 0
+    then putStrLn "Error: Instruction pointer out of bounds"
     else case instructions state !! ip state of
         Halt -> return ()
-        PushConst idx -> nextStep (opPushConst (constants state !! idx) state)
+        PushConst idx ->
+            if idx < 0 || idx >= length (constants state)
+            then nextStep (Left ("Error: Constant index out of bounds: " ++ show idx))
+            else nextStep (opPushConst (constants state !! idx) state)
         PushInt i -> nextStep (opPushInt i state)
+        PushFloat f -> nextStep (opPushFloat f state)
+        PushBool b -> nextStep (opPushBool b state)
+        PushString s -> nextStep (opPushString s state)
+        PushNil -> nextStep (opPushNil state)
         Pop -> nextStep (opPop state)
         Add -> nextStep (opAdd state)
         Sub -> nextStep (opSub state)
+        Mul -> nextStep (opMul state)
+        Div -> nextStep (opDiv state)
+        Mod -> nextStep (opMod state)
+        Neg -> nextStep (opNeg state)
         Eq -> nextStep (opEq state)
+        Neq -> nextStep (opNeq state)
+        Lt -> nextStep (opLt state)
+        Gt -> nextStep (opGt state)
+        Le -> nextStep (opLte state)
+        Ge -> nextStep (opGte state)
+        Cons -> nextStep (opCons state)
+        Head -> nextStep (opHead state)
+        Tail -> nextStep (opTail state)
+        ListMake n -> nextStep (opList n state)
+        Len -> nextStep (opLen state)
+        MakeSymbol -> nextStep (opMakeSymbol state)
+        Quote -> nextStep (opQuote state)
+        Eval -> nextStep (opEval state)
+        Load s -> nextStep (opLoad s state)
+        Store s -> nextStep (opStore s state)
+        Define s -> nextStep (opDefine s state)
+        Jump addr -> nextStep (opJump addr state)
+        JumpIfTrue addr -> nextStep (opJumpIfTrue addr state)
+        JumpIfFalse addr -> nextStep (opJumpIfFalse addr state)
+        Call funcId argCount -> nextStep (opCall funcId argCount state)
+        Return -> nextStep (opReturn state)
+        Closure funcId -> nextStep (opClosure funcId state)
+        LoadArg idx -> nextStep (opLoadArg idx state)
         Print -> case stack state of
-                    [] -> hPutStrLn stderr "Error: Print requires a value on the stack"
+                    [] -> putStrLn "Error: Print requires a value on the stack"
                     (val : _) -> do
-                        putStrLn (showValue val)
+                        print val
                         nextStep (Right (state {ip = ip state}))
+        Input -> do
+            line <- getLine
+            nextStep (opInput line state)
         _ -> nextStep (Left "Error: Unknown instruction")
     where
         nextStep :: Either String VMState -> IO ()
-        nextStep (Left err) = hPutStrLn stderr ("Runtime Error: " ++ err)
+        nextStep (Left err) = putStrLn ("Runtime Error: " ++ err)
         nextStep (Right newState) = execLoop (newState {ip = ip newState + 1})
-
-showValue :: Value -> String
-showValue (IntVal i) = show i
-showValue (FloatVal f) = show f
-showValue (BoolVal b) = if b then "#t" else "#f"
-showValue (CharVal c) = [c]
-showValue (StringVal s) = s
-showValue (ListVal l) = "(" ++ unwords (map showValue l) ++ ")"
-showValue (SymbolVal s) = s
-showValue NilVal = "nil"
-showValue (FunctionVal _) = "<function>"

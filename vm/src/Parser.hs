@@ -91,8 +91,9 @@ parseInstruction pool = do
         0x02 -> PushInt . fromIntegral <$> getInt32be
         0x03 -> PushFloat . word32ToFloat <$> getWord32be
         0x04 -> PushBool . (/= 0) <$> getWord8
-        0x05 -> return PushNil
-        0x06 -> return Pop
+        0x05 -> PushString . getStringFromPool pool . fromIntegral <$> getInt32be
+        0x06 -> return PushNil
+        0x07 -> return Pop
 
         0x10 -> return Add
         0x11 -> return Sub
@@ -108,12 +109,11 @@ parseInstruction pool = do
         0x24 -> return Le
         0x25 -> return Ge
 
-        -- TODO
-        -- 0x30 -> return Cons
-        -- 0x31 -> return Head
-        -- 0x32 -> return Tail
-        -- 0x33 -> TODO
-        -- 0x34 -> return Len
+        0x30 -> return Cons
+        0x31 -> return Head
+        0x32 -> return Tail
+        0x33 -> ListMake . fromIntegral <$> getInt32be
+        0x34 -> return Len
 
         0x50 -> Load . getStringFromPool pool . fromIntegral <$> getInt32be
         0x51 -> Store . getStringFromPool pool . fromIntegral <$> getInt32be
@@ -127,6 +127,8 @@ parseInstruction pool = do
             fIdx <- getInt32be
             Call (fromIntegral fIdx) . fromIntegral <$> getWord8
         0x71 -> return Return
+        0x72 -> Closure . fromIntegral <$> getInt32be
+        0x73 -> LoadArg . fromIntegral <$> getInt32be
 
         0x80 -> return Print
         0x81 -> return Input
