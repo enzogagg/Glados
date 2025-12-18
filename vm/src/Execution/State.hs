@@ -17,7 +17,8 @@ data VMState = VMState {
     stack     :: [Value],               -- The stack of the virtual machine. (Store values)
     env       :: Map.Map String Value,  -- The environment of the virtual machine. (Store variables)
     ip        :: Int,                   -- The instruction pointer. (Current instruction)
-    callStack :: [Int],                 -- The call stack. (Store function calls)
+    callStack :: [(Int, [Value])],      -- The call stack. (Store return addresses and previous arguments)
+    curArgs   :: [Value],               -- The current function arguments.
     isRunning :: Bool,                  -- The boolean to know if the virtual machine is running.
 
     -- === VM Data ===
@@ -32,6 +33,7 @@ newVMState insts consts funcs = VMState {
     env = Map.empty,
     ip = 0,
     callStack = [],
+    curArgs = [],
     isRunning = False,
     instructions = insts,
     constants = consts,

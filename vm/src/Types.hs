@@ -17,8 +17,9 @@ data Instruction
     | PushInt Int             -- 02
     | PushFloat Float         -- 03
     | PushBool Bool           -- 04
-    | PushNil                 -- 05
-    | Pop                     -- 06
+    | PushString String       -- 05
+    | PushNil                 -- 06
+    | Pop                     -- 07
 
     | Add                     -- 10
     | Sub                     -- 11
@@ -40,6 +41,10 @@ data Instruction
     | ListMake Int            -- 33
     | Len                     -- 34
 
+    | MakeSymbol              -- 40
+    | Quote                   -- 41
+    | Eval                    -- 42
+
     | Load String             -- 50
     | Store String            -- 51
     | Define String           -- 52
@@ -47,8 +52,11 @@ data Instruction
     | Jump Int                -- 60
     | JumpIfTrue Int          -- 61
     | JumpIfFalse Int         -- 62
+
     | Call Int Int            -- 70
     | Return                  -- 71
+    | Closure Int             -- 72
+    | LoadArg Int             -- 73
 
     | Print                   -- 80
     | Input                   -- 81
