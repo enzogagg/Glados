@@ -85,7 +85,7 @@ spec = describe "ParseToAST" $ do
         it "parses conditional (si/fin)" $ do
             let cond = IAInfix (IASymbol "x") ">" (IANumber 10)
             let bodyThen = [IAReturn (IABoolean True)]
-            let expected = IAProgram [IAIf cond bodyThen Nothing]
+            let expected = IAProgram [IAConditional cond bodyThen Nothing]
             let input = "si (x > 10) retourner vrai fin"
             parse parseProgramAST "" input `shouldBe` Right expected
 
@@ -190,8 +190,8 @@ spec = describe "ParseToAST" $ do
             let body1 = [IAReturn (IANumber 1)]
             let body2 = [IAReturn (IANumber 2)]
             let bodyElse = [IAReturn (IANumber 3)]
-            let elseIfNode = IAIf cond2 body2 (Just bodyElse)
-            let expected = IAProgram [IAIf cond1 body1 (Just [elseIfNode])]
+            let elseIfNode = IAConditional cond2 body2 (Just bodyElse)
+            let expected = IAProgram [IAConditional cond1 body1 (Just [elseIfNode])]
             let input = unlines [
                     "si (x > 10)",
                     "  retourner 1",

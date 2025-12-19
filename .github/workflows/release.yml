@@ -11,28 +11,25 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
+
     steps:
-      
+
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Haskell Stack
         uses: haskell-actions/setup@v2
         with:
           enable-stack: true
 
-      - name: Build Binary (Release Mode)
+      - name: Build Binaries (Release Mode)
         run: |
-          stack build --allow-different-user --ghc-options="-O2"
-          
-          BINARY_PATH=$(stack path --local-install-root --allow-different-user)/bin/glados-exe
-          cp "$BINARY_PATH" ./glados
-      
-      - name: Package Binary
+          make
+
+      - name: Package Binaries
         run: |
-          tar -czvf glados-linux-x86_64.tar.gz glados README.md
-      
+          tar -czvf glados-linux-x86_64.tar.gz glados-compiler glados-vm README.md
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
