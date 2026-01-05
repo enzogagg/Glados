@@ -326,7 +326,7 @@ generateInstruction (IAAssign name expr) = do
             let storeBytes = BL.unpack $ runPut $ putWord32be (fromIntegral idx)
             return $ Right $ exprCode ++ (opcodeToByte OpStore : storeBytes)
 
-generateInstruction (IACall "print" args) = do
+generateInstruction (IACall "afficher" args) = do
     results <- mapM generateInstruction args
     case sequence results of
         Left err -> return $ Left err
