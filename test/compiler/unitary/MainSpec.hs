@@ -3,15 +3,14 @@
 module MainSpec (spec) where
 
 import Test.Hspec
-import ParseArguments (parseContent, getScmExtension)
-import ParseValue (parseValue)
+import ParseArguments (parseContent, getCladExtension)
 
 spec :: Spec
 spec = do
     describe "parseContent - error cases" $ do
 
         it "returns error when wrong number of arguments" $ do
-            let args = ["file1.scm", "file2.scm"]
+            let args = ["file1.clad", "file2.clad"]
             result <- parseContent args
             result `shouldBe` Left "wrong number of arguments"
 
@@ -21,21 +20,20 @@ spec = do
             result `shouldBe` Left "invalid type file"
 
         it "returns error when file does not exist" $ do
-            let args = ["nofile.scm"]
+            let args = ["nofile.clad"]
             result <- parseContent args
-            result `shouldBe` Left "file does not exist: nofile.scm"
+            result `shouldBe` Left "file does not exist: nofile.clad"
 
-    describe "getScmExtension" $ do
-        it "returns True for .scm files" $ do
-            getScmExtension "test.scm" `shouldBe` True
-            getScmExtension "path/to/file.scm" `shouldBe` True
+        it "returns error when no input file provided" $ do
+            let args = []
+            pendingWith "Testing parseContent with empty args requires more context setup"
 
-        it "returns False for non-.scm files" $ do
-            getScmExtension "test.txt" `shouldBe` False
-            getScmExtension "test" `shouldBe` False
-            getScmExtension "test.scheme" `shouldBe` False
+    describe "getCladExtension" $ do
+        it "returns True for .clad files" $ do
+            getCladExtension "test.clad" `shouldBe` True
+            getCladExtension "path/to/file.clad" `shouldBe` True
 
-    describe "parseValue" $ do
-        it "returns error on empty program" $ do
-            result <- parseValue []
-            result `shouldBe` Left "empty program"
+        it "returns False for non-.clad files" $ do
+            getCladExtension "test.txt" `shouldBe` False
+            getCladExtension "test" `shouldBe` False
+            getCladExtension "test.scheme" `shouldBe` False

@@ -144,7 +144,6 @@ spec = describe "ParseValue" $ do
         it "shows floats" $ do
             showValue (FloatVal 3.14) `shouldBe` "3.14"
 
-
     describe "primAdd" $ do
         it "adds two integers" $ do
             primAdd [IntVal 2, IntVal 3] `shouldBe` Right (IntVal 5)
@@ -152,7 +151,6 @@ spec = describe "ParseValue" $ do
             primAdd [FloatVal 2.5, FloatVal 3.5] `shouldBeApprox` Right (FloatVal 6.0)
         it "fails with wrong number of arguments" $ do
             primAdd [IntVal 2] `shouldBe` Left "+ requires two integer arguments"
-
     describe "primSub" $ do
         it "subtracts two integers" $ do
             primSub [IntVal 2, IntVal 3] `shouldBe` Right (IntVal (-1))
@@ -160,7 +158,6 @@ spec = describe "ParseValue" $ do
             primSub [FloatVal 5.5, FloatVal 2.5] `shouldBeApprox` Right (FloatVal 3.0)
         it "fails with wrong arguments" $ do
             primSub [IntVal 2] `shouldBe` Left "- requires two integer arguments"
-
     describe "primMul" $ do
         it "multiplies two integers" $ do
             primMul [IntVal 2, IntVal 3] `shouldBe` Right (IntVal 6)
@@ -168,7 +165,6 @@ spec = describe "ParseValue" $ do
             primMul [FloatVal 2.5, FloatVal 4.0] `shouldBeApprox` Right (FloatVal 10.0)
         it "fails with wrong arguments" $ do
             primMul [IntVal 2] `shouldBe` Left "* requires two integer arguments"
-
     describe "primDiv" $ do
         it "divides two integers" $ do
             primDiv [IntVal 6, IntVal 3] `shouldBe` Right (IntVal 2)
@@ -180,7 +176,6 @@ spec = describe "ParseValue" $ do
             primDiv [FloatVal 5.0, FloatVal 0.0] `shouldBe` Left "division by zero"
         it "fails with wrong arguments" $ do
             primDiv [IntVal 2] `shouldBe` Left "div requires two integer arguments"
-
     describe "primMod" $ do
         it "modulates two integers" $ do
             primMod [IntVal 7, IntVal 3] `shouldBe` Right (IntVal 1)
@@ -190,7 +185,6 @@ spec = describe "ParseValue" $ do
             primMod [FloatVal 5.0, FloatVal 0.0] `shouldBe` Left "modulo by zero"
         it "fails with wrong arguments" $ do
             primMod [IntVal 2] `shouldBe` Left "mod requires two integer arguments"
-
     describe "primLt" $ do
         it "returns true if the first integer is less than the second" $ do
             primLt [IntVal 2, IntVal 3] `shouldBe` Right (BoolVal True)
@@ -202,7 +196,6 @@ spec = describe "ParseValue" $ do
             primLt [FloatVal 5.5, FloatVal 3.5] `shouldBe` Right (BoolVal False)
         it "fails with wrong arguments" $ do
             primLt [IntVal 2] `shouldBe` Left "< requires two integer arguments"
-
     describe "primEq" $ do
         it "returns true if the two integers are equal" $ do
             primEq [IntVal 2, IntVal 2] `shouldBe` Right (BoolVal True)

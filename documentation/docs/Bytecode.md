@@ -46,7 +46,7 @@ Le bytecode utilise un système de typage unifié basé sur des tags d'un octet 
 | 05            | List              | Liste                          |
 | 06            | Symbol            | Symbole                        |
 | 07            | Nil               | Valeur nulle                   |
-| 08            | Function/Closure  | Fonction ou closure            |
+| 08            | Function          | Référence vers Function Table  |
 | 09            | Object            | Objet (extension future)       |
 
 ### 2.2 Format des valeurs
@@ -58,8 +58,16 @@ Chaque valeur sur la pile respecte le format suivant :
 
 ### 2.3 Exemples d'encodage
 
-00 00 00 00 2A = Int 42 01 40 28 00 00 = Float 2.5 02 01 = Bool true 04 00 00 00 05 'H' 'e' 'l' 'l' 'o' = String "Hello" 06 00 00 00 03 'f' 'o' 'o' = Symbol 'foo'
+**Note sur les flottants** : Ils suivent la norme **IEEE-754 simple précision (32 bits)**, format Big Endian.
 
+```
+00 00 00 00 2A     = Int 42
+01 40 28 00 00     = Float 2.5  (0x40280000)
+01 41 28 00 00     = Float 10.5 (0x41280000)
+02 01              = Bool true
+04 00 00 00 05 'H' 'e' 'l' 'l' 'o'  = String "Hello"
+06 00 00 00 03 'f' 'o' 'o'          = Symbol 'foo'
+```
 
 ---
 
@@ -69,15 +77,14 @@ Chaque valeur sur la pile respecte le format suivant :
 
 | Opcode | Instruction      | Description                                |
 | ------ | ---------------- | ------------------------------------------ |
-| 01     | PUSH_CONST index | Pousse une constante depuis le pool        |
-| 02     | PUSH_INT value   | Pousse un entier sur la pile               |
-| 03     | PUSH_FLOAT value | Pousse un flottant sur la pile             |
-| 04     | PUSH_BOOL value  | Pousse un booléen sur la pile              |
-| 05     | PUSH_STRING      | Pousse une chaîne sur la pile              |
-| 06     | PUSH_NIL         | Pousse la valeur nulle sur la pile         |
-| 07     | POP              | Retire la valeur au sommet de la pile      |
+| 01     | PUSH_CONST index | Pousse une constante (String, List, etc.)  |
+| 02     | PUSH_INT value   | Pousse un entier immédiat (4 bytes)        |
+| 03     | PUSH_FLOAT value | Pousse un flottant immédiat (4 bytes)      |
+| 04     | PUSH_BOOL value  | Pousse un booléen immédiat (1 byte)        |
+| 05     | PUSH_NIL         | Pousse la valeur nulle sur la pile         |
+| 06     | POP              | Retire la valeur au sommet de la pile      |
 
-**Note** : Le constant pool permet de stocker efficacement les valeurs volumineuses (chaînes, symboles, listes complexes).
+**Note importante** : Les types complexes (Strings, Symboles, Listes) doivent être stockés dans le Constant Pool et chargés via `PUSH_CONST`. Les types immédiats (Int, Float, Bool) peuvent être encodés directement dans l'instruction.
 
 ---
 
@@ -245,11 +252,9 @@ HALT
 02 00 00 00 01    ; PUSH_INT 1
 02 00 00 00 02    ; PUSH_INT 2
 02 00 00 00 03    ; PUSH_INT 3
-33 03             ; LIST 3
-51 00             ; STORE 0 ("liste")
+51 00 00 00 00    ; STORE 0 ("liste")
 
-50 00             ; LOAD 0 ("liste")
-31                ; HEAD
+50 00 00 00 00    ; LOAD 0 ("liste")
 02 00 00 00 0A    ; PUSH_INT 10
 10                ; ADD
 80                ; PRINT

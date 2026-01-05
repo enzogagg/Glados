@@ -35,9 +35,12 @@ ghc-options:
 - -Wredundant-constraints
 
 library:
-  source-dirs: src
+  source-dirs:
+  - src
+  - src/parser
 
 executables:
+
   glados-compiler:
     main:                Main.hs
     source-dirs:         app
@@ -48,10 +51,11 @@ executables:
     dependencies:
     - glados
 
+
 tests:
   glados-test:
     main:                Spec.hs
-    source-dirs:         test/compiler/unitary
+    source-dirs:         ../test/compiler/unitary
     ghc-options:
     - -threaded
     - -rtsopts
