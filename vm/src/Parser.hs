@@ -54,6 +54,18 @@ parseConstantEntry = do
             return $ SymbolVal (map (toEnum . fromEnum) (BL.unpack (BL.fromStrict str)))
         0x07 -> return NilVal
         0x08 -> FunctionVal . fromIntegral <$> getInt32be
+        0x09 -> do -- Tuple
+             _ <- getByteString (fromIntegral len)
+             return $ TupleVal []
+        0x0A -> do -- Array
+             _ <- getByteString (fromIntegral len)
+             return $ ArrayVal []
+        0x0B -> do -- Struct
+             _ <- getByteString (fromIntegral len)
+             return $ StructVal []
+        0x0C -> do -- Map
+             _ <- getByteString (fromIntegral len)
+             return $ MapVal []
         _ -> fail $ "Unknown constant type tag: " ++ show tag
 
 parseFunctionTable :: Get [FunctionMeta]
@@ -132,6 +144,18 @@ parseInstruction pool = do
 
         0x80 -> return Print
         0x81 -> return Input
+
+        0x90 -> MakeTuple . fromIntegral <$> getInt32be
+        0x91 -> TupleGet . fromIntegral <$> getInt32be
+        0x92 -> MakeArray . fromIntegral <$> getInt32be
+        0x93 -> return ArrayGet
+        0x94 -> return ArraySet
+        0x95 -> MakeMap . fromIntegral <$> getInt32be
+        0x96 -> return MapGet
+        0x97 -> return MapSet
+        0x98 -> MakeStruct . fromIntegral <$> getInt32be
+        0x99 -> StructGet . getStringFromPool pool . fromIntegral <$> getInt32be
+        0x9A -> StructSet . getStringFromPool pool . fromIntegral <$> getInt32be
 
         0xFF -> return Halt
         _ -> fail $ "Unknown Opcode: " ++ show opcode
