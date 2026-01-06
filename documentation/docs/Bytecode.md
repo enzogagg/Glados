@@ -252,9 +252,11 @@ La VM CLaD est conçue pour supporter :
 ```clad
 liste = [1, 2, 3]
 print(head(liste) + 10)
+```
 
-5.2 Représentation en bytecode assembleur
+### 5.2 Représentation en bytecode assembleur
 
+```assembly
 PUSH_INT 1
 PUSH_INT 2
 PUSH_INT 3
@@ -267,9 +269,11 @@ PUSH_INT 10
 ADD
 PRINT
 HALT
+```
 
-5.3 Encôdage binaire
+### 5.3 Encôdage binaire
 
+```binary
 02 00 00 00 01    ; PUSH_INT 1
 02 00 00 00 02    ; PUSH_INT 2
 02 00 00 00 03    ; PUSH_INT 3
@@ -280,13 +284,15 @@ HALT
 10                ; ADD
 80                ; PRINT
 FF                ; HALT
+```
 
-6. Format du fichier .cbc
-6.1 Vue d'ensemble de la structure
+### 6. Format du fichier .cbc
+
+#### 6.1 Vue d'ensemble de la structure
 
 Pour visualiser clairement la structure du fichier .cbc, voici un diagramme Mermaid :
-Extrait de code
 
+```mermaid
 graph TD
     A[Fichier .cbc] --> B(HEADER);
     A --> C(CONSTANT POOL);
@@ -327,8 +333,10 @@ graph TD
         E3[Instruction 1] --> E3_1(Opcode : 1 byte);
         E3_1 --> E3_2(Operands : variable);
     end
+```
 
-6.2 Header (10 bytes)
+#### 6.2 Header (10 bytes)
+
 Offset   Taille   Champ Valeur / Description
 0x00  4  Magic Number   0x43 0x42 0x43 0x00 ("CBC\0")
 0x04  2  Version  0x01 0x00 (version 1.0)
@@ -340,7 +348,7 @@ Exemple en hexadécimal :
 43 42 43 00 | 01 00 | 00 | 00 00 00
    Magic    | Ver.  |Flg | Reserved
 
-6.3 Constant Pool
+#### 6.3 Constant Pool
 
 Structure :
 Champ Taille   Description
@@ -364,7 +372,7 @@ Int 42:
 00 | 00 00 00 04 | 00 00 00 2A
 Type | Length | Data (32-bit int)
 
-6.4 Function Table
+#### 6.4 Function Table
 
 Structure :
 Champ Taille   Description
@@ -386,7 +394,7 @@ Function 1: main (0 args, @ 0x0150)
 00 00 00 01 | 00 00 01 50 | 00
    Index       Address      Args
 
-6.5 Instructions
+#### 6.5 Instructions
 
 Structure :
 Champ Taille   Description
@@ -409,10 +417,11 @@ Instruction: CALL 0 with 2 args
 70 | 00 00 00 00 | 02
 Opcode | Function Index | ArgCount
 
-6.6 Exemple complet de fichier .cbc
+#### 6.6 Exemple complet de fichier .cbc
 
 Programme : print(42)
 
+```binary
 43 42 43 00 01 00 00 00 00 00  ; HEADER (10 bytes)
 00 00 00 00                    ; CONSTANT POOL (Count: 0)
 00 00 00 00                    ; FUNCTION TABLE (Count: 0)

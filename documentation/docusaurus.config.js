@@ -20,7 +20,6 @@ const config = {
     trailingSlash: false,
 
     onBrokenLinks: 'throw',
-    // onBrokenMarkdownLinks: 'warn', // Deprecated in v4
 
     // --- CONFIGURATION I18N CORRIGÉE ---
     i18n: {
