@@ -3,7 +3,7 @@
 module ParseToASTSpec (spec) where
 
 import Test.Hspec
-import ParseToAST ()
+import ParseToAST (parseAST)
 import CladParser (parseProgramAST)
 import Types
 import Text.Megaparsec (parse)
@@ -110,7 +110,7 @@ spec = describe "ParseToAST" $ do
 
         it "fails on invalid syntax (misplaced operator)" $ do
             let input = "constante entier x = +"
-            case parse parseProgramAST "" input of
+            case parse parseProgramAST "" input of -- Le test passe car il y a bien une erreur
                 Left _ -> return ()
                 Right _ -> expectationFailure "Expected parse error on dangling operator"
 
@@ -122,9 +122,9 @@ spec = describe "ParseToAST" $ do
 
         it "fails on invalid syntax (no operator)" $ do
             let input = "x 10"
-            case parse parseProgramAST "" input of
-                Left _ -> return ()
-                Right _ -> expectationFailure "Expected parse error with no operator"
+            case parseAST input of
+                Left _ -> return () -- Succès du test (il y a une erreur)
+                Right ast -> expectationFailure $ "Devrait échouer, mais a retourné l'AST : " ++ show ast
 
     -- ====================================================================
     -- Tests de Structure et de Logique (Fonctions, Boucles, Conditions)
@@ -172,11 +172,12 @@ spec = describe "ParseToAST" $ do
         it "parses C-style for loop (pour)" $ do
             let initExpr = IADeclare "i" (Just IntT) (IANumber 0)
             let condExpr = IAInfix (IASymbol "i") "<" (IANumber 10)
-            let incExpr = IAInfix (IASymbol "i") "=" (IAInfix (IASymbol "i") "+" (IANumber 1))
-            let body = [IAReturn (IASymbol "i")]
-            let expected = IAProgram [IAFor initExpr condExpr incExpr body]
-            let input = "pour (variable entier i = 0; i < 10; i = i + 1) retourner i fin"
-            parse parseProgramAST "" input `shouldBe` Right expected
+            let incExpr  = IAAssign "i" (IAInfix (IASymbol "i") "+" (IANumber 1)) 
+            let body     = [IAReturn (IASymbol "i")]
+            let expected = Right (IAProgram [IAFor initExpr condExpr incExpr body])
+            
+            let input = "pour (variable entier i = 0 ; i < 10 ; i = i + 1) retourner i fin"
+            parseAST input `shouldBe` expected
 
         it "fails when for loop misses semicolon" $ do
             let input = "pour (variable entier i = 0 i < 10; i = i + 1) retourner i fin"

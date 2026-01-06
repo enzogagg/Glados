@@ -142,7 +142,7 @@ parseMultiplicative = chainl1' parseTerm parseMultiplicativeOp
 -- ====================================================================
 
 parseBlock :: Parser [AST]
-parseBlock = many parseInstruction
+parseBlock = many $ notFollowedBy (symbol "fin" <|> symbol "sinon") >> parseInstruction
 
 parseInstruction :: Parser AST
 parseInstruction =
@@ -268,7 +268,7 @@ parseFor = do
     condExpr <- parseExpression
     _ <- symbol ";"
 
-    incExpr <- parseExpression
+    incExpr <- try parseAssignment <|> parseExpression
     _ <- symbol ")"
 
     body <- parseBlock
