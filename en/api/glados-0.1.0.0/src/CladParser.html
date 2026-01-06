@@ -1,0 +1,804 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-
+-- EPITECH PROJECT, 2025
+-- Glados
+-- File description:
+-- CladParser (Handles AST construction and precedence)
+-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="CladParser.html"><span class="hs-identifier">CladParser</span></a></span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="CladParser.html#parseProgramAST"><span class="hs-identifier">parseProgramAST</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><a href="CladParser.html#parseInstruction"><span class="hs-identifier">parseInstruction</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>    </span><span class="annot"><a href="CladParser.html#parseExpression"><span class="hs-identifier">parseExpression</span></a></span><span>
+</span><span id="line-12"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-13"></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Types.html"><span class="hs-identifier">Types</span></a></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="CladLexer.html"><span class="hs-identifier">CladLexer</span></a></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Text.Megaparsec</span></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Void</span></span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">void</span></span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span>
+</span><span id="line-20"></span><span class="hs-comment">-- ====================================================================</span><span>
+</span><span id="line-21"></span><span class="hs-comment">-- Parsing des Types (Annotations)</span><span>
+</span><span id="line-22"></span><span class="hs-comment">-- ====================================================================</span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span class="hs-comment">-- Analyse un type de base (entier, flottant, bool, phrase, neant)</span><span>
+</span><span id="line-25"></span><span class="annot"><a href="CladParser.html#parseBaseType"><span class="hs-identifier hs-type">parseBaseType</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Types.html#CladType"><span class="hs-identifier hs-type">CladType</span></a></span><span>
+</span><span id="line-26"></span><span id="parseBaseType"><span class="annot"><span class="annottext">parseBaseType :: Parser CladType
+</span><a href="CladParser.html#parseBaseType"><span class="hs-identifier hs-var hs-var">parseBaseType</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-27"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;entier&quot;</span></span><span> </span><span class="annot"><span class="annottext">Parser String -&gt; Parser CladType -&gt; Parser CladType
+forall a b.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity b -&gt; ParsecT Void String Identity b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">CladType -&gt; Parser CladType
+forall a. a -&gt; ParsecT Void String Identity a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">CladType
+</span><a href="Types.html#IntT"><span class="hs-identifier hs-var">IntT</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-28"></span><span>  </span><span class="annot"><span class="annottext">Parser CladType -&gt; Parser CladType -&gt; Parser CladType
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;flottant&quot;</span></span><span> </span><span class="annot"><span class="annottext">Parser String -&gt; Parser CladType -&gt; Parser CladType
+forall a b.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity b -&gt; ParsecT Void String Identity b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">CladType -&gt; Parser CladType
+forall a. a -&gt; ParsecT Void String Identity a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">CladType
+</span><a href="Types.html#FloatT"><span class="hs-identifier hs-var">FloatT</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span><span>  </span><span class="annot"><span class="annottext">Parser CladType -&gt; Parser CladType -&gt; Parser CladType
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;pileouface&quot;</span></span><span> </span><span class="annot"><span class="annottext">Parser String -&gt; Parser CladType -&gt; Parser CladType
+forall a b.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity b -&gt; ParsecT Void String Identity b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">CladType -&gt; Parser CladType
+forall a. a -&gt; ParsecT Void String Identity a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">CladType
+</span><a href="Types.html#BoolT"><span class="hs-identifier hs-var">BoolT</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span>  </span><span class="annot"><span class="annottext">Parser CladType -&gt; Parser CladType -&gt; Parser CladType
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;phrase&quot;</span></span><span> </span><span class="annot"><span class="annottext">Parser String -&gt; Parser CladType -&gt; Parser CladType
+forall a b.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity b -&gt; ParsecT Void String Identity b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">CladType -&gt; Parser CladType
+forall a. a -&gt; ParsecT Void String Identity a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">CladType
+</span><a href="Types.html#StringT"><span class="hs-identifier hs-var">StringT</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span>  </span><span class="annot"><span class="annottext">Parser CladType -&gt; Parser CladType -&gt; Parser CladType
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;neant&quot;</span></span><span> </span><span class="annot"><span class="annottext">Parser String -&gt; Parser CladType -&gt; Parser CladType
+forall a b.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity b -&gt; ParsecT Void String Identity b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">CladType -&gt; Parser CladType
+forall a. a -&gt; ParsecT Void String Identity a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">CladType
+</span><a href="Types.html#VoidT"><span class="hs-identifier hs-var">VoidT</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span>
+</span><span id="line-33"></span><span class="annot"><a href="CladParser.html#parseExplicitType"><span class="hs-identifier hs-type">parseExplicitType</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Types.html#CladType"><span class="hs-identifier hs-type">CladType</span></a></span><span>
+</span><span id="line-34"></span><span id="parseExplicitType"><span class="annot"><span class="annottext">parseExplicitType :: Parser CladType
+</span><a href="CladParser.html#parseExplicitType"><span class="hs-identifier hs-var hs-var">parseExplicitType</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-35"></span><span>      </span><span class="hs-special">(</span><span class="hs-keyword">do</span><span>
+</span><span id="line-36"></span><span>        </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;liste&quot;</span></span><span>
+</span><span id="line-37"></span><span>        </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;&lt;&quot;</span></span><span>
+</span><span id="line-38"></span><span>        </span><span id="local-6989586621679069494"><span class="annot"><a href="#local-6989586621679069494"><span class="hs-identifier hs-var">elementType</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladParser.html#parseExplicitType"><span class="hs-identifier hs-type">parseExplicitType</span></a></span><span>
+</span><span id="line-39"></span><span>        </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;&gt;&quot;</span></span><span>
+</span><span id="line-40"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Types.html#ListT"><span class="hs-identifier hs-type">ListT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069494"><span class="hs-identifier hs-type">elementType</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-41"></span><span>      </span><span class="hs-special">)</span><span>
+</span><span id="line-42"></span><span>  </span><span class="annot"><span class="annottext">Parser CladType -&gt; Parser CladType -&gt; Parser CladType
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser CladType
+</span><a href="CladParser.html#parseBaseType"><span class="hs-identifier hs-var">parseBaseType</span></a></span><span>
+</span><span id="line-43"></span><span>
+</span><span id="line-44"></span><span class="hs-comment">-- ====================================================================</span><span>
+</span><span id="line-45"></span><span class="hs-comment">-- Parsing des Expressions (Terminaux simples et appels de fonction)</span><span>
+</span><span id="line-46"></span><span class="hs-comment">-- ====================================================================</span><span>
+</span><span id="line-47"></span><span>
+</span><span id="line-48"></span><span class="hs-comment">-- overloaded chainl1 car erreur quand import de Megaparsec</span><span>
+</span><span id="line-49"></span><span id="local-6989586621679069305"><span class="annot"><a href="CladParser.html#chainl1%27"><span class="hs-identifier hs-type">chainl1'</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069305"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679069305"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679069305"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679069305"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069305"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-50"></span><span id="chainl1%27"><span class="annot"><span class="annottext">chainl1' :: forall a. Parser a -&gt; Parser (a -&gt; a -&gt; a) -&gt; Parser a
+</span><a href="CladParser.html#chainl1%27"><span class="hs-identifier hs-var hs-var">chainl1'</span></a></span></span><span> </span><span id="local-6989586621679069498"><span class="annot"><span class="annottext">Parser a
+</span><a href="#local-6989586621679069498"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span id="local-6989586621679069499"><span class="annot"><span class="annottext">Parser (a -&gt; a -&gt; a)
+</span><a href="#local-6989586621679069499"><span class="hs-identifier hs-var">op</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-51"></span><span>    </span><span id="local-6989586621679069500"><span class="annot"><a href="#local-6989586621679069500"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser a
+</span><a href="#local-6989586621679069498"><span class="hs-identifier hs-var">p</span></a></span><span>
+</span><span id="line-52"></span><span>    </span><span class="annot"><a href="#local-6989586621679069501"><span class="hs-identifier hs-type">rest</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069500"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-53"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-54"></span><span>    </span><span id="local-6989586621679069501"><span class="annot"><span class="annottext">rest :: a -&gt; Parser a
+</span><a href="#local-6989586621679069501"><span class="hs-identifier hs-var hs-var">rest</span></a></span></span><span> </span><span id="local-6989586621679069509"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679069509"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-55"></span><span>        </span><span class="hs-special">(</span><span class="hs-keyword">do</span><span>
+</span><span id="line-56"></span><span>            </span><span id="local-6989586621679069510"><span class="annot"><a href="#local-6989586621679069510"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser (a -&gt; a -&gt; a)
+</span><a href="#local-6989586621679069499"><span class="hs-identifier hs-var">op</span></a></span><span>
+</span><span id="line-57"></span><span>            </span><span id="local-6989586621679069511"><span class="annot"><a href="#local-6989586621679069511"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="#local-6989586621679069498"><span class="hs-identifier hs-type">p</span></a></span><span>
+</span><span id="line-58"></span><span>            </span><span class="annot"><a href="#local-6989586621679069501"><span class="hs-identifier hs-type">rest</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679069510"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069509"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069511"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-59"></span><span>        </span><span class="hs-special">)</span><span>
+</span><span id="line-60"></span><span>        </span><span class="annot"><span class="annottext">Parser a -&gt; Parser a -&gt; Parser a
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">a -&gt; Parser a
+forall a. a -&gt; ParsecT Void String Identity a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679069509"><span class="hs-identifier hs-var">a</span></a></span><span>
+</span><span id="line-61"></span><span>
+</span><span id="line-62"></span><span class="hs-comment">-- Analyseur de base pour les &#233;l&#233;ments qui ne n&#233;cessitent pas de priorit&#233; (litt&#233;raux, identifiants, appels)</span><span>
+</span><span id="line-63"></span><span class="annot"><a href="CladParser.html#parseTerm"><span class="hs-identifier hs-type">parseTerm</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Types.html#IAST"><span class="hs-identifier hs-type">IAST</span></a></span><span>
+</span><span id="line-64"></span><span id="parseTerm"><span class="annot"><span class="annottext">parseTerm :: Parser IAST
+</span><a href="CladParser.html#parseTerm"><span class="hs-identifier hs-var hs-var">parseTerm</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-65"></span><span>        </span><span class="annot"><span class="annottext">Parser IAST
+</span><a href="CladLexer.html#parseFloat"><span class="hs-identifier hs-var">parseFloat</span></a></span><span>
+</span><span id="line-66"></span><span>    </span><span class="annot"><span class="annottext">Parser IAST -&gt; Parser IAST -&gt; Parser IAST
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser IAST
+</span><a href="CladLexer.html#parseNumber"><span class="hs-identifier hs-var">parseNumber</span></a></span><span>
+</span><span id="line-67"></span><span>    </span><span class="annot"><span class="annottext">Parser IAST -&gt; Parser IAST -&gt; Parser IAST
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser IAST
+</span><a href="CladLexer.html#parseBoolean"><span class="hs-identifier hs-var">parseBoolean</span></a></span><span>
+</span><span id="line-68"></span><span>    </span><span class="annot"><span class="annottext">Parser IAST -&gt; Parser IAST -&gt; Parser IAST
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser IAST
+</span><a href="CladLexer.html#parseString"><span class="hs-identifier hs-var">parseString</span></a></span><span>
+</span><span id="line-69"></span><span>    </span><span class="annot"><span class="annottext">Parser IAST -&gt; Parser IAST -&gt; Parser IAST
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; IAST
+</span><a href="Types.html#IASymbol"><span class="hs-identifier hs-var">IASymbol</span></a></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IAST) -&gt; Parser String -&gt; Parser IAST
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser String
+</span><a href="CladLexer.html#parseIdentifier"><span class="hs-identifier hs-var">parseIdentifier</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-70"></span><span>    </span><span class="annot"><span class="annottext">Parser IAST -&gt; Parser IAST -&gt; Parser IAST
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser IAST
+</span><a href="CladParser.html#parseCall"><span class="hs-identifier hs-var">parseCall</span></a></span><span>
+</span><span id="line-71"></span><span>    </span><span class="annot"><span class="annottext">Parser IAST -&gt; Parser IAST -&gt; Parser IAST
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser IAST
+</span><a href="CladParser.html#parseListCreation"><span class="hs-identifier hs-var">parseListCreation</span></a></span><span>
+</span><span id="line-72"></span><span>    </span><span class="annot"><span class="annottext">Parser IAST -&gt; Parser IAST -&gt; Parser IAST
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;(&quot;</span></span><span> </span><span class="annot"><span class="annottext">Parser String -&gt; Parser IAST -&gt; Parser IAST
+forall a b.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity b -&gt; ParsecT Void String Identity b
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f a -&gt; f b -&gt; f b
+</span><span class="hs-operator hs-var">*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser IAST
+</span><a href="CladParser.html#parseExpression"><span class="hs-identifier hs-var">parseExpression</span></a></span><span> </span><span class="annot"><span class="annottext">Parser IAST -&gt; Parser String -&gt; Parser IAST
+forall a b.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity b -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f a -&gt; f b -&gt; f a
+</span><span class="hs-operator hs-var">&lt;*</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;)&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-73"></span><span>
+</span><span id="line-74"></span><span class="annot"><a href="CladParser.html#parseListCreation"><span class="hs-identifier hs-type">parseListCreation</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Types.html#IAST"><span class="hs-identifier hs-type">IAST</span></a></span><span>
+</span><span id="line-75"></span><span id="parseListCreation"><span class="annot"><span class="annottext">parseListCreation :: Parser IAST
+</span><a href="CladParser.html#parseListCreation"><span class="hs-identifier hs-var hs-var">parseListCreation</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-76"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;[&quot;</span></span><span>
+</span><span id="line-77"></span><span>    </span><span id="local-6989586621679069523"><span class="annot"><a href="#local-6989586621679069523"><span class="hs-identifier hs-var">elements</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladParser.html#parseExpression"><span class="hs-identifier hs-type">parseExpression</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">`sepBy`</span></span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;,&quot;</span></span><span>
+</span><span id="line-78"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;]&quot;</span></span><span>
+</span><span id="line-79"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Types.html#IAList"><span class="hs-identifier hs-type">IAList</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069523"><span class="hs-identifier hs-type">elements</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-80"></span><span>
+</span><span id="line-81"></span><span class="annot"><a href="CladParser.html#parseCall"><span class="hs-identifier hs-type">parseCall</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Types.html#IAST"><span class="hs-identifier hs-type">IAST</span></a></span><span>
+</span><span id="line-82"></span><span id="parseCall"><span class="annot"><span class="annottext">parseCall :: Parser IAST
+</span><a href="CladParser.html#parseCall"><span class="hs-identifier hs-var hs-var">parseCall</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-83"></span><span>    </span><span id="local-6989586621679069526"><span class="annot"><a href="#local-6989586621679069526"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser String
+</span><a href="CladLexer.html#parseIdentifier"><span class="hs-identifier hs-var">parseIdentifier</span></a></span><span>
+</span><span id="line-84"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;(&quot;</span></span><span>
+</span><span id="line-85"></span><span>    </span><span id="local-6989586621679069527"><span class="annot"><a href="#local-6989586621679069527"><span class="hs-identifier hs-var">args</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladParser.html#parseExpression"><span class="hs-identifier hs-type">parseExpression</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">`sepBy`</span></span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;,&quot;</span></span><span>
+</span><span id="line-86"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;)&quot;</span></span><span>
+</span><span id="line-87"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Types.html#IACall"><span class="hs-identifier hs-type">IACall</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069526"><span class="hs-identifier hs-type">name</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069527"><span class="hs-identifier hs-type">args</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-88"></span><span>
+</span><span id="line-89"></span><span class="hs-comment">-- ====================================================================</span><span>
+</span><span id="line-90"></span><span class="hs-comment">-- Parsing de la Grammaire (Pr&#233;c&#233;dence des Op&#233;rateurs)</span><span>
+</span><span id="line-91"></span><span class="hs-comment">-- ====================================================================</span><span>
+</span><span id="line-92"></span><span>
+</span><span id="line-93"></span><span class="annot"><a href="CladParser.html#parseExpression"><span class="hs-identifier hs-type">parseExpression</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Types.html#IAST"><span class="hs-identifier hs-type">IAST</span></a></span><span>
+</span><span id="line-94"></span><span id="parseExpression"><span class="annot"><span class="annottext">parseExpression :: Parser IAST
+</span><a href="CladParser.html#parseExpression"><span class="hs-identifier hs-var hs-var">parseExpression</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser IAST
+</span><a href="CladParser.html#parseRelationnelle"><span class="hs-identifier hs-var">parseRelationnelle</span></a></span><span>
+</span><span id="line-95"></span><span>
+</span><span id="line-96"></span><span class="annot"><a href="CladParser.html#parseRelationnelle"><span class="hs-identifier hs-type">parseRelationnelle</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Types.html#IAST"><span class="hs-identifier hs-type">IAST</span></a></span><span>
+</span><span id="line-97"></span><span id="parseRelationnelle"><span class="annot"><span class="annottext">parseRelationnelle :: Parser IAST
+</span><a href="CladParser.html#parseRelationnelle"><span class="hs-identifier hs-var hs-var">parseRelationnelle</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser IAST -&gt; Parser (IAST -&gt; IAST -&gt; IAST) -&gt; Parser IAST
+forall a. Parser a -&gt; Parser (a -&gt; a -&gt; a) -&gt; Parser a
+</span><a href="CladParser.html#chainl1%27"><span class="hs-identifier hs-var">chainl1'</span></a></span><span> </span><span class="annot"><span class="annottext">Parser IAST
+</span><a href="CladParser.html#parseAdditive"><span class="hs-identifier hs-var">parseAdditive</span></a></span><span> </span><span class="annot"><span class="annottext">Parser (IAST -&gt; IAST -&gt; IAST)
+</span><a href="#local-6989586621679069531"><span class="hs-identifier hs-var">parseRelationnelleOp</span></a></span><span>
+</span><span id="line-98"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-99"></span><span>    </span><span id="local-6989586621679069531"><span class="annot"><span class="annottext">parseRelationnelleOp :: Parser (IAST -&gt; IAST -&gt; IAST)
+</span><a href="#local-6989586621679069531"><span class="hs-identifier hs-var hs-var">parseRelationnelleOp</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-100"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;=&quot;</span></span><span>  </span><span class="annot"><span class="annottext">Parser String
+-&gt; Parser (IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a b.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity b -&gt; ParsecT Void String Identity b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">(IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a. a -&gt; ParsecT Void String Identity a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IAST -&gt; String -&gt; IAST -&gt; IAST
+</span><a href="Types.html#IAInfix"><span class="hs-operator hs-var">`IAInfix`</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;=&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-101"></span><span>      </span><span class="annot"><span class="annottext">Parser (IAST -&gt; IAST -&gt; IAST)
+-&gt; Parser (IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&lt;&quot;</span></span><span>  </span><span class="annot"><span class="annottext">Parser String
+-&gt; Parser (IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a b.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity b -&gt; ParsecT Void String Identity b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">(IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a. a -&gt; ParsecT Void String Identity a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IAST -&gt; String -&gt; IAST -&gt; IAST
+</span><a href="Types.html#IAInfix"><span class="hs-operator hs-var">`IAInfix`</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&lt;&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-102"></span><span>      </span><span class="annot"><span class="annottext">Parser (IAST -&gt; IAST -&gt; IAST)
+-&gt; Parser (IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&gt;&quot;</span></span><span>  </span><span class="annot"><span class="annottext">Parser String
+-&gt; Parser (IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a b.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity b -&gt; ParsecT Void String Identity b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">(IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a. a -&gt; ParsecT Void String Identity a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IAST -&gt; String -&gt; IAST -&gt; IAST
+</span><a href="Types.html#IAInfix"><span class="hs-operator hs-var">`IAInfix`</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&gt;&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-103"></span><span>      </span><span class="annot"><span class="annottext">Parser (IAST -&gt; IAST -&gt; IAST)
+-&gt; Parser (IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&gt;=&quot;</span></span><span> </span><span class="annot"><span class="annottext">Parser String
+-&gt; Parser (IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a b.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity b -&gt; ParsecT Void String Identity b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">(IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a. a -&gt; ParsecT Void String Identity a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IAST -&gt; String -&gt; IAST -&gt; IAST
+</span><a href="Types.html#IAInfix"><span class="hs-operator hs-var">`IAInfix`</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&gt;=&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-104"></span><span>      </span><span class="annot"><span class="annottext">Parser (IAST -&gt; IAST -&gt; IAST)
+-&gt; Parser (IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&lt;=&quot;</span></span><span> </span><span class="annot"><span class="annottext">Parser String
+-&gt; Parser (IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a b.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity b -&gt; ParsecT Void String Identity b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">(IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a. a -&gt; ParsecT Void String Identity a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IAST -&gt; String -&gt; IAST -&gt; IAST
+</span><a href="Types.html#IAInfix"><span class="hs-operator hs-var">`IAInfix`</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&lt;=&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-105"></span><span>
+</span><span id="line-106"></span><span class="annot"><a href="CladParser.html#parseAdditive"><span class="hs-identifier hs-type">parseAdditive</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Types.html#IAST"><span class="hs-identifier hs-type">IAST</span></a></span><span>
+</span><span id="line-107"></span><span id="parseAdditive"><span class="annot"><span class="annottext">parseAdditive :: Parser IAST
+</span><a href="CladParser.html#parseAdditive"><span class="hs-identifier hs-var hs-var">parseAdditive</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser IAST -&gt; Parser (IAST -&gt; IAST -&gt; IAST) -&gt; Parser IAST
+forall a. Parser a -&gt; Parser (a -&gt; a -&gt; a) -&gt; Parser a
+</span><a href="CladParser.html#chainl1%27"><span class="hs-identifier hs-var">chainl1'</span></a></span><span> </span><span class="annot"><span class="annottext">Parser IAST
+</span><a href="CladParser.html#parseMultiplicative"><span class="hs-identifier hs-var">parseMultiplicative</span></a></span><span> </span><span class="annot"><span class="annottext">Parser (IAST -&gt; IAST -&gt; IAST)
+</span><a href="#local-6989586621679069551"><span class="hs-identifier hs-var">parseAdditiveOp</span></a></span><span>
+</span><span id="line-108"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-109"></span><span>    </span><span id="local-6989586621679069551"><span class="annot"><span class="annottext">parseAdditiveOp :: Parser (IAST -&gt; IAST -&gt; IAST)
+</span><a href="#local-6989586621679069551"><span class="hs-identifier hs-var hs-var">parseAdditiveOp</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-110"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;+&quot;</span></span><span> </span><span class="annot"><span class="annottext">Parser String
+-&gt; Parser (IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a b.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity b -&gt; ParsecT Void String Identity b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">(IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a. a -&gt; ParsecT Void String Identity a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IAST -&gt; String -&gt; IAST -&gt; IAST
+</span><a href="Types.html#IAInfix"><span class="hs-operator hs-var">`IAInfix`</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;+&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-111"></span><span>      </span><span class="annot"><span class="annottext">Parser (IAST -&gt; IAST -&gt; IAST)
+-&gt; Parser (IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;-&quot;</span></span><span> </span><span class="annot"><span class="annottext">Parser String
+-&gt; Parser (IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a b.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity b -&gt; ParsecT Void String Identity b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">(IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a. a -&gt; ParsecT Void String Identity a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IAST -&gt; String -&gt; IAST -&gt; IAST
+</span><a href="Types.html#IAInfix"><span class="hs-operator hs-var">`IAInfix`</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;-&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-112"></span><span>
+</span><span id="line-113"></span><span class="annot"><a href="CladParser.html#parseMultiplicative"><span class="hs-identifier hs-type">parseMultiplicative</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Types.html#IAST"><span class="hs-identifier hs-type">IAST</span></a></span><span>
+</span><span id="line-114"></span><span id="parseMultiplicative"><span class="annot"><span class="annottext">parseMultiplicative :: Parser IAST
+</span><a href="CladParser.html#parseMultiplicative"><span class="hs-identifier hs-var hs-var">parseMultiplicative</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser IAST -&gt; Parser (IAST -&gt; IAST -&gt; IAST) -&gt; Parser IAST
+forall a. Parser a -&gt; Parser (a -&gt; a -&gt; a) -&gt; Parser a
+</span><a href="CladParser.html#chainl1%27"><span class="hs-identifier hs-var">chainl1'</span></a></span><span> </span><span class="annot"><span class="annottext">Parser IAST
+</span><a href="CladParser.html#parseTerm"><span class="hs-identifier hs-var">parseTerm</span></a></span><span> </span><span class="annot"><span class="annottext">Parser (IAST -&gt; IAST -&gt; IAST)
+</span><a href="#local-6989586621679069560"><span class="hs-identifier hs-var">parseMultiplicativeOp</span></a></span><span>
+</span><span id="line-115"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-116"></span><span>    </span><span id="local-6989586621679069560"><span class="annot"><span class="annottext">parseMultiplicativeOp :: Parser (IAST -&gt; IAST -&gt; IAST)
+</span><a href="#local-6989586621679069560"><span class="hs-identifier hs-var hs-var">parseMultiplicativeOp</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-117"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;*&quot;</span></span><span>   </span><span class="annot"><span class="annottext">Parser String
+-&gt; Parser (IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a b.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity b -&gt; ParsecT Void String Identity b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">(IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a. a -&gt; ParsecT Void String Identity a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IAST -&gt; String -&gt; IAST -&gt; IAST
+</span><a href="Types.html#IAInfix"><span class="hs-operator hs-var">`IAInfix`</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;*&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-118"></span><span>      </span><span class="annot"><span class="annottext">Parser (IAST -&gt; IAST -&gt; IAST)
+-&gt; Parser (IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;/&quot;</span></span><span>   </span><span class="annot"><span class="annottext">Parser String
+-&gt; Parser (IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a b.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity b -&gt; ParsecT Void String Identity b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">(IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a. a -&gt; ParsecT Void String Identity a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IAST -&gt; String -&gt; IAST -&gt; IAST
+</span><a href="Types.html#IAInfix"><span class="hs-operator hs-var">`IAInfix`</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;/&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-119"></span><span>      </span><span class="annot"><span class="annottext">Parser (IAST -&gt; IAST -&gt; IAST)
+-&gt; Parser (IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;mod&quot;</span></span><span> </span><span class="annot"><span class="annottext">Parser String
+-&gt; Parser (IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a b.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity b -&gt; ParsecT Void String Identity b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">(IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a. a -&gt; ParsecT Void String Identity a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IAST -&gt; String -&gt; IAST -&gt; IAST
+</span><a href="Types.html#IAInfix"><span class="hs-operator hs-var">`IAInfix`</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;mod&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-120"></span><span>      </span><span class="annot"><span class="annottext">Parser (IAST -&gt; IAST -&gt; IAST)
+-&gt; Parser (IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;div&quot;</span></span><span> </span><span class="annot"><span class="annottext">Parser String
+-&gt; Parser (IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a b.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity b -&gt; ParsecT Void String Identity b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">(IAST -&gt; IAST -&gt; IAST) -&gt; Parser (IAST -&gt; IAST -&gt; IAST)
+forall a. a -&gt; ParsecT Void String Identity a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IAST -&gt; String -&gt; IAST -&gt; IAST
+</span><a href="Types.html#IAInfix"><span class="hs-operator hs-var">`IAInfix`</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;div&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-121"></span><span>
+</span><span id="line-122"></span><span class="hs-comment">-- ====================================================================</span><span>
+</span><span id="line-123"></span><span class="hs-comment">-- Parsing des Instructions (Blocs, D&#233;clarations, Control Flow)</span><span>
+</span><span id="line-124"></span><span class="hs-comment">-- ====================================================================</span><span>
+</span><span id="line-125"></span><span>
+</span><span id="line-126"></span><span class="annot"><a href="CladParser.html#parseBlockEndKeywords"><span class="hs-identifier hs-type">parseBlockEndKeywords</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-127"></span><span id="parseBlockEndKeywords"><span class="annot"><span class="annottext">parseBlockEndKeywords :: Parser ()
+</span><a href="CladParser.html#parseBlockEndKeywords"><span class="hs-identifier hs-var hs-var">parseBlockEndKeywords</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser String -&gt; Parser ()
+forall (f :: * -&gt; *) a. Functor f =&gt; f a -&gt; f ()
+</span><span class="hs-identifier hs-var">void</span></span><span> </span><span class="annot"><span class="annottext">(Parser String -&gt; Parser ()) -&gt; Parser String -&gt; Parser ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-128"></span><span>        </span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;fin&quot;</span></span><span>
+</span><span id="line-129"></span><span>    </span><span class="annot"><span class="annottext">Parser String -&gt; Parser String -&gt; Parser String
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;sinon&quot;</span></span><span>
+</span><span id="line-130"></span><span>    </span><span class="annot"><span class="annottext">Parser String -&gt; Parser String -&gt; Parser String
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;sinon si&quot;</span></span><span>
+</span><span id="line-131"></span><span>
+</span><span id="line-132"></span><span class="annot"><a href="CladParser.html#parseBlock"><span class="hs-identifier hs-type">parseBlock</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Types.html#IAST"><span class="hs-identifier hs-type">IAST</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-133"></span><span id="parseBlock"><span class="annot"><span class="annottext">parseBlock :: ParsecT Void String Identity [IAST]
+</span><a href="CladParser.html#parseBlock"><span class="hs-identifier hs-var hs-var">parseBlock</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser IAST -&gt; ParsecT Void String Identity [IAST]
+forall (m :: * -&gt; *) a. MonadPlus m =&gt; m a -&gt; m [a]
+</span><span class="hs-identifier hs-var">many</span></span><span> </span><span class="annot"><span class="annottext">(Parser IAST -&gt; ParsecT Void String Identity [IAST])
+-&gt; Parser IAST -&gt; ParsecT Void String Identity [IAST]
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Parser IAST -&gt; Parser IAST
+forall a.
+ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall e s (m :: * -&gt; *) a. MonadParsec e s m =&gt; m a -&gt; m a
+</span><span class="hs-identifier hs-var">try</span></span><span> </span><span class="annot"><span class="annottext">(Parser IAST -&gt; Parser IAST) -&gt; Parser IAST -&gt; Parser IAST
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-134"></span><span>    </span><span class="annot"><span class="annottext">Parser () -&gt; Parser ()
+forall a. ParsecT Void String Identity a -&gt; Parser ()
+forall e s (m :: * -&gt; *) a. MonadParsec e s m =&gt; m a -&gt; m ()
+</span><span class="hs-identifier hs-var">notFollowedBy</span></span><span> </span><span class="annot"><span class="annottext">Parser ()
+</span><a href="CladParser.html#parseBlockEndKeywords"><span class="hs-identifier hs-var">parseBlockEndKeywords</span></a></span><span>
+</span><span id="line-135"></span><span>    </span><span class="annot"><span class="annottext">Parser IAST
+</span><a href="CladParser.html#parseInstruction"><span class="hs-identifier hs-var">parseInstruction</span></a></span><span>
+</span><span id="line-136"></span><span>
+</span><span id="line-137"></span><span class="annot"><a href="CladParser.html#parseInstruction"><span class="hs-identifier hs-type">parseInstruction</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Types.html#IAST"><span class="hs-identifier hs-type">IAST</span></a></span><span>
+</span><span id="line-138"></span><span id="parseInstruction"><span class="annot"><span class="annottext">parseInstruction :: Parser IAST
+</span><a href="CladParser.html#parseInstruction"><span class="hs-identifier hs-var hs-var">parseInstruction</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-139"></span><span>        </span><span class="annot"><span class="annottext">Parser IAST
+</span><a href="CladParser.html#parseFunctionDef"><span class="hs-identifier hs-var">parseFunctionDef</span></a></span><span> </span><span class="hs-comment">-- Doit &#234;tre en premier pour reconna&#238;tre le mot-cl&#233; 'fonction'</span><span>
+</span><span id="line-140"></span><span>    </span><span class="annot"><span class="annottext">Parser IAST -&gt; Parser IAST -&gt; Parser IAST
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser IAST
+</span><a href="CladParser.html#parseMain"><span class="hs-identifier hs-var">parseMain</span></a></span><span>
+</span><span id="line-141"></span><span>    </span><span class="annot"><span class="annottext">Parser IAST -&gt; Parser IAST -&gt; Parser IAST
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser IAST
+</span><a href="CladParser.html#parseDeclaration"><span class="hs-identifier hs-var">parseDeclaration</span></a></span><span>
+</span><span id="line-142"></span><span>    </span><span class="annot"><span class="annottext">Parser IAST -&gt; Parser IAST -&gt; Parser IAST
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser IAST
+</span><a href="CladParser.html#parseReturn"><span class="hs-identifier hs-var">parseReturn</span></a></span><span>
+</span><span id="line-143"></span><span>    </span><span class="annot"><span class="annottext">Parser IAST -&gt; Parser IAST -&gt; Parser IAST
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser IAST
+</span><a href="CladParser.html#parseConditional"><span class="hs-identifier hs-var">parseConditional</span></a></span><span>
+</span><span id="line-144"></span><span>    </span><span class="annot"><span class="annottext">Parser IAST -&gt; Parser IAST -&gt; Parser IAST
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser IAST
+</span><a href="CladParser.html#parseWhile"><span class="hs-identifier hs-var">parseWhile</span></a></span><span>
+</span><span id="line-145"></span><span>    </span><span class="annot"><span class="annottext">Parser IAST -&gt; Parser IAST -&gt; Parser IAST
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser IAST
+</span><a href="CladParser.html#parseFor"><span class="hs-identifier hs-var">parseFor</span></a></span><span>
+</span><span id="line-146"></span><span>    </span><span class="annot"><span class="annottext">Parser IAST -&gt; Parser IAST -&gt; Parser IAST
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser IAST
+</span><a href="CladParser.html#parseAssignment"><span class="hs-identifier hs-var">parseAssignment</span></a></span><span>
+</span><span id="line-147"></span><span>    </span><span class="annot"><span class="annottext">Parser IAST -&gt; Parser IAST -&gt; Parser IAST
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser IAST
+</span><a href="CladParser.html#parseExpression"><span class="hs-identifier hs-var">parseExpression</span></a></span><span> </span><span class="hs-comment">-- Un appel de fonction seul est une instruction</span><span>
+</span><span id="line-148"></span><span>
+</span><span id="line-149"></span><span class="annot"><a href="CladParser.html#parseFunctionArgument"><span class="hs-identifier hs-type">parseFunctionArgument</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Types.html#CladType"><span class="hs-identifier hs-type">CladType</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-150"></span><span id="parseFunctionArgument"><span class="annot"><span class="annottext">parseFunctionArgument :: Parser (String, Maybe CladType)
+</span><a href="CladParser.html#parseFunctionArgument"><span class="hs-identifier hs-var hs-var">parseFunctionArgument</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-151"></span><span>    </span><span id="local-6989586621679069589"><span class="annot"><a href="#local-6989586621679069589"><span class="hs-identifier hs-var">typeAnnot</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser CladType
+</span><a href="CladParser.html#parseExplicitType"><span class="hs-identifier hs-var">parseExplicitType</span></a></span><span>
+</span><span id="line-152"></span><span>    </span><span id="local-6989586621679069590"><span class="annot"><a href="#local-6989586621679069590"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#parseIdentifier"><span class="hs-identifier hs-type">parseIdentifier</span></a></span><span>
+</span><span id="line-153"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679069590"><span class="hs-identifier hs-type">name</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="annot"><a href="#local-6989586621679069589"><span class="hs-identifier hs-type">typeAnnot</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-154"></span><span>
+</span><span id="line-155"></span><span class="hs-comment">-- D&#233;finition de fonction compl&#232;te</span><span>
+</span><span id="line-156"></span><span class="annot"><a href="CladParser.html#parseFunctionDef"><span class="hs-identifier hs-type">parseFunctionDef</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Types.html#IAST"><span class="hs-identifier hs-type">IAST</span></a></span><span>
+</span><span id="line-157"></span><span id="parseFunctionDef"><span class="annot"><span class="annottext">parseFunctionDef :: Parser IAST
+</span><a href="CladParser.html#parseFunctionDef"><span class="hs-identifier hs-var hs-var">parseFunctionDef</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-158"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;fonction&quot;</span></span><span>
+</span><span id="line-159"></span><span>    </span><span id="local-6989586621679069591"><span class="annot"><a href="#local-6989586621679069591"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#parseIdentifier"><span class="hs-identifier hs-type">parseIdentifier</span></a></span><span>
+</span><span id="line-160"></span><span>
+</span><span id="line-161"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;(&quot;</span></span><span>
+</span><span id="line-162"></span><span>    </span><span id="local-6989586621679069592"><span class="annot"><a href="#local-6989586621679069592"><span class="hs-identifier hs-var">params</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladParser.html#parseFunctionArgument"><span class="hs-identifier hs-type">parseFunctionArgument</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">`sepBy`</span></span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;,&quot;</span></span><span>
+</span><span id="line-163"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;)&quot;</span></span><span>
+</span><span id="line-164"></span><span>
+</span><span id="line-165"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;:&quot;</span></span><span>
+</span><span id="line-166"></span><span>    </span><span id="local-6989586621679069593"><span class="annot"><a href="#local-6989586621679069593"><span class="hs-identifier hs-var">returnTypeAnnot</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladParser.html#parseExplicitType"><span class="hs-identifier hs-type">parseExplicitType</span></a></span><span>
+</span><span id="line-167"></span><span>
+</span><span id="line-168"></span><span>    </span><span id="local-6989586621679069594"><span class="annot"><a href="#local-6989586621679069594"><span class="hs-identifier hs-var">body</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladParser.html#parseBlock"><span class="hs-identifier hs-type">parseBlock</span></a></span><span>
+</span><span id="line-169"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;fin&quot;</span></span><span>
+</span><span id="line-170"></span><span>
+</span><span id="line-171"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Types.html#IAFunctionDef"><span class="hs-identifier hs-type">IAFunctionDef</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069591"><span class="hs-identifier hs-type">name</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069592"><span class="hs-identifier hs-type">params</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="annot"><a href="#local-6989586621679069593"><span class="hs-identifier hs-type">returnTypeAnnot</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679069594"><span class="hs-identifier hs-type">body</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-172"></span><span>
+</span><span id="line-173"></span><span class="annot"><a href="CladParser.html#parseMain"><span class="hs-identifier hs-type">parseMain</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Types.html#IAST"><span class="hs-identifier hs-type">IAST</span></a></span><span>
+</span><span id="line-174"></span><span id="parseMain"><span class="annot"><span class="annottext">parseMain :: Parser IAST
+</span><a href="CladParser.html#parseMain"><span class="hs-identifier hs-var hs-var">parseMain</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-175"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;principal&quot;</span></span><span>
+</span><span id="line-176"></span><span>    </span><span id="local-6989586621679069596"><span class="annot"><a href="#local-6989586621679069596"><span class="hs-identifier hs-var">body</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladParser.html#parseBlock"><span class="hs-identifier hs-type">parseBlock</span></a></span><span>
+</span><span id="line-177"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;fin&quot;</span></span><span>
+</span><span id="line-178"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Types.html#IAMain"><span class="hs-identifier hs-type">IAMain</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069596"><span class="hs-identifier hs-type">body</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-179"></span><span>
+</span><span id="line-180"></span><span class="annot"><a href="CladParser.html#parseDeclaration"><span class="hs-identifier hs-type">parseDeclaration</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Types.html#IAST"><span class="hs-identifier hs-type">IAST</span></a></span><span>
+</span><span id="line-181"></span><span id="parseDeclaration"><span class="annot"><span class="annottext">parseDeclaration :: Parser IAST
+</span><a href="CladParser.html#parseDeclaration"><span class="hs-identifier hs-var hs-var">parseDeclaration</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-182"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;constante&quot;</span></span><span> </span><span class="annot"><span class="annottext">Parser String -&gt; Parser String -&gt; Parser String
+forall a.
+ParsecT Void String Identity a
+-&gt; ParsecT Void String Identity a -&gt; ParsecT Void String Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;variable&quot;</span></span><span>
+</span><span id="line-183"></span><span>
+</span><span id="line-184"></span><span>    </span><span id="local-6989586621679069598"><span class="annot"><a href="#local-6989586621679069598"><span class="hs-identifier hs-var">typeAnnot</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladParser.html#parseExplicitType"><span class="hs-identifier hs-type">parseExplicitType</span></a></span><span>
+</span><span id="line-185"></span><span>
+</span><span id="line-186"></span><span>    </span><span id="local-6989586621679069599"><span class="annot"><a href="#local-6989586621679069599"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#parseIdentifier"><span class="hs-identifier hs-type">parseIdentifier</span></a></span><span>
+</span><span id="line-187"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;=&quot;</span></span><span>
+</span><span id="line-188"></span><span>    </span><span class="annot"><a href="Types.html#IADeclare"><span class="hs-identifier hs-type">IADeclare</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069599"><span class="hs-identifier hs-type">name</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="annot"><a href="#local-6989586621679069598"><span class="hs-identifier hs-type">typeAnnot</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="hs-operator hs-type">&lt;$&gt;</span></span><span> </span><span class="annot"><a href="CladParser.html#parseExpression"><span class="hs-identifier hs-type">parseExpression</span></a></span><span>
+</span><span id="line-189"></span><span>
+</span><span id="line-190"></span><span class="hs-comment">-- Assignation (Modification de variable)</span><span>
+</span><span id="line-191"></span><span class="annot"><a href="CladParser.html#parseAssignment"><span class="hs-identifier hs-type">parseAssignment</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Types.html#IAST"><span class="hs-identifier hs-type">IAST</span></a></span><span>
+</span><span id="line-192"></span><span id="parseAssignment"><span class="annot"><span class="annottext">parseAssignment :: Parser IAST
+</span><a href="CladParser.html#parseAssignment"><span class="hs-identifier hs-var hs-var">parseAssignment</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-193"></span><span>    </span><span id="local-6989586621679069601"><span class="annot"><a href="#local-6989586621679069601"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser String
+</span><a href="CladLexer.html#parseIdentifier"><span class="hs-identifier hs-var">parseIdentifier</span></a></span><span>
+</span><span id="line-194"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;=&quot;</span></span><span>
+</span><span id="line-195"></span><span>    </span><span class="annot"><a href="Types.html#IAAssign"><span class="hs-identifier hs-type">IAAssign</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069601"><span class="hs-identifier hs-type">name</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">&lt;$&gt;</span></span><span> </span><span class="annot"><a href="CladParser.html#parseExpression"><span class="hs-identifier hs-type">parseExpression</span></a></span><span>
+</span><span id="line-196"></span><span>
+</span><span id="line-197"></span><span class="annot"><a href="CladParser.html#parseReturn"><span class="hs-identifier hs-type">parseReturn</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Types.html#IAST"><span class="hs-identifier hs-type">IAST</span></a></span><span>
+</span><span id="line-198"></span><span id="parseReturn"><span class="annot"><span class="annottext">parseReturn :: Parser IAST
+</span><a href="CladParser.html#parseReturn"><span class="hs-identifier hs-var hs-var">parseReturn</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-199"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;retourner&quot;</span></span><span>
+</span><span id="line-200"></span><span>    </span><span class="annot"><a href="Types.html#IAReturn"><span class="hs-identifier hs-type">IAReturn</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">&lt;$&gt;</span></span><span> </span><span class="annot"><a href="CladParser.html#parseExpression"><span class="hs-identifier hs-type">parseExpression</span></a></span><span>
+</span><span id="line-201"></span><span>
+</span><span id="line-202"></span><span class="annot"><a href="CladParser.html#parseElseClause"><span class="hs-identifier hs-type">parseElseClause</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Types.html#IAST"><span class="hs-identifier hs-type">IAST</span></a></span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-203"></span><span id="parseElseClause"><span class="annot"><span class="annottext">parseElseClause :: Parser (Maybe [IAST])
+</span><a href="CladParser.html#parseElseClause"><span class="hs-identifier hs-var hs-var">parseElseClause</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ParsecT Void String Identity [IAST] -&gt; Parser (Maybe [IAST])
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f (Maybe a)
+</span><span class="hs-identifier hs-var">optional</span></span><span> </span><span class="annot"><span class="annottext">(ParsecT Void String Identity [IAST] -&gt; Parser (Maybe [IAST]))
+-&gt; ParsecT Void String Identity [IAST] -&gt; Parser (Maybe [IAST])
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-204"></span><span>    </span><span id="local-6989586621679069606"><span class="annot"><a href="#local-6989586621679069606"><span class="hs-identifier hs-var">maybeElseIf</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser IAST -&gt; ParsecT Void String Identity (Maybe IAST)
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f (Maybe a)
+</span><span class="hs-identifier hs-var">optional</span></span><span> </span><span class="annot"><span class="annottext">Parser IAST
+</span><a href="CladParser.html#parseElseIf"><span class="hs-identifier hs-var">parseElseIf</span></a></span><span>
+</span><span id="line-205"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><a href="#local-6989586621679069606"><span class="hs-identifier hs-type">maybeElseIf</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-206"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679069608"><span class="annot"><span class="annottext">IAST
+</span><a href="#local-6989586621679069608"><span class="hs-identifier hs-var">elseIf</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">[IAST] -&gt; ParsecT Void String Identity [IAST]
+forall a. a -&gt; ParsecT Void String Identity a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">IAST
+</span><a href="#local-6989586621679069608"><span class="hs-identifier hs-var">elseIf</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-207"></span><span>
+</span><span id="line-208"></span><span>        </span><span class="annot"><span class="annottext">Maybe IAST
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-209"></span><span>            </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;sinon&quot;</span></span><span>
+</span><span id="line-210"></span><span>            </span><span class="annot"><a href="CladParser.html#parseBlock"><span class="hs-identifier hs-type">parseBlock</span></a></span><span>
+</span><span id="line-211"></span><span>
+</span><span id="line-212"></span><span class="annot"><a href="CladParser.html#parseElseIf"><span class="hs-identifier hs-type">parseElseIf</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Types.html#IAST"><span class="hs-identifier hs-type">IAST</span></a></span><span>
+</span><span id="line-213"></span><span id="parseElseIf"><span class="annot"><span class="annottext">parseElseIf :: Parser IAST
+</span><a href="CladParser.html#parseElseIf"><span class="hs-identifier hs-var hs-var">parseElseIf</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-214"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;sinon si&quot;</span></span><span>
+</span><span id="line-215"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;(&quot;</span></span><span>
+</span><span id="line-216"></span><span>    </span><span id="local-6989586621679069609"><span class="annot"><a href="#local-6989586621679069609"><span class="hs-identifier hs-var">cond</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladParser.html#parseExpression"><span class="hs-identifier hs-type">parseExpression</span></a></span><span>
+</span><span id="line-217"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;)&quot;</span></span><span>
+</span><span id="line-218"></span><span>
+</span><span id="line-219"></span><span>    </span><span id="local-6989586621679069610"><span class="annot"><a href="#local-6989586621679069610"><span class="hs-identifier hs-var">bodyThen</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladParser.html#parseBlock"><span class="hs-identifier hs-type">parseBlock</span></a></span><span>
+</span><span id="line-220"></span><span>    </span><span class="annot"><a href="Types.html#IAConditional"><span class="hs-identifier hs-type">IAConditional</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069609"><span class="hs-identifier hs-type">cond</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069610"><span class="hs-identifier hs-type">bodyThen</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">&lt;$&gt;</span></span><span> </span><span class="annot"><a href="CladParser.html#parseElseClause"><span class="hs-identifier hs-type">parseElseClause</span></a></span><span>
+</span><span id="line-221"></span><span>
+</span><span id="line-222"></span><span class="annot"><a href="CladParser.html#parseConditional"><span class="hs-identifier hs-type">parseConditional</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Types.html#IAST"><span class="hs-identifier hs-type">IAST</span></a></span><span>
+</span><span id="line-223"></span><span id="parseConditional"><span class="annot"><span class="annottext">parseConditional :: Parser IAST
+</span><a href="CladParser.html#parseConditional"><span class="hs-identifier hs-var hs-var">parseConditional</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-224"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;si&quot;</span></span><span>
+</span><span id="line-225"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;(&quot;</span></span><span>
+</span><span id="line-226"></span><span>    </span><span id="local-6989586621679069612"><span class="annot"><a href="#local-6989586621679069612"><span class="hs-identifier hs-var">cond</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladParser.html#parseExpression"><span class="hs-identifier hs-type">parseExpression</span></a></span><span>
+</span><span id="line-227"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;)&quot;</span></span><span>
+</span><span id="line-228"></span><span>
+</span><span id="line-229"></span><span>    </span><span id="local-6989586621679069613"><span class="annot"><a href="#local-6989586621679069613"><span class="hs-identifier hs-var">bodyThen</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladParser.html#parseBlock"><span class="hs-identifier hs-type">parseBlock</span></a></span><span>
+</span><span id="line-230"></span><span>
+</span><span id="line-231"></span><span>    </span><span id="local-6989586621679069614"><span class="annot"><a href="#local-6989586621679069614"><span class="hs-identifier hs-var">elseBody</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladParser.html#parseElseClause"><span class="hs-identifier hs-type">parseElseClause</span></a></span><span>
+</span><span id="line-232"></span><span>
+</span><span id="line-233"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;fin&quot;</span></span><span>
+</span><span id="line-234"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Types.html#IAConditional"><span class="hs-identifier hs-type">IAConditional</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069612"><span class="hs-identifier hs-type">cond</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069613"><span class="hs-identifier hs-type">bodyThen</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069614"><span class="hs-identifier hs-type">elseBody</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-235"></span><span>
+</span><span id="line-236"></span><span class="annot"><a href="CladParser.html#parseWhile"><span class="hs-identifier hs-type">parseWhile</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Types.html#IAST"><span class="hs-identifier hs-type">IAST</span></a></span><span>
+</span><span id="line-237"></span><span id="parseWhile"><span class="annot"><span class="annottext">parseWhile :: Parser IAST
+</span><a href="CladParser.html#parseWhile"><span class="hs-identifier hs-var hs-var">parseWhile</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-238"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;tantque&quot;</span></span><span>
+</span><span id="line-239"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;(&quot;</span></span><span>
+</span><span id="line-240"></span><span>    </span><span id="local-6989586621679069615"><span class="annot"><a href="#local-6989586621679069615"><span class="hs-identifier hs-var">cond</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladParser.html#parseExpression"><span class="hs-identifier hs-type">parseExpression</span></a></span><span>
+</span><span id="line-241"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;)&quot;</span></span><span>
+</span><span id="line-242"></span><span>    </span><span id="local-6989586621679069616"><span class="annot"><a href="#local-6989586621679069616"><span class="hs-identifier hs-var">body</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladParser.html#parseBlock"><span class="hs-identifier hs-type">parseBlock</span></a></span><span>
+</span><span id="line-243"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;fin&quot;</span></span><span>
+</span><span id="line-244"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Types.html#IAWhile"><span class="hs-identifier hs-type">IAWhile</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069615"><span class="hs-identifier hs-type">cond</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069616"><span class="hs-identifier hs-type">body</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-245"></span><span>
+</span><span id="line-246"></span><span class="annot"><a href="CladParser.html#parseFor"><span class="hs-identifier hs-type">parseFor</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Types.html#IAST"><span class="hs-identifier hs-type">IAST</span></a></span><span>
+</span><span id="line-247"></span><span id="parseFor"><span class="annot"><span class="annottext">parseFor :: Parser IAST
+</span><a href="CladParser.html#parseFor"><span class="hs-identifier hs-var hs-var">parseFor</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-248"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">String -&gt; Parser String
+</span><a href="CladLexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;pour&quot;</span></span><span>
+</span><span id="line-249"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;(&quot;</span></span><span>
+</span><span id="line-250"></span><span>
+</span><span id="line-251"></span><span>    </span><span id="local-6989586621679069618"><span class="annot"><a href="#local-6989586621679069618"><span class="hs-identifier hs-var">initExpr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladParser.html#parseDeclaration"><span class="hs-identifier hs-type">parseDeclaration</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">&lt;|&gt;</span></span><span> </span><span class="annot"><a href="CladParser.html#parseAssignment"><span class="hs-identifier hs-type">parseAssignment</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">return</span></span><span> </span><span class="annot"><a href="Types.html#IAUnit"><span class="hs-identifier hs-type">IAUnit</span></a></span><span>
+</span><span id="line-252"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;;&quot;</span></span><span>
+</span><span id="line-253"></span><span>
+</span><span id="line-254"></span><span>    </span><span id="local-6989586621679069620"><span class="annot"><a href="#local-6989586621679069620"><span class="hs-identifier hs-var">condExpr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladParser.html#parseExpression"><span class="hs-identifier hs-type">parseExpression</span></a></span><span>
+</span><span id="line-255"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;;&quot;</span></span><span>
+</span><span id="line-256"></span><span>
+</span><span id="line-257"></span><span>    </span><span id="local-6989586621679069621"><span class="annot"><a href="#local-6989586621679069621"><span class="hs-identifier hs-var">incExpr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladParser.html#parseExpression"><span class="hs-identifier hs-type">parseExpression</span></a></span><span>
+</span><span id="line-258"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;)&quot;</span></span><span>
+</span><span id="line-259"></span><span>
+</span><span id="line-260"></span><span>    </span><span id="local-6989586621679069622"><span class="annot"><a href="#local-6989586621679069622"><span class="hs-identifier hs-var">body</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladParser.html#parseBlock"><span class="hs-identifier hs-type">parseBlock</span></a></span><span>
+</span><span id="line-261"></span><span>    </span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="CladLexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;fin&quot;</span></span><span>
+</span><span id="line-262"></span><span>
+</span><span id="line-263"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Types.html#IAFor"><span class="hs-identifier hs-type">IAFor</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069618"><span class="hs-identifier hs-type">initExpr</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069620"><span class="hs-identifier hs-type">condExpr</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069621"><span class="hs-identifier hs-type">incExpr</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069622"><span class="hs-identifier hs-type">body</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-264"></span><span>
+</span><span id="line-265"></span><span class="hs-comment">-- ====================================================================</span><span>
+</span><span id="line-266"></span><span class="hs-comment">-- Point d'entr&#233;e du Programme CLaD</span><span>
+</span><span id="line-267"></span><span class="hs-comment">-- ====================================================================</span><span>
+</span><span id="line-268"></span><span>
+</span><span id="line-269"></span><span class="annot"><a href="CladParser.html#parseProgramAST"><span class="hs-identifier hs-type">parseProgramAST</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="CladLexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Types.html#IAST"><span class="hs-identifier hs-type">IAST</span></a></span><span>
+</span><span id="line-270"></span><span id="parseProgramAST"><span class="annot"><span class="annottext">parseProgramAST :: Parser IAST
+</span><a href="CladParser.html#parseProgramAST"><span class="hs-identifier hs-var hs-var">parseProgramAST</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser () -&gt; Parser () -&gt; Parser IAST -&gt; Parser IAST
+forall (m :: * -&gt; *) open close a.
+Applicative m =&gt;
+m open -&gt; m close -&gt; m a -&gt; m a
+</span><span class="hs-identifier hs-var">between</span></span><span> </span><span class="annot"><span class="annottext">Parser ()
+</span><a href="CladLexer.html#sc"><span class="hs-identifier hs-var">sc</span></a></span><span> </span><span class="annot"><span class="annottext">Parser ()
+forall e s (m :: * -&gt; *). MonadParsec e s m =&gt; m ()
+</span><span class="hs-identifier hs-var">eof</span></span><span> </span><span class="annot"><span class="annottext">(Parser IAST -&gt; Parser IAST) -&gt; Parser IAST -&gt; Parser IAST
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-271"></span><span>    </span><span id="local-6989586621679069627"><span class="annot"><a href="#local-6989586621679069627"><span class="hs-identifier hs-var">instructions</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser IAST -&gt; ParsecT Void String Identity [IAST]
+forall (m :: * -&gt; *) a. MonadPlus m =&gt; m a -&gt; m [a]
+</span><span class="hs-identifier hs-var">many</span></span><span> </span><span class="annot"><span class="annottext">Parser IAST
+</span><a href="CladParser.html#parseInstruction"><span class="hs-identifier hs-var">parseInstruction</span></a></span><span>
+</span><span id="line-272"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Types.html#IAProgram"><span class="hs-identifier hs-type">IAProgram</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069627"><span class="hs-identifier hs-type">instructions</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-273"></span></pre></body></html>
