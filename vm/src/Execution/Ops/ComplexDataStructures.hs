@@ -44,7 +44,7 @@ opArraySet state = case stack state of
     (val : IntVal idx : ArrayVal values : rest) ->
         if idx >= 0 && idx < length values
         then 
-            let (before, (_:after)) = splitAt idx values
+            let (before, _:after) = splitAt idx values
                 newArray = ArrayVal (before ++ [val] ++ after)
             in Right $ state { stack = newArray : rest }
         else Left ("Error: Index " ++ show idx ++ " out of bounds for Array")
