@@ -15,7 +15,7 @@ import Types
 import CladLexer
 import Text.Megaparsec
 import Data.Void()
-import Control.Monad (void)
+import Control.Monad()
 
 -- ====================================================================
 -- Parsing des Types (Annotations)
@@ -66,10 +66,17 @@ parseTerm =
     <|> parseNumber
     <|> parseBoolean
     <|> parseString
+    <|> parseUnaryNot
     <|> try parseCall
     <|> (IASymbol <$> parseIdentifier)
     <|> parseListCreation
     <|> (symbol "(" *> parseExpression <* symbol ")")
+
+parseUnaryNot :: Parser AST
+parseUnaryNot = do
+    _ <- symbol "!"
+    term <- parseTerm
+    return (IACall "!" [term])
 
 parseListCreation :: Parser AST
 parseListCreation = do
@@ -91,13 +98,23 @@ parseCall = do
 -- ====================================================================
 
 parseExpression :: Parser AST
-parseExpression = parseRelationnelle
+parseExpression = parseLogicalOr
+
+parseLogicalOr :: Parser AST
+parseLogicalOr = chainl1' parseLogicalAnd parseOrOp
+  where
+    parseOrOp = (symbol "ou" >> return (`IAInfix` "ou"))
+
+parseLogicalAnd :: Parser AST
+parseLogicalAnd = chainl1' parseRelationnelle parseAndOp
+  where
+    parseAndOp = (symbol "et" >> return (`IAInfix` "et"))
 
 parseRelationnelle :: Parser AST
 parseRelationnelle = chainl1' parseAdditive parseRelationnelleOp
   where
     parseRelationnelleOp =
-          (symbol "="  >> return (`IAInfix` "="))
+          (symbol "=="  >> return (`IAInfix` "=="))
       <|> (symbol "<"  >> return (`IAInfix` "<"))
       <|> (symbol ">"  >> return (`IAInfix` ">"))
       <|> (symbol ">=" >> return (`IAInfix` ">="))
@@ -119,15 +136,10 @@ parseMultiplicative = chainl1' parseTerm parseMultiplicativeOp
       <|> (symbol "mod" >> return (`IAInfix` "mod"))
       <|> (symbol "div" >> return (`IAInfix` "div"))
 
+
 -- ====================================================================
 -- Parsing des Instructions (Blocs, Déclarations, Control Flow)
 -- ====================================================================
-
-parseBlockEndKeywords :: Parser ()
-parseBlockEndKeywords = void $
-        symbol "fin"
-    <|> symbol "sinon"
-    <|> symbol "sinon si"
 
 parseBlock :: Parser [AST]
 parseBlock = many parseInstruction

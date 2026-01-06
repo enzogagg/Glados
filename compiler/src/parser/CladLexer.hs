@@ -30,8 +30,8 @@ type Parser = Parsec Void String
 reservedWords :: [String]
 reservedWords = [
     "fonction", "fin", "principal", "constante", "variable", "retourner",
-    "si", "sinon", "sinon si", "tantque", "pour", "de", "à",
-    "vrai", "faux",
+    "si", "sinon", "sinon si", "tantque", "pour",
+    "vrai", "faux", "et", "ou",
     "entier", "flottant", "pileouface", "phrase", "liste", "neant"
     ]
 
