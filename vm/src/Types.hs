@@ -10,6 +10,10 @@ data Value
     | SymbolVal String        -- Tag 06
     | NilVal                  -- Tag 07
     | FunctionVal Int         -- Tag 08
+    | TupleVal [Value]        -- Tag 09
+    | ArrayVal [Value]        -- Tag 0A
+    | StructVal [(String, Value)] -- Tag 0B
+    | MapVal [(Value, Value)] -- Tag 0C
     deriving (Show, Eq)
 
 data Instruction
@@ -60,6 +64,21 @@ data Instruction
 
     | Print                   -- 80
     | Input                   -- 81
+
+    | MakeTuple Int           -- 90
+    | TupleGet Int            -- 91
+
+    | MakeArray Int           -- 92
+    | ArrayGet                -- 93
+    | ArraySet                -- 94
+
+    | MakeMap Int             -- 95
+    | MapGet                  -- 96
+    | MapSet                  -- 97
+
+    | MakeStruct Int          -- 98
+    | StructGet String        -- 99
+    | StructSet String        -- 9A
 
     | Halt                    -- FF
     deriving (Show, Eq)
