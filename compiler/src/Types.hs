@@ -24,6 +24,7 @@ data CladType
     | StringT
     | ListT CladType                -- Liste d'un type spécifique
     | FuncT [CladType] CladType     -- (Args types) -> Return type
+    | TupleT [CladType]
     | AnyT
     | VoidT
     | ErrorT
@@ -61,6 +62,7 @@ data AST
     | IASymbol String                           -- Identifiant de variable ou de fonction
     | IAList [AST]                              -- Construction d'une liste (ex: [1, 2, 3] si implémenté)
     | IAUnit                                    -- Représente le Neant (:unit ou void)
+    | IATuple [AST]                             -- Représente les Tuples (sous forme Variable (element, element))
 
     -- Expressions Infixées (Opérateurs Builtin ou Utilisateur)
     | IAInfix AST String AST                    -- Left Symbole/Opérateur Right (Ex: 1 "+" 2)
@@ -99,6 +101,7 @@ data Value
     | ListVal [Value]
     | SymbolVal String
     | StringVal String
+    | TupleVal [Value]
     | Void                      -- Représente le type Neant
     | ErrorVal String           -- Ajout d'un type pour les erreurs (plus propre que Left String)
 
@@ -111,6 +114,7 @@ instance Show Value where
     show FuncVal {} = "#<procedure>"
     show (Primitive _) = "#<primitive-procedure>"
     show (ListVal list) = "(" ++ unwords (map show list) ++ ")"
+    show (TupleVal t) = "(" ++ intercalate ", " (map show t) ++ ")"
     show (SymbolVal s) = s
     show (StringVal s) = s
     show Void = "#<void>"

@@ -110,7 +110,7 @@ spec = describe "ParseToAST" $ do
 
         it "fails on invalid syntax (misplaced operator)" $ do
             let input = "constante entier x = +"
-            case parse parseProgramAST "" input of -- Le test passe car il y a bien une erreur
+            case parse parseProgramAST "" input of
                 Left _ -> return ()
                 Right _ -> expectationFailure "Expected parse error on dangling operator"
 
@@ -202,3 +202,49 @@ spec = describe "ParseToAST" $ do
             case parse parseProgramAST "" input of
                 Left _ -> return ()
                 Right _ -> expectationFailure "Expected error: 'fin' missing from conditional block"
+
+    -- ====================================================================
+    -- Tests de Type (Liste, Tuples, ...)
+    -- ====================================================================
+
+    describe "CLaD Tuples & Multi-type Lists" $ do
+
+        it "parses a simple tuple literal" $ do
+            let input = "(42, \"Glados\", vrai)"
+            let expected = IAProgram [IATuple [IANumber 42, IAString "Glados", IABoolean True]]
+            parseAST input `shouldBe` Right expected
+
+        it "parses a constant tuple declaration with explicit types" $ do
+            let input = "constante (entier, phrase) paire = (1, \"un\")"
+            let tupleType = TupleT [IntT, StringT]
+            let tupleVal = IATuple [IANumber 1, IAString "un"]
+            let expected = IAProgram [IADeclare "paire" (Just tupleType) tupleVal]
+            parseAST input `shouldBe` Right expected
+
+        it "parses nested tuples" $ do
+            let input = "(1, (2, 3))"
+            let innerTuple = IATuple [IANumber 2, IANumber 3]
+            let expected = IAProgram [IATuple [IANumber 1, innerTuple]]
+            parseAST input `shouldBe` Right expected
+
+        it "parses a list of tuples" $ do
+            let input = "[(1, vrai), (2, faux)]"
+            let t1 = IATuple [IANumber 1, IABoolean True]
+            let t2 = IATuple [IANumber 2, IABoolean False]
+            let expected = IAProgram [IAList [t1, t2]]
+            parseAST input `shouldBe` Right expected
+
+        it "parses a function returning a tuple type" $ do
+            let input = "fonction coord() : (entier, entier) retourner (10, 20) fin"
+            let retType = TupleT [IntT, IntT]
+            let body = [IAReturn (IATuple [IANumber 10, IANumber 20])]
+            let expected = IAProgram [IAFunctionDef "coord" [] (Just retType) body]
+            parseAST input `shouldBe` Right expected
+
+        it "parses a complex nested list and tuple structure" $ do
+            let input = "variable liste<liste<(entier, entier)>> complexe = [[(0,0)]]"
+            let innerTupleType = TupleT [IntT, IntT]
+            let complexType = ListT (ListT innerTupleType)
+            let innerVal = IAList [IATuple [IANumber 0, IANumber 0]]
+            let expected = IAProgram [IADeclare "complexe" (Just complexType) (IAList [innerVal])]
+            parseAST input `shouldBe` Right expected

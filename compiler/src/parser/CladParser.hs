@@ -30,9 +30,17 @@ parseBaseType =
   <|> (symbol "phrase" >> return StringT)
   <|> (symbol "neant" >> return VoidT)
 
+parseTupleType :: Parser CladType
+parseTupleType = do
+    _ <- symbol "("
+    types <- parseExplicitType `sepBy1` symbol ","
+    _ <- symbol ")"
+    return (TupleT types)
+
 parseExplicitType :: Parser CladType
 parseExplicitType =
-      (do
+      try parseTupleType
+  <|> (do
         _ <- symbol "liste"
         _ <- symbol "<"
         elementType <- parseExplicitType
@@ -70,7 +78,17 @@ parseTerm =
     <|> try parseCall
     <|> (IASymbol <$> parseIdentifier)
     <|> parseListCreation
-    <|> (symbol "(" *> parseExpression <* symbol ")")
+    <|> parseTupleOrParenthesized
+
+parseTupleOrParenthesized :: Parser AST
+parseTupleOrParenthesized = do
+    _ <- symbol "("
+    first <- parseExpression
+    maybeRest <- optional (symbol "," *> parseExpression `sepBy` symbol ",")
+    _ <- symbol ")"
+    case maybeRest of
+        Nothing    -> return first
+        Just rest  -> return (IATuple (first : rest))
 
 parseUnaryNot :: Parser AST
 parseUnaryNot = do
