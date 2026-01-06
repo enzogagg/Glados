@@ -92,7 +92,10 @@ Le bytecode utilise un système de typage unifié basé sur des tags d'un octet 
 | 06            | Symbol            | Symbole                        |
 | 07            | Nil               | Valeur nulle                   |
 | 08            | Function          | Référence vers Function Table  |
-| 09            | Object            | Objet (extension future)       |
+| 09            | Tuple             | Tuple (liste fixe)             |
+| 0A            | Array             | Tableau (vecteur)              |
+| 0B            | Struct            | Structure (champs nommés)      |
+| 0C            | Map               | Dictionnaire (Clé-Valeur)      |
 
 ### 2.2 Format des valeurs
 
@@ -237,7 +240,25 @@ Function 1 → adresse 350
 
 ---
 
-### 3.10 Terminaison
+### 3.10 Structures de données complexes
+
+| Opcode | Instruction       | Description                                      |
+| ------ | ----------------- | ------------------------------------------------ |
+| 90     | MAKE_TUPLE size   | Crée un tuple de n éléments depuis la pile       |
+| 91     | TUPLE_GET index   | Accède à l'élément à l'index immédiat            |
+| 92     | MAKE_ARRAY size   | Crée un tableau de n éléments depuis la pile     |
+| 93     | ARRAY_GET         | Accès indexé (Stack: array, index)               |
+| 94     | ARRAY_SET         | Modification (Stack: array, index, val)          |
+| 95     | MAKE_MAP count    | Crée une map (Stack: k1, v1, k2, v2...)          |
+| 96     | MAP_GET           | Accès par clé (Stack: map, key)                  |
+| 97     | MAP_SET           | Ajout/Modif (Stack: map, key, val)               |
+| 98     | MAKE_STRUCT count | Crée une struct de n champs (Stack: val1, ...)   |
+| 99     | STRUCT_GET nameId | Accès champ par nom (arg: index string pool)     |
+| 9A     | STRUCT_SET nameId | Modif champ par nom (arg: index string pool)     |
+
+---
+
+### 3.11 Terminaison
 
 | Opcode | Instruction | Description                |
 | ------ | ----------- | -------------------------- |
