@@ -1,0 +1,100 @@
+{-
+-- EPITECH PROJECT, 2025
+-- Glados
+-- File description:
+-- Types
+-}
+
+module Types (
+    Expr(..),
+    IAST(..),
+    CladType(..),
+    Value(..),
+    Env) where
+
+data Expr
+    = Number Integer
+    | FloatLiteral Double
+    | Boolean Bool
+    | Symbol String
+    | String String
+    | List [Expr]
+    deriving (Show, Eq)
+
+-- Le nouvel Abstract Syntax Tree Intermédiaire
+data IAST
+    = IANumber Integer
+    | IAFloatLiteral Double
+    | IABoolean Bool
+    | IASymbol String
+    | IAString String
+    | IAList [IAST] -- Pour les appels de fonction génériques
+
+    -- Formes spéciales explicites:
+    | IAIf IAST IAST IAST
+    | IALambda [String] IAST
+    | IADefine String IAST
+    | IAQuote IAST
+
+    -- CLaD Extensions
+    | IAInfix IAST String IAST
+    | IACall String [IAST]
+    | IAFunctionDef String [(String, Maybe CladType)] (Maybe CladType) [IAST]
+    | IAMain [IAST]
+    | IADeclare String (Maybe CladType) IAST
+    | IAAssign String IAST
+    | IAReturn IAST
+    | IAConditional IAST [IAST] (Maybe [IAST])
+    | IAWhile IAST [IAST]
+    | IAFor IAST IAST IAST [IAST]
+    | IAProgram [IAST]
+    | IAUnit
+    deriving (Show, Eq)
+
+data CladType
+    = IntT
+    | FloatT
+    | BoolT
+    | StringT
+    | VoidT
+    | ListT CladType
+    deriving (Show, Eq)
+
+data Value
+    = IntVal Integer
+    | FloatVal Double
+    | BoolVal Bool
+    | FuncVal [String] IAST Env -- ⚠️ UPDATED: Stocke l'IAST (corps de fonction)
+    | Primitive ([Value] -> Either String Value)
+    | ListVal [Value]
+    | SymbolVal String
+    | StringVal String
+    | Void
+
+-- Instance Show personnalisée
+instance Show Value where
+    show (IntVal n) = show n
+    show (FloatVal n) = show n
+    show (BoolVal True) = "#t"
+    show (BoolVal False) = "#f"
+    show FuncVal {} = "#<procedure>"
+    show (Primitive _) = "#<primitive-procedure>"
+    show (ListVal list) = "(" ++ unwords (map show list) ++ ")"
+    show (SymbolVal s) = s
+    show (StringVal s) = s
+    show Void = "#<void>"
+
+-- Instance Eq personnalisée
+instance Eq Value where
+    IntVal a == IntVal b = a == b
+    FloatVal a == FloatVal b = a == b
+    BoolVal a == BoolVal b = a == b
+    FuncVal {} == FuncVal {} = True     -- approximation : toutes les fonctions sont égales
+    Primitive _ == Primitive _ = True         -- approximation : tous les primitives sont égales
+    ListVal a == ListVal b = a == b
+    SymbolVal a == SymbolVal b = a == b
+    StringVal a == StringVal b = a == b
+    Void == Void = True
+    _ == _ = False
+
+type Env = [(String, Value)] -- simple environment as an association list
