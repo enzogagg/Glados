@@ -90,6 +90,8 @@ data Opcode
     | OpGt              -- 0x23
     | OpLte             -- 0x24
     | OpGte             -- 0x25
+    | OpAnd             -- 0x26
+    | OpOr              -- 0x27
     | OpCons            -- 0x30
     | OpHead            -- 0x31
     | OpTail            -- 0x32
@@ -133,6 +135,8 @@ opcodeToByte OpLt = 0x22
 opcodeToByte OpGt = 0x23
 opcodeToByte OpLte = 0x24
 opcodeToByte OpGte = 0x25
+opcodeToByte OpAnd = 0x26
+opcodeToByte OpOr = 0x27
 opcodeToByte OpCons = 0x30
 opcodeToByte OpHead = 0x31
 opcodeToByte OpTail = 0x32
@@ -303,6 +307,8 @@ generateInstruction (IAInfix left op right) = do
                     ">" -> Right [opcodeToByte OpGt]
                     "<=" -> Right [opcodeToByte OpLte]
                     ">=" -> Right [opcodeToByte OpGte]
+                    "et" -> Right [opcodeToByte OpAnd]
+                    "ou" -> Right [opcodeToByte OpOr]
                     _ -> Left $ "Unknown operator: " ++ op
             case opCode of
                 Left err -> return $ Left err
@@ -347,6 +353,102 @@ generateInstruction (IAReturn expr) = do
     case exprResult of
         Left err -> return $ Left err
         Right exprCode -> return $ Right $ exprCode ++ [opcodeToByte OpReturn]
+
+generateInstruction (IAIf condExpr thenStmts maybeElseStmts) = do
+    condResult <- generateInstruction condExpr
+    thenResults <- mapM generateInstruction thenStmts
+
+    case (condResult, sequence thenResults) of
+        (Left err, _) -> return $ Left err
+        (_, Left err) -> return $ Left err
+        (Right condCode, Right thenCodes) -> do
+            let thenBody = concat thenCodes
+
+            case maybeElseStmts of
+                Nothing -> do
+                    let thenLength = length thenBody
+                    let jmpOffset = fromIntegral thenLength
+                    let jmpBytes = BL.unpack $ runPut $ putWord32be jmpOffset
+                    return $ Right $ condCode ++ (opcodeToByte OpJmpIfFalse : jmpBytes) ++ thenBody
+
+                Just elseStmts -> do
+                    elseResults <- mapM generateInstruction elseStmts
+                    case sequence elseResults of
+                        Left err -> return $ Left err
+                        Right elseCodes -> do
+                            let elseBody = concat elseCodes
+                            let thenLength = length thenBody + 5  -- +5 pour le Jmp à la fin du then
+                            let elseLength = length elseBody
+                            let jmpIfFalseOffset = fromIntegral thenLength
+                            let jmpOffset = fromIntegral elseLength
+                            let jmpIfFalseBytes = BL.unpack $ runPut $ putWord32be jmpIfFalseOffset
+                            let jmpBytes = BL.unpack $ runPut $ putWord32be jmpOffset
+                            return $ Right $ condCode
+                                ++ (opcodeToByte OpJmpIfFalse : jmpIfFalseBytes)
+                                ++ thenBody
+                                ++ (opcodeToByte OpJmp : jmpBytes)
+                                ++ elseBody
+
+generateInstruction (IAWhile condExpr bodyStmts) = do
+    condResult <- generateInstruction condExpr
+    bodyResults <- mapM generateInstruction bodyStmts
+
+    case (condResult, sequence bodyResults) of
+        (Left err, _) -> return $ Left err
+        (_, Left err) -> return $ Left err
+        (Right condCode, Right bodyCodes) -> do
+            let body = concat bodyCodes
+            let condLength = length condCode
+            let bodyLength = length body
+            -- JmpIfFalse pour sortir de la boucle
+            let jmpIfFalseOffset = fromIntegral (bodyLength + 5)  -- +5 pour le Jmp de retour
+            -- Jmp pour retourner au début de la condition
+            let jmpBackOffset = fromIntegral (condLength + bodyLength + 5)
+            let jmpIfFalseBytes = BL.unpack $ runPut $ putWord32be jmpIfFalseOffset
+            let jmpBackBytes = BL.unpack $ runPut $ putWord32be jmpBackOffset
+            return $ Right $ condCode
+                ++ (opcodeToByte OpJmpIfFalse : jmpIfFalseBytes)
+                ++ body
+                ++ (opcodeToByte OpJmp : jmpBackBytes)
+
+generateInstruction (IAFor iterVar startExpr endExpr bodyStmts) = do
+    initResult <- generateInstruction (IAAssign (getSymbolName iterVar) startExpr)
+
+    endResult <- generateInstruction endExpr
+    condResult <- generateInstruction (IAInfix iterVar "<=" endExpr)
+
+    bodyResults <- mapM generateInstruction bodyStmts
+
+    let incrExpr = IAAssign (getSymbolName iterVar)
+                            (IAInfix iterVar "+" (IANumber 1))
+    incrResult <- generateInstruction incrExpr
+
+    case (initResult, endResult, condResult, sequence bodyResults, incrResult) of
+        (Left err, _, _, _, _) -> return $ Left err
+        (_, Left err, _, _, _) -> return $ Left err
+        (_, _, Left err, _, _) -> return $ Left err
+        (_, _, _, Left err, _) -> return $ Left err
+        (_, _, _, _, Left err) -> return $ Left err
+        (Right initCode, Right endCode, Right condCode, Right bodyCodes, Right incrCode) -> do
+            let body = concat bodyCodes
+            let condLength = length condCode
+            let bodyLength = length body
+            let incrLength = length incrCode
+            -- JmpIfFalse pour sortir de la boucle
+            let jmpIfFalseOffset = fromIntegral (bodyLength + incrLength + 5)
+            -- Jmp pour retourner au début de la condition
+            let jmpBackOffset = fromIntegral (condLength + bodyLength + incrLength + 5)
+            let jmpIfFalseBytes = BL.unpack $ runPut $ putWord32be jmpIfFalseOffset
+            let jmpBackBytes = BL.unpack $ runPut $ putWord32be jmpBackOffset
+            return $ Right $ initCode
+                ++ condCode
+                ++ (opcodeToByte OpJmpIfFalse : jmpIfFalseBytes)
+                ++ body
+                ++ incrCode
+                ++ (opcodeToByte OpJmp : jmpBackBytes)
+  where
+    getSymbolName (IASymbol name) = name
+    getSymbolName _ = "i"  -- Valeur par défaut
 
 generateInstruction (IABlock stmts) = do
     results <- mapM generateInstruction stmts
