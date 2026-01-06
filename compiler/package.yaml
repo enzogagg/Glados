@@ -44,6 +44,7 @@ library:
   - src/parser
 
 executables:
+
   glados-compiler:
     main:                Main.hs
     source-dirs:         app
@@ -53,6 +54,7 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - glados
+
 
 tests:
   glados-test:

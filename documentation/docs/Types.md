@@ -1,150 +1,69 @@
 ---
-id: Types
-title: Types
-sidebar_position: 3
+id: Tests
+title: Protocoles de Test
+sidebar_position: 4
 ---
 
-# Types de base de **CLaD**
+# Protocoles de Test
 
-Ce document décrit l’ensemble des **types fondamentaux** du langage CLaD, leurs opérations natives, ainsi que des exemples d’utilisation..
+Le Centre d'Enrichissement accorde une importance capitale à la validation des données. Tout code non testé sera considéré comme une violation du protocole de sécurité.
+
+## Tests Unitaires
+
+Les tests unitaires vérifient le bon fonctionnement des composants individuels du noyau GLaDOS (parsing, évaluation, types).
+
+### Localisation
+Les sujets de test se trouvent dans le secteur `test/` :
+- `ParseToExprSpec.hs` : Vérifie la transformation du texte en AST.
+- `ParseValueSpec.hs` : Valide l'évaluation des expressions et les primitives.
+- `MainSpec.hs` : Tests généraux du point d'entrée.
+
+### Exécution
+Pour lancer la séquence de tests unitaires via le terminal :
+
+```bash
+make tests_run
+```
+Ou directement avec Stack :
+```bash
+stack test
+```
+
+### Ajouter un Test
+1. Créez ou modifiez un fichier `*Spec.hs` dans `test/`.
+2. Utilisez la syntaxe `hspec` pour définir vos assertions.
+3. Vérifiez que votre test ne provoque pas de paradoxe temporel.
 
 ---
 
-## 1. Nombres
+## Tests Fonctionnels
 
-Les nombres sont divisés en deux catégories :
+Les tests fonctionnels valident le comportement global de l'interpréteur en conditions réelles.
 
-* **Entiers** (`Entiers`)
-* **Flottants** (`Virgule`)
+### Localisation
+Le script de contrôle est situé à : `scripts/functional_tests.sh`.
 
-### Fonctions natives
+### Fonctionnement
+Le script :
+1. Compile le binaire `glados`.
+2. Injecte des instructions (via `stdin` ou fichiers).
+3. Compare la sortie standard et le code de retour avec les valeurs attendues.
 
-* `+ a b` — Addition
-* `- a b` — Soustraction
-* `* a b` — Multiplication
-* `/ a b` — Division flottante
-* `div a b` — Division entière
-* `mod a b` — Modulo
-* `abs x` — Valeur absolue
-* `arrondi x` — Arrondi
+### Exécution
+```bash
+./scripts/functional_tests.sh
+```
 
-### Exemples
+### Ajouter un Test
+Ouvrez `scripts/functional_tests.sh` et ajoutez une ligne `assert_output` :
 
-```clad
-(+ 2 3)        ;; => 5
-(/ 7 2)        ;; => 3.5
-(div 7 2)      ;; => 3
-(mod 7 2)      ;; => 1
-(abs -42)      ;; => 42
-(arrondi 3.14)   ;; => 3
+```bash
+# assert_output "Nom du Test" "Entrée" "Code Retour Attendu" "Sortie Attendue"
+assert_output "Test Gâteau" "(eq? 'cake 'lie)" 0 "#t"
 ```
 
 ---
 
-## 2. Chaînes de caractères (`Phrase`)
-
-Les chaînes permettent de manipuler du texte – utile pour menacer les sujets de test.
-
-### Fonctions natives
-
-* `phr-long s` — Longueur
-* `phr-ajout a b` — Concaténation
-* `phr-coupe s sep` — Découpe
-* `phr-cherche? s sub` — Recherche
-
-### Exemples
-
-```clad
-(phr-long "CLaD")         ;; => 6
-(phr-ajout "Bonjour, " "Sujet 17")  ;; => "Bonjour, Sujet 17"
-(phr-coupe "a,b,c" ",")        ;; => ["a" "b" "c"]
-(phr-cherche? "neurotoxine" "tox") ;; => #t
-```
-
----
-
-## 3. Booléens (`PileouFace`)
-
-Deux valeurs possibles :
-
-* `vrai` — vrai
-* `faux` — faux
-
-### Fonctions natives
-
-* `et a b`
-* `ou a b`
-* `non a`
-* `=` — Égalité
-* `>` `<` `>=` `<=` — Comparaisons
-
-### Exemples
-
-```glados
-(and #t #f)        ;; => #f
-(or #t #f)         ;; => #t
-(not #t)           ;; => #f
-(= 3 3)            ;; => #t
-(> 5 2)            ;; => #t
-```
-
----
-
-## 4. Listes (`Liste`)
-
-Collections ordonnées d’éléments, souvent utilisées pour stocker des résultats de tests ou des données de sujets.
-
-### Fonctions natives
-
-* `Liste a b c ...` — Crée une liste
-* `Premier lst` — Premier élément
-* `rest lst` — Le reste
-* `ajout lst1 lst2` — Concaténation de listes
-* `map fn lst` — Application d’une fonction
-* `filtre fn lst` — Filtrage
-* `réduis fn init lst` — Réduction
-
-### Exemples
-
-```clad
-(list 1 2 3)            ;; => [1 2 3]
-(Premier [1 2 3])         ;; => 1
-(rest [1 2 3])          ;; => [2 3]
-(ajout [1 2] [3 4])     ;; => [1 2 3 4]
-(map (lambda (x) (* x 2)) [1 2 3])      ;; => [2 4 6]
-(filtre (lambda (x) (> x 2)) [1 2 3 4]) ;; => [3 4]
-(réduis + 0 [1 2 3])      ;; => 6
-```
-
----
-
-## 5. Le type `Neant`
-
-Type spécial indiquant l'absence de valeur.
-Similaire à `null`, `none` ou `void` dans d'autres langages.
-
-### Exemple
-
-```glados
-(print "Test en cours...")  ;; => retourne :Neant
-```
-
----
-
-## 6. Le type `Erreur`
-
-Toutes les exceptions internes (ex : division par zéro, accès hors liste, surcharge de tourelles) retournent un objet de type `Erreur`.
-
-### Exemple
-
-```clad
-(/ 1 0)  ;; => Erreur: DivisionParZero
-```
-
----
-
-## Conclusion
-
-Cette section détaille tous les types fondamentaux disponibles dans le langage CLaD. Ils constituent les blocs essentiels pour l’écriture de programmes fiables, reproductibles et scientifiquement cruels.
-
-Bonne expérimentation.
+:::tip Note du Superviseur
+Un code vert est un code joyeux. Un code rouge entraînera la libération de neurotoxine.
+:::

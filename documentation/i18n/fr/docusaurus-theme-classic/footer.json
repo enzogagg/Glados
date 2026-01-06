@@ -1,0 +1,26 @@
+{
+  "link.title.Docs": {
+    "message": "Docs",
+    "description": "The title of the footer links column with title=Docs in the footer"
+  },
+  "link.title.Community": {
+    "message": "Community",
+    "description": "The title of the footer links column with title=Community in the footer"
+  },
+  "link.item.label.User Manual": {
+    "message": "User Manual",
+    "description": "The label of footer link with label=User Manual linking to /docs/Introduction"
+  },
+  "link.item.label.Developer API": {
+    "message": "Developer API",
+    "description": "The label of footer link with label=Developer API linking to pathname:///api/index.html"
+  },
+  "link.item.label.Epitech": {
+    "message": "Epitech",
+    "description": "The label of footer link with label=Epitech linking to https://epitech.eu"
+  },
+  "copyright": {
+    "message": "Copyright © 2025 GLaDOS Project. Built with Docusaurus & Haskell.",
+    "description": "The footer copyright"
+  }
+}

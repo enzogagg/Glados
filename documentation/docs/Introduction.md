@@ -1,8 +1,12 @@
 ---
 id: Introduction
-title: Introduction
+title: Introduction à la bibliothèque standard de CLaD
 sidebar_position: 1
+slug: /
 ---
+
+# Introduction à la bibliothèque standard de **CLaD**
+...
 
 # Introduction à la bibliothèque standard de **CLaD**
 
