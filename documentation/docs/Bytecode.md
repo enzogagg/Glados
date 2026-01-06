@@ -252,8 +252,9 @@ La VM CLaD est conçue pour supporter :
 ```clad
 liste = [1, 2, 3]
 print(head(liste) + 10)
+```
 
-5.2 Représentation en bytecode assembleur
+### 5.2 Représentation en bytecode assembleur
 
 ```assembly
 PUSH_INT 1

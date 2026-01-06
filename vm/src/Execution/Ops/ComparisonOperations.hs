@@ -55,7 +55,7 @@ opLte state =
         (FloatVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (b <= a) : rest }
         (IntVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (b <= fromIntegral a) : rest }
         (FloatVal a : IntVal b : rest) -> Right $ state { stack = BoolVal (fromIntegral b <= a) : rest }
-        _ -> Left "Error: Le requires two numeric values on the stack"
+        _ -> Left "Error: Lte requires two numeric values on the stack"
 
 opGte :: VMState -> Either String VMState
 opGte state =
@@ -64,4 +64,4 @@ opGte state =
         (FloatVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (b >= a) : rest }
         (IntVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (b >= fromIntegral a) : rest }
         (FloatVal a : IntVal b : rest) -> Right $ state { stack = BoolVal (fromIntegral b >= a) : rest }
-        _ -> Left "Error: Ge requires two numeric values on the stack"
+        _ -> Left "Error: Gte requires two numeric values on the stack"
