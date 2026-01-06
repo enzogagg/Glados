@@ -1,0 +1,33 @@
+# Dépendances (Le plus important)
+node_modules/
+.pnp
+.pnp.js
+
+# Docusaurus - Fichiers de cache et de génération
+.docusaurus/
+.cache-loader/
+
+# Dossier de Build (Production)
+build/
+
+# Logs d'erreurs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Fichiers Système
+.DS_Store
+Thumbs.db
+
+# Environnement (Variables locales)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Editeurs de texte
+.vscode/
+.idea/
+*.swp

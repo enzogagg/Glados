@@ -10,7 +10,27 @@ data Value
     | SymbolVal String        -- Tag 06
     | NilVal                  -- Tag 07
     | FunctionVal Int         -- Tag 08
-    deriving (Show, Eq)
+    | TupleVal [Value]        -- Tag 09
+    | ArrayVal [Value]        -- Tag 0A
+    | StructVal [(String, Value)] -- Tag 0B
+    | MapVal [(Value, Value)] -- Tag 0C
+    deriving (Eq)
+
+instance Show Value where
+    show (IntVal n) = show n
+    show (FloatVal n) = show n
+    show (BoolVal True) = "#t"
+    show (BoolVal False) = "#f"
+    show (CharVal c) = show c
+    show (StringVal s) = s
+    show (ListVal l) = "(" ++ unwords (map show l) ++ ")"
+    show (SymbolVal s) = s
+    show NilVal = "nil"
+    show (FunctionVal n) = "<function " ++ show n ++ ">"
+    show (TupleVal l) = "{" ++ unwords (map show l) ++ "}"
+    show (ArrayVal l) = "[" ++ unwords (map show l) ++ "]"
+    show (StructVal _) = "<struct>"
+    show (MapVal _) = "<map>"
 
 data Instruction
     = PushConst Int           -- 01
@@ -60,6 +80,21 @@ data Instruction
 
     | Print                   -- 80
     | Input                   -- 81
+
+    | MakeTuple Int           -- 90
+    | TupleGet Int            -- 91
+
+    | MakeArray Int           -- 92
+    | ArrayGet                -- 93
+    | ArraySet                -- 94
+
+    | MakeMap Int             -- 95
+    | MapGet                  -- 96
+    | MapSet                  -- 97
+
+    | MakeStruct Int          -- 98
+    | StructGet String        -- 99
+    | StructSet String        -- 9A
 
     | Halt                    -- FF
     deriving (Show, Eq)

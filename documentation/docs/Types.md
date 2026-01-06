@@ -1,150 +1,64 @@
 ---
 id: Types
-title: Types
-sidebar_position: 3
+title: Système de Types
+sidebar_position: 5
 ---
 
-# Types de base de **CLaD**
+# Système de Types
 
-Ce document décrit l’ensemble des **types fondamentaux** du langage CLaD, leurs opérations natives, ainsi que des exemples d’utilisation..
+Le langage Glados (et sa variante CLaD) repose sur un système de types interne robuste défini en Haskell.
 
----
+## 1. Expressions (Expr)
+Le type `Expr` représente l'AST brut issu du parsing initial.
 
-## 1. Nombres
+- **Number** : Entiers (`Integer`).
+- **FloatLiteral** : Nombres à virgule flottante (`Double`).
+- **Boolean** : Booléens (`Bool`).
+- **Symbol** : Identifiants ou symboles.
+- **String** : Chaînes de caractères.
+- **List** : Liste d'expressions S-expressions.
 
-Les nombres sont divisés en deux catégories :
+## 2. IAST (Intermediate Abstract Syntax Tree)
+L'`IAST` est une représentation intermédiaire plus riche, utilisée après une phase de transformation pour faciliter la compilation ou l'interprétation.
 
-* **Entiers** (`Entiers`)
-* **Flottants** (`Virgule`)
+### Types primitifs
+- `IANumber`, `IAFloatLiteral`, `IABoolean`, `IASymbol`, `IAString`.
 
-### Fonctions natives
+### Formes spéciales
+- **IAIf** : Conditionnelle `if`.
+- **IALambda** : Fonctions anonymes.
+- **IADefine** : Définition de variables/fonctions.
+- **IAQuote** : Quotation.
 
-* `+ a b` — Addition
-* `- a b` — Soustraction
-* `* a b` — Multiplication
-* `/ a b` — Division flottante
-* `div a b` — Division entière
-* `mod a b` — Modulo
-* `abs x` — Valeur absolue
-* `arrondi x` — Arrondi
+### Extensions CLaD
+- **IAInfix** : Opérations infixes.
+- **IACall** : Appels de fonctions.
+- **IAFunctionDef** : Définition de fonctions typées.
+- **IADeclare**, **IAAssign** : Gestion des variables.
+- **IAWhile**, **IAFor** : Boucles.
+- **IAProgram** : Programme complet.
+- **IAUnit** : Type unit (void).
 
-### Exemples
+## 3. CladType (Types CLaD)
+Types explicites utilisés dans la syntaxe CLaD pour le typage statique ou dynamique.
 
-```clad
-(+ 2 3)        ;; => 5
-(/ 7 2)        ;; => 3.5
-(div 7 2)      ;; => 3
-(mod 7 2)      ;; => 1
-(abs -42)      ;; => 42
-(arrondi 3.14)   ;; => 3
-```
+- `IntT`, `FloatT`, `BoolT`, `StringT`, `VoidT`
+- `ListT CladType` : Liste typée.
 
----
+## 4. Value (Valeurs d'Exécution)
+Le type `Value` représente les données manipulées par la VM lors de l'exécution.
 
-## 2. Chaînes de caractères (`Phrase`)
+| Constructeur | Description |
+|---|---|
+| `IntVal` | Valeur entière. |
+| `FloatVal` | Valeur flottante. |
+| `BoolVal` | Valeur booléenne (`#t` / `#f`). |
+| `FuncVal` | Fermeture (Closure) contenant arguments, corps et environnement. |
+| `Primitive` | Fonction native (Haskell). |
+| `ListVal` | Liste de valeurs. |
+| `SymbolVal` | Symbole atomique. |
+| `StringVal` | Chaîne de caractères. |
+| `Void` | Absence de valeur. |
 
-Les chaînes permettent de manipuler du texte – utile pour menacer les sujets de test.
-
-### Fonctions natives
-
-* `phr-long s` — Longueur
-* `phr-ajout a b` — Concaténation
-* `phr-coupe s sep` — Découpe
-* `phr-cherche? s sub` — Recherche
-
-### Exemples
-
-```clad
-(phr-long "CLaD")         ;; => 6
-(phr-ajout "Bonjour, " "Sujet 17")  ;; => "Bonjour, Sujet 17"
-(phr-coupe "a,b,c" ",")        ;; => ["a" "b" "c"]
-(phr-cherche? "neurotoxine" "tox") ;; => #t
-```
-
----
-
-## 3. Booléens (`PileouFace`)
-
-Deux valeurs possibles :
-
-* `vrai` — vrai
-* `faux` — faux
-
-### Fonctions natives
-
-* `et a b`
-* `ou a b`
-* `non a`
-* `=` — Égalité
-* `>` `<` `>=` `<=` — Comparaisons
-
-### Exemples
-
-```glados
-(and #t #f)        ;; => #f
-(or #t #f)         ;; => #t
-(not #t)           ;; => #f
-(= 3 3)            ;; => #t
-(> 5 2)            ;; => #t
-```
-
----
-
-## 4. Listes (`Liste`)
-
-Collections ordonnées d’éléments, souvent utilisées pour stocker des résultats de tests ou des données de sujets.
-
-### Fonctions natives
-
-* `Liste a b c ...` — Crée une liste
-* `Premier lst` — Premier élément
-* `rest lst` — Le reste
-* `ajout lst1 lst2` — Concaténation de listes
-* `map fn lst` — Application d’une fonction
-* `filtre fn lst` — Filtrage
-* `réduis fn init lst` — Réduction
-
-### Exemples
-
-```clad
-(list 1 2 3)            ;; => [1 2 3]
-(Premier [1 2 3])         ;; => 1
-(rest [1 2 3])          ;; => [2 3]
-(ajout [1 2] [3 4])     ;; => [1 2 3 4]
-(map (lambda (x) (* x 2)) [1 2 3])      ;; => [2 4 6]
-(filtre (lambda (x) (> x 2)) [1 2 3 4]) ;; => [3 4]
-(réduis + 0 [1 2 3])      ;; => 6
-```
-
----
-
-## 5. Le type `Neant`
-
-Type spécial indiquant l'absence de valeur.
-Similaire à `null`, `none` ou `void` dans d'autres langages.
-
-### Exemple
-
-```glados
-(print "Test en cours...")  ;; => retourne :Neant
-```
-
----
-
-## 6. Le type `Erreur`
-
-Toutes les exceptions internes (ex : division par zéro, accès hors liste, surcharge de tourelles) retournent un objet de type `Erreur`.
-
-### Exemple
-
-```clad
-(/ 1 0)  ;; => Erreur: DivisionParZero
-```
-
----
-
-## Conclusion
-
-Cette section détaille tous les types fondamentaux disponibles dans le langage CLaD. Ils constituent les blocs essentiels pour l’écriture de programmes fiables, reproductibles et scientifiquement cruels.
-
-Bonne expérimentation.
+## 5. Environnement (Env)
+L'environnement `Env` est une liste d'association `[(String, Value)]` stockant les variables et fonctions définies.
