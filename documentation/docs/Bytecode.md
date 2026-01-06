@@ -6,47 +6,6 @@ sidebar_position: 7
 
 # CLaD Bytecode Specification v1.0
 
-## Table des matières
-
-1. [Architecture générale](#1-architecture-générale)
-   - 1.1 [Structure du fichier bytecode](#11-structure-du-fichier-bytecode)
-   - 1.2 [Architecture de la machine virtuelle](#12-architecture-de-la-machine-virtuelle)
-
-2. [Système de typage](#2-système-de-typage)
-   - 2.1 [Tags de types](#21-tags-de-types)
-   - 2.2 [Format des valeurs](#22-format-des-valeurs)
-   - 2.3 [Exemples d'encodage](#23-exemples-dencodage)
-
-3. [Jeu d'instructions](#3-jeu-dinstructions)
-   - 3.1 [Gestion des valeurs](#31-gestion-des-valeurs)
-   - 3.2 [Opérations arithmétiques](#32-opérations-arithmétiques)
-   - 3.3 [Opérations de comparaison](#33-opérations-de-comparaison)
-   - 3.4 [Opérations sur les listes](#34-opérations-sur-les-listes)
-   - 3.5 [Symboles et évaluation](#35-symboles-et-évaluation)
-   - 3.6 [Gestion des variables](#36-gestion-des-variables)
-   - 3.7 [Contrôle de flux](#37-contrôle-de-flux)
-   - 3.8 [Gestion des fonctions](#38-gestion-des-fonctions)
-   - 3.9 [Entrées/Sorties](#39-entréessorties)
-   - 3.10 [Terminaison](#310-terminaison)
-
-4. [Caractéristiques de la VM](#4-caractéristiques-de-la-vm)
-   - 4.1 [Architecture à pile](#41-architecture-à-pile)
-   - 4.2 [Support multi-paradigmes](#42-support-multi-paradigmes)
-   - 4.3 [Gestion des types](#43-gestion-des-types)
-
-5. [Exemple d'exécution](#5-exemple-dexécution)
-   - 5.1 [Code source CLaD](#51-code-source-clad)
-   - 5.2 [Représentation en bytecode assembleur](#52-représentation-en-bytecode-assembleur)
-   - 5.3 [Encodage binaire](#53-encodage-binaire)
-
-6. [Format du fichier .cbc](#6-format-du-fichier-cbc)
-   - 6.1 [Vue d'ensemble de la structure](#61-vue-densemble-de-la-structure)
-   - 6.2 [Header](#62-header-10-bytes)
-   - 6.3 [Constant Pool](#63-constant-pool)
-   - 6.4 [Function Table](#64-function-table)
-   - 6.5 [Instructions](#65-instructions)
-   - 6.6 [Exemple complet de fichier .cbc](#66-exemple-complet-de-fichier-cbc)
-
 ---
 
 ## 1. Architecture générale
@@ -55,12 +14,8 @@ sidebar_position: 7
 
 Le fichier `.cbc` (CLaD ByteCode) est structuré en quatre sections principales :
 
-```
-[ HEADER ]
-[ CONSTANT POOL ]
-[ FUNCTION TABLE ]
-[ INSTRUCTIONS ]
-```
+[ HEADER ] [ CONSTANT POOL ] [ FUNCTION TABLE ] [ INSTRUCTIONS ]
+
 
 ### 1.2 Architecture de la machine virtuelle
 
@@ -101,9 +56,8 @@ Le bytecode utilise un système de typage unifié basé sur des tags d'un octet 
 
 Chaque valeur sur la pile respecte le format suivant :
 
-```
 [ TYPE_TAG ][ DATA... ]
-```
+
 
 ### 2.3 Exemples d'encodage
 
@@ -224,10 +178,8 @@ Ces instructions permettent de supporter les mécanismes d'évaluation différé
 
 **Function Table** : Une table associe chaque index de fonction à son adresse dans le bytecode :
 
-```
-Function 0 → adresse 200
-Function 1 → adresse 350
-```
+Function 0 → adresse 200 Function 1 → adresse 350
+
 
 ---
 
@@ -300,11 +252,9 @@ La VM CLaD est conçue pour supporter :
 ```clad
 liste = [1, 2, 3]
 print(head(liste) + 10)
-```
 
-### 5.2 Représentation en bytecode assembleur
+5.2 Représentation en bytecode assembleur
 
-```
 PUSH_INT 1
 PUSH_INT 2
 PUSH_INT 3
@@ -317,11 +267,9 @@ PUSH_INT 10
 ADD
 PRINT
 HALT
-```
 
-### 5.3 Encodage binaire
+5.3 Encôdage binaire
 
-```
 02 00 00 00 01    ; PUSH_INT 1
 02 00 00 00 02    ; PUSH_INT 2
 02 00 00 00 03    ; PUSH_INT 3
@@ -332,146 +280,102 @@ HALT
 10                ; ADD
 80                ; PRINT
 FF                ; HALT
-```
 
----
+6. Format du fichier .cbc
+6.1 Vue d'ensemble de la structure
 
-## 6. Format du fichier .cbc
+Pour visualiser clairement la structure du fichier .cbc, voici un diagramme Mermaid :
+Extrait de code
 
-### 6.1 Vue d'ensemble de la structure
+graph TD
+    A[Fichier .cbc] --> B(HEADER);
+    A --> C(CONSTANT POOL);
+    A --> D(FUNCTION TABLE);
+    A --> E(INSTRUCTIONS);
 
-```
-┌─────────────────────────────────────────┐
-│              HEADER                     │
-│  ┌────────────────────────────────┐    │
-│  │ Magic Number    : 4 bytes      │    │
-│  │ Version         : 2 bytes      │    │
-│  │ Flags           : 1 byte       │    │
-│  │ Reserved        : 3 bytes      │    │
-│  └────────────────────────────────┘    │
-├─────────────────────────────────────────┤
-│          CONSTANT POOL                  │
-│  ┌────────────────────────────────┐    │
-│  │ Count           : 4 bytes      │    │
-│  ├────────────────────────────────┤    │
-│  │ Entry 0                        │    │
-│  │  ├─ Type       : 1 byte        │    │
-│  │  ├─ Length     : 4 bytes       │    │
-│  │  └─ Data       : n bytes       │    │
-│  ├────────────────────────────────┤    │
-│  │ Entry 1                        │    │
-│  │  ├─ Type       : 1 byte        │    │
-│  │  ├─ Length     : 4 bytes       │    │
-│  │  └─ Data       : n bytes       │    │
-│  └────────────────────────────────┘    │
-├─────────────────────────────────────────┤
-│         FUNCTION TABLE                  │
-│  ┌────────────────────────────────┐    │
-│  │ Count           : 4 bytes      │    │
-│  ├────────────────────────────────┤    │
-│  │ Function 0                     │    │
-│  │  ├─ Index      : 4 bytes       │    │
-│  │  ├─ Address    : 4 bytes       │    │
-│  │  └─ ArgCount   : 1 byte        │    │
-│  ├────────────────────────────────┤    │
-│  │ Function 1                     │    │
-│  │  ├─ Index      : 4 bytes       │    │
-│  │  ├─ Address    : 4 bytes       │    │
-│  │  └─ ArgCount   : 1 byte        │    │
-│  └────────────────────────────────┘    │
-├─────────────────────────────────────────┤
-│          INSTRUCTIONS                   │
-│  ┌────────────────────────────────┐    │
-│  │ Code Length     : 4 bytes      │    │
-│  ├────────────────────────────────┤    │
-│  │ Opcode 1        : 1 byte       │    │
-│  │ Operands        : n bytes      │    │
-│  ├────────────────────────────────┤    │
-│  │ Opcode 2        : 1 byte       │    │
-│  │ Operands        : n bytes      │    │
-│  ├────────────────────────────────┤    │
-│  │        ...                     │    │
-│  └────────────────────────────────┘    │
-└─────────────────────────────────────────┘
-```
+    subgraph HEADER
+        B1(Magic Number : 4 bytes)
+        B2(Version : 2 bytes)
+        B3(Flags : 1 byte)
+        B4(Reserved : 3 bytes)
+    end
 
-### 6.2 Header (10 bytes)
+    subgraph CONSTANT_POOL
+        C1(Count : 4 bytes)
+        C2[Entry 0] --> C2_1(Type Tag : 1 byte);
+        C2_1 --> C2_2(Length : 4 bytes);
+        C2_2 --> C2_3(Data : n bytes);
+        C3[Entry 1] --> C3_1(Type Tag : 1 byte);
+        C3_1 --> C3_2(Length : 4 bytes);
+        C3_2 --> C3_3(Data : n bytes);
+    end
 
-| Offset | Taille | Champ        | Valeur / Description                |
-|--------|--------|--------------|-------------------------------------|
-| 0x00   | 4      | Magic Number | `0x43 0x42 0x43 0x00` ("CBC\0")    |
-| 0x04   | 2      | Version      | `0x01 0x00` (version 1.0)          |
-| 0x06   | 1      | Flags        | `0x00` (réservé pour usage futur)  |
-| 0x07   | 3      | Reserved     | `0x00 0x00 0x00` (padding)         |
+    subgraph FUNCTION_TABLE
+        D1(Count : 4 bytes)
+        D2[Function 0] --> D2_1(Index : 4 bytes);
+        D2_1 --> D2_2(Address : 4 bytes);
+        D2_2 --> D2_3(ArgCount : 1 byte);
+        D3[Function 1] --> D3_1(Index : 4 bytes);
+        D3_1 --> D3_2(Address : 4 bytes);
+        D3_2 --> D3_3(ArgCount : 1 byte);
+    end
 
-**Exemple en hexadécimal :**
-```
+    subgraph INSTRUCTIONS
+        E1(Code Length : 4 bytes)
+        E2[Instruction 0] --> E2_1(Opcode : 1 byte);
+        E2_1 --> E2_2(Operands : variable);
+        E3[Instruction 1] --> E3_1(Opcode : 1 byte);
+        E3_1 --> E3_2(Operands : variable);
+    end
+
+6.2 Header (10 bytes)
+Offset   Taille   Champ Valeur / Description
+0x00  4  Magic Number   0x43 0x42 0x43 0x00 ("CBC\0")
+0x04  2  Version  0x01 0x00 (version 1.0)
+0x06  1  Flags 0x00 (réservé pour usage futur)
+0x07  3  Reserved 0x00 0x00 0x00 (padding)
+
+Exemple en hexadécimal :
+
 43 42 43 00 | 01 00 | 00 | 00 00 00
    Magic    | Ver.  |Flg | Reserved
-```
 
-### 6.3 Constant Pool
+6.3 Constant Pool
 
-**Structure :**
+Structure :
+Champ Taille   Description
+Count 4 bytes  Nombre total d'entrées
+Entry N  variable Entrée de la pool
+Type Tag 1 byte   Type de l'entrée (voir section 2.1)
+Length   4 bytes  Taille des données
+Data  Length bytes   Données brutes
 
-```
-┌──────────────────────────────────────┐
-│ Count (4 bytes)                      │  ← Nombre total d'entrées
-├──────────────────────────────────────┤
-│ Entry 0                              │
-│  ┌────────────────────────────────┐  │
-│  │ Type Tag    : 1 byte           │  │  ← Type (voir section 2.1)
-│  │ Length      : 4 bytes          │  │  ← Taille des données
-│  │ Data        : Length bytes     │  │  ← Données brutes
-│  └────────────────────────────────┘  │
-├──────────────────────────────────────┤
-│ Entry 1                              │
-│  ...                                 │
-└──────────────────────────────────────┘
-```
+Exemples d'entrées :
 
-**Exemples d'entrées :**
-
-```
 String "Hello":
 04 | 00 00 00 05 | 48 65 6C 6C 6F
-^    ^             ^
-Type Length        Data
+Type | Length | Data
 
 Symbol 'x':
 06 | 00 00 00 01 | 78
-^    ^             ^
-Type Length        Data (ASCII 'x')
+Type | Length | Data (ASCII 'x')
 
 Int 42:
 00 | 00 00 00 04 | 00 00 00 2A
-^    ^             ^
-Type Length        Data (32-bit int)
-```
+Type | Length | Data (32-bit int)
 
-### 6.4 Function Table
+6.4 Function Table
 
-**Structure :**
+Structure :
+Champ Taille   Description
+Count 4 bytes  Nombre de fonctions
+Function Entry N  variable Entrée de la table
+Index 4 bytes  ID de la fonction
+Address  4 bytes  Adresse dans le bytecode
+ArgCount 1 byte   Nombre d'arguments
 
-```
-┌──────────────────────────────────────┐
-│ Count (4 bytes)                      │  ← Nombre de fonctions
-├──────────────────────────────────────┤
-│ Function Entry 0                     │
-│  ┌────────────────────────────────┐  │
-│  │ Index       : 4 bytes          │  │  ← ID de la fonction
-│  │ Address     : 4 bytes          │  │  ← Adresse dans le bytecode
-│  │ ArgCount    : 1 byte           │  │  ← Nombre d'arguments
-│  └────────────────────────────────┘  │
-├──────────────────────────────────────┤
-│ Function Entry 1                     │
-│  ...                                 │
-└──────────────────────────────────────┘
-```
+Exemple :
 
-**Exemple :**
-
-```
 Count: 2 fonctions
 
 Function 0: factorial (2 args, @ 0x00C8)
@@ -481,78 +385,40 @@ Function 0: factorial (2 args, @ 0x00C8)
 Function 1: main (0 args, @ 0x0150)
 00 00 00 01 | 00 00 01 50 | 00
    Index       Address      Args
-```
 
-### 6.5 Instructions
+6.5 Instructions
 
-**Structure :**
+Structure :
+Champ Taille   Description
+Code Length 4 bytes  Taille totale du code
+Instruction N  variable Séquence d'Opcode et d'Opérandes
+Opcode   1 byte   Instruction
+Operands variable Arguments de l'instruction
 
-```
-┌──────────────────────────────────────┐
-│ Code Length (4 bytes)                │  ← Taille totale du code
-├──────────────────────────────────────┤
-│ Instruction 0                        │
-│  ┌────────────────────────────────┐  │
-│  │ Opcode      : 1 byte           │  │
-│  │ Operands    : variable         │  │
-│  └────────────────────────────────┘  │
-├──────────────────────────────────────┤
-│ Instruction 1                        │
-│  ...                                 │
-├──────────────────────────────────────┤
-│ ...                                  │
-├──────────────────────────────────────┤
-│ HALT (0xFF)                          │
-└──────────────────────────────────────┘
-```
+Exemple d'encodage :
 
-**Exemple d'encodage :**
-
-```
 Instruction: PUSH_INT 42
-┌────┬────────────────────┐
-│ 02 │ 00 00 00 2A       │
-└────┴────────────────────┘
-  ^          ^
-Opcode    Operand (4 bytes)
+02 | 00 00 00 2A
+Opcode | Operand (4 bytes)
 
 Instruction: ADD
-┌────┐
-│ 10 │
-└────┘
-  ^
+10
 Opcode (pas d'opérande)
 
 Instruction: CALL 0 with 2 args
-┌────┬────────────────────┬────┐
-│ 70 │ 00 00 00 00       │ 02 │
-└────┴────────────────────┴────┘
-  ^          ^             ^
-Opcode   Function Index  ArgCount
-```
+70 | 00 00 00 00 | 02
+Opcode | Function Index | ArgCount
 
-### 6.6 Exemple complet de fichier .cbc
+6.6 Exemple complet de fichier .cbc
 
-Programme : `print(42)`
+Programme : print(42)
 
-```
-┌─────────── HEADER ───────────┐
-│ 43 42 43 00                  │  Magic "CBC\0"
-│ 01 00                        │  Version 1.0
-│ 00                           │  Flags
-│ 00 00 00                     │  Reserved
-├────── CONSTANT POOL ─────────┤
-│ 00 00 00 00                  │  Count: 0 entrées
-├────── FUNCTION TABLE ────────┤
-│ 00 00 00 00                  │  Count: 0 fonctions
-├─────── INSTRUCTIONS ─────────┤
-│ 00 00 00 06                  │  Code Length: 6 bytes
-│ 02 00 00 00 2A               │  PUSH_INT 42
-│ 80                           │  PRINT
-│ FF                           │  HALT
-└──────────────────────────────┘
+43 42 43 00 01 00 00 00 00 00  ; HEADER (10 bytes)
+00 00 00 00                    ; CONSTANT POOL (Count: 0)
+00 00 00 00                    ; FUNCTION TABLE (Count: 0)
+00 00 00 06                    ; INSTRUCTIONS (Code Length: 6 bytes)
+02 00 00 00 2A                 ; PUSH_INT 42
+80                             ; PRINT
+FF                             ; HALT
 
-Taille totale: 10 + 4 + 4 + 4 + 6 = 28 bytes
-```
-
----
+Taille totale: 28 bytes
