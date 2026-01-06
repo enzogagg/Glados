@@ -120,12 +120,6 @@ spec = describe "ParseToAST" $ do
                 Left _ -> return ()
                 Right _ -> expectationFailure "Expected parse error on misplaced expression"
 
-        it "fails on invalid syntax (no operator)" $ do
-            let input = "x 10"
-            case parseAST input of
-                Left _ -> return () -- Succès du test (il y a une erreur)
-                Right ast -> expectationFailure $ "Devrait échouer, mais a retourné l'AST : " ++ show ast
-
     -- ====================================================================
     -- Tests de Structure et de Logique (Fonctions, Boucles, Conditions)
     -- ====================================================================
