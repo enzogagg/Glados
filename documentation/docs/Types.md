@@ -1,69 +1,64 @@
 ---
-id: Tests
-title: Protocoles de Test
-sidebar_position: 4
+id: Types
+title: Système de Types
+sidebar_position: 5
 ---
 
-# Protocoles de Test
+# Système de Types
 
-Le Centre d'Enrichissement accorde une importance capitale à la validation des données. Tout code non testé sera considéré comme une violation du protocole de sécurité.
+Le langage Glados (et sa variante CLaD) repose sur un système de types interne robuste défini en Haskell.
 
-## Tests Unitaires
+## 1. Expressions (Expr)
+Le type `Expr` représente l'AST brut issu du parsing initial.
 
-Les tests unitaires vérifient le bon fonctionnement des composants individuels du noyau GLaDOS (parsing, évaluation, types).
+- **Number** : Entiers (`Integer`).
+- **FloatLiteral** : Nombres à virgule flottante (`Double`).
+- **Boolean** : Booléens (`Bool`).
+- **Symbol** : Identifiants ou symboles.
+- **String** : Chaînes de caractères.
+- **List** : Liste d'expressions S-expressions.
 
-### Localisation
-Les sujets de test se trouvent dans le secteur `test/` :
-- `ParseToExprSpec.hs` : Vérifie la transformation du texte en AST.
-- `ParseValueSpec.hs` : Valide l'évaluation des expressions et les primitives.
-- `MainSpec.hs` : Tests généraux du point d'entrée.
+## 2. IAST (Intermediate Abstract Syntax Tree)
+L'`IAST` est une représentation intermédiaire plus riche, utilisée après une phase de transformation pour faciliter la compilation ou l'interprétation.
 
-### Exécution
-Pour lancer la séquence de tests unitaires via le terminal :
+### Types primitifs
+- `IANumber`, `IAFloatLiteral`, `IABoolean`, `IASymbol`, `IAString`.
 
-```bash
-make tests_run
-```
-Ou directement avec Stack :
-```bash
-stack test
-```
+### Formes spéciales
+- **IAIf** : Conditionnelle `if`.
+- **IALambda** : Fonctions anonymes.
+- **IADefine** : Définition de variables/fonctions.
+- **IAQuote** : Quotation.
 
-### Ajouter un Test
-1. Créez ou modifiez un fichier `*Spec.hs` dans `test/`.
-2. Utilisez la syntaxe `hspec` pour définir vos assertions.
-3. Vérifiez que votre test ne provoque pas de paradoxe temporel.
+### Extensions CLaD
+- **IAInfix** : Opérations infixes.
+- **IACall** : Appels de fonctions.
+- **IAFunctionDef** : Définition de fonctions typées.
+- **IADeclare**, **IAAssign** : Gestion des variables.
+- **IAWhile**, **IAFor** : Boucles.
+- **IAProgram** : Programme complet.
+- **IAUnit** : Type unit (void).
 
----
+## 3. CladType (Types CLaD)
+Types explicites utilisés dans la syntaxe CLaD pour le typage statique ou dynamique.
 
-## Tests Fonctionnels
+- `IntT`, `FloatT`, `BoolT`, `StringT`, `VoidT`
+- `ListT CladType` : Liste typée.
 
-Les tests fonctionnels valident le comportement global de l'interpréteur en conditions réelles.
+## 4. Value (Valeurs d'Exécution)
+Le type `Value` représente les données manipulées par la VM lors de l'exécution.
 
-### Localisation
-Le script de contrôle est situé à : `scripts/functional_tests.sh`.
+| Constructeur | Description |
+|---|---|
+| `IntVal` | Valeur entière. |
+| `FloatVal` | Valeur flottante. |
+| `BoolVal` | Valeur booléenne (`#t` / `#f`). |
+| `FuncVal` | Fermeture (Closure) contenant arguments, corps et environnement. |
+| `Primitive` | Fonction native (Haskell). |
+| `ListVal` | Liste de valeurs. |
+| `SymbolVal` | Symbole atomique. |
+| `StringVal` | Chaîne de caractères. |
+| `Void` | Absence de valeur. |
 
-### Fonctionnement
-Le script :
-1. Compile le binaire `glados`.
-2. Injecte des instructions (via `stdin` ou fichiers).
-3. Compare la sortie standard et le code de retour avec les valeurs attendues.
-
-### Exécution
-```bash
-./scripts/functional_tests.sh
-```
-
-### Ajouter un Test
-Ouvrez `scripts/functional_tests.sh` et ajoutez une ligne `assert_output` :
-
-```bash
-# assert_output "Nom du Test" "Entrée" "Code Retour Attendu" "Sortie Attendue"
-assert_output "Test Gâteau" "(eq? 'cake 'lie)" 0 "#t"
-```
-
----
-
-:::tip Note du Superviseur
-Un code vert est un code joyeux. Un code rouge entraînera la libération de neurotoxine.
-:::
+## 5. Environnement (Env)
+L'environnement `Env` est une liste d'association `[(String, Value)]` stockant les variables et fonctions définies.
