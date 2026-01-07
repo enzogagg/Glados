@@ -65,3 +65,21 @@ opGte state =
         (IntVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (b >= fromIntegral a) : rest }
         (FloatVal a : IntVal b : rest) -> Right $ state { stack = BoolVal (fromIntegral b >= a) : rest }
         _ -> Left "Error: Gte requires two numeric values on the stack"
+
+opAnd :: VMState -> Either String VMState
+opAnd state =
+    case stack state of
+        (BoolVal a : BoolVal b : rest) -> Right $ state { stack = BoolVal (b && a) : rest }
+        _ -> Left "Error: And requires two boolean values on the stack"
+
+opOr :: VMState -> Either String VMState
+opOr state =
+    case stack state of
+        (BoolVal a : BoolVal b : rest) -> Right $ state { stack = BoolVal (b || a) : rest }
+        _ -> Left "Error: Or requires two boolean values on the stack"
+
+opNot :: VMState -> Either String VMState
+opNot state =
+    case stack state of
+        (BoolVal a: rest) -> Right $ state { stack = BoolVal (not a) : rest }
+        _ -> Left "Error: Not requires one boolean value on the stack"

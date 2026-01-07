@@ -120,6 +120,9 @@ parseInstruction pool = do
         0x23 -> return Gt
         0x24 -> return Le
         0x25 -> return Ge
+        0x26 -> return And
+        0x27 -> return Or
+        0x28 -> return Not
 
         0x30 -> return Cons
         0x31 -> return Head
