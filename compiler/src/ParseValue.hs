@@ -99,7 +99,7 @@ evalExprForDisplay expr env =
                     case res of
                         Right val ->
                             case iast of
-                                IADefine name _ ->
+                                IADefine name valIAST ->
                                     return (Right ((name, val) : env, False, Void))
                                 _ ->
                                     return (Right (env, True, val))
