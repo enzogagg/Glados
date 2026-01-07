@@ -10,6 +10,7 @@ dependencies:
 - containers
 - bytestring
 - binary
+- directory
 
 library:
   source-dirs: src
