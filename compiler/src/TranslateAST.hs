@@ -64,11 +64,13 @@ translateExpr (List (Symbol "define" : List (Symbol fname : params) : body)) = d
 
         _ -> Left "Function body must be a single expression"
 
+translateExpr (List (Symbol s : _))
+    | s `elem` ["if", "lambda", "define", "quote"] = Left $ "Invalid number of arguments for special form: " ++ s
+
+translateExpr (List []) = Left "empty list is not a valid expression"
+
 translateExpr (List xs) = do
     iasts <- mapM translateExpr xs
     return (IAList iasts)
 
-translateExpr (List (Symbol s : _))
-    | s `elem` ["if", "lambda", "define", "quote"] = Left $ "Invalid number of arguments for special form: " ++ s
-translateExpr (List []) = Left "empty list is not a valid expression"
-translateExpr _ = Left "Translation error: Unrecognized expression structure."
+

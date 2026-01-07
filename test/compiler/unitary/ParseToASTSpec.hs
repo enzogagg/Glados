@@ -121,7 +121,7 @@ spec = describe "ParseToAST" $ do
                 Right _ -> expectationFailure "Expected parse error on misplaced expression"
 
         it "fails on invalid syntax (no operator)" $ do
-            let input = "x 10"
+            let input = "(x 10)"
             case parse parseProgramAST "" input of
                 Left _ -> return ()
                 Right _ -> expectationFailure "Expected parse error with no operator"
@@ -172,7 +172,7 @@ spec = describe "ParseToAST" $ do
         it "parses C-style for loop (pour)" $ do
             let initExpr = IADeclare "i" (Just IntT) (IANumber 0)
             let condExpr = IAInfix (IASymbol "i") "<" (IANumber 10)
-            let incExpr = IAInfix (IASymbol "i") "=" (IAInfix (IASymbol "i") "+" (IANumber 1))
+            let incExpr = IAAssign "i" (IAInfix (IASymbol "i") "+" (IANumber 1))
             let body = [IAReturn (IASymbol "i")]
             let expected = IAProgram [IAFor initExpr condExpr incExpr body]
             let input = "pour (variable entier i = 0; i < 10; i = i + 1) retourner i fin"

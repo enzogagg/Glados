@@ -66,8 +66,8 @@ parseTerm =
     <|> parseNumber
     <|> parseBoolean
     <|> parseString
+    <|> try parseCall
     <|> (IASymbol <$> parseIdentifier)
-    <|> parseCall
     <|> parseListCreation
     <|> (symbol "(" *> parseExpression <* symbol ")")
 
@@ -143,7 +143,7 @@ parseInstruction =
     <|> parseConditional
     <|> parseWhile
     <|> parseFor
-    <|> parseAssignment
+    <|> try parseAssignment
     <|> parseExpression -- Un appel de fonction seul est une instruction
 
 parseFunctionArgument :: Parser (String, Maybe CladType)
@@ -254,7 +254,7 @@ parseFor = do
     condExpr <- parseExpression
     _ <- symbol ";"
 
-    incExpr <- parseExpression
+    incExpr <- try parseAssignment <|> parseExpression
     _ <- symbol ")"
 
     body <- parseBlock

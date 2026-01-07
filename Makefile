@@ -28,5 +28,6 @@ re: fclean all
 
 tests_run:
 	$(MAKE) -C $(COMPILER_DIR) tests_run
+	$(MAKE) -C $(VM_DIR) tests_run	
 
 .PHONY: all clean fclean re tests_run compiler vm

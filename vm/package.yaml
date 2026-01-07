@@ -39,4 +39,6 @@ tests:
     - base
     - hspec
     - silently
+    - binary
+    - bytestring
 

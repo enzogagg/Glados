@@ -1,0 +1,3 @@
+principal
+    print("Hello World")
+fin
