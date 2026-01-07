@@ -1,0 +1,97 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-
+-- EPITECH PROJECT, 2025
+-- Delivery
+-- File description:
+-- Flow-control
+-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Execution.Ops.FlowControl.html"><span class="hs-identifier">Execution.Ops.FlowControl</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Types.html"><span class="hs-identifier">Types</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Types.html#Value"><span class="hs-identifier">Value</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Execution.State.html"><span class="hs-identifier">Execution.State</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Execution.State.html#VMState"><span class="hs-identifier">VMState</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span class="annot"><a href="Execution.Ops.FlowControl.html#opJump"><span class="hs-identifier hs-type">opJump</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Execution.State.html#VMState"><span class="hs-identifier hs-type">VMState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="annot"><a href="Execution.State.html#VMState"><span class="hs-identifier hs-type">VMState</span></a></span><span>
+</span><span id="line-14"></span><span id="opJump"><span class="annot"><span class="annottext">opJump :: Int -&gt; VMState -&gt; Either String VMState
+</span><a href="Execution.Ops.FlowControl.html#opJump"><span class="hs-identifier hs-var hs-var">opJump</span></a></span></span><span> </span><span id="local-6989586621679066502"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679066502"><span class="hs-identifier hs-var">addr</span></a></span></span><span> </span><span id="local-6989586621679066503"><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679066503"><span class="hs-identifier hs-var">state</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">VMState -&gt; Either String VMState
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="annot"><span class="annottext">(VMState -&gt; Either String VMState)
+-&gt; VMState -&gt; Either String VMState
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679066503"><span class="hs-identifier hs-var">state</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="Execution.State.html#ip"><span class="hs-identifier hs-var">ip</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679066502"><span class="hs-identifier hs-type">addr</span></a></span><span> </span><span class="annot"><span class="hs-glyph hs-type">-</span></span><span> </span><span class="annot"><span class="hs-number">1</span></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="annot"><a href="Execution.Ops.FlowControl.html#opJumpIfTrue"><span class="hs-identifier hs-type">opJumpIfTrue</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Execution.State.html#VMState"><span class="hs-identifier hs-type">VMState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="annot"><a href="Execution.State.html#VMState"><span class="hs-identifier hs-type">VMState</span></a></span><span>
+</span><span id="line-17"></span><span id="opJumpIfTrue"><span class="annot"><span class="annottext">opJumpIfTrue :: Int -&gt; VMState -&gt; Either String VMState
+</span><a href="Execution.Ops.FlowControl.html#opJumpIfTrue"><span class="hs-identifier hs-var hs-var">opJumpIfTrue</span></a></span></span><span> </span><span id="local-6989586621679066506"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679066506"><span class="hs-identifier hs-var">addr</span></a></span></span><span> </span><span id="local-6989586621679066507"><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679066507"><span class="hs-identifier hs-var">state</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-18"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">VMState -&gt; [Value]
+</span><a href="Execution.State.html#stack"><span class="hs-identifier hs-var">stack</span></a></span><span> </span><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679066507"><span class="hs-identifier hs-var">state</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-19"></span><span>        </span><span class="hs-special">(</span><span class="annot"><a href="Types.html#BoolVal"><span class="hs-identifier hs-type">BoolVal</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span> </span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span> </span><span id="local-6989586621679066510"><span class="annot"><span class="annottext">[Value]
+</span><a href="#local-6989586621679066510"><span class="hs-identifier hs-var">rest</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">VMState -&gt; Either String VMState
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="annot"><span class="annottext">(VMState -&gt; Either String VMState)
+-&gt; VMState -&gt; Either String VMState
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679066507"><span class="hs-identifier hs-var">state</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="Execution.State.html#stack"><span class="hs-identifier hs-var">stack</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679066510"><span class="hs-identifier hs-type">rest</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Execution.State.html#ip"><span class="hs-identifier hs-var">ip</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679066506"><span class="hs-identifier hs-type">addr</span></a></span><span> </span><span class="annot"><span class="hs-glyph hs-type">-</span></span><span> </span><span class="annot"><span class="hs-number">1</span></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-20"></span><span>        </span><span class="hs-special">(</span><span class="annot"><a href="Types.html#BoolVal"><span class="hs-identifier hs-type">BoolVal</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span> </span><span id="local-6989586621679066511"><span class="annot"><span class="annottext">[Value]
+</span><a href="#local-6989586621679066511"><span class="hs-identifier hs-var">rest</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">VMState -&gt; Either String VMState
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="annot"><span class="annottext">(VMState -&gt; Either String VMState)
+-&gt; VMState -&gt; Either String VMState
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679066507"><span class="hs-identifier hs-var">state</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="Execution.State.html#stack"><span class="hs-identifier hs-var">stack</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679066511"><span class="hs-identifier hs-type">rest</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-21"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Value
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span> </span><span class="annot"><span class="annottext">[Value]
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; Either String VMState
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Error: JumpIfTrue requires a boolean on the stack&quot;</span></span><span>
+</span><span id="line-22"></span><span>        </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; Either String VMState
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Error: JumpIfTrue requires a value on the stack&quot;</span></span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span class="annot"><a href="Execution.Ops.FlowControl.html#opJumpIfFalse"><span class="hs-identifier hs-type">opJumpIfFalse</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Execution.State.html#VMState"><span class="hs-identifier hs-type">VMState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="annot"><a href="Execution.State.html#VMState"><span class="hs-identifier hs-type">VMState</span></a></span><span>
+</span><span id="line-25"></span><span id="opJumpIfFalse"><span class="annot"><span class="annottext">opJumpIfFalse :: Int -&gt; VMState -&gt; Either String VMState
+</span><a href="Execution.Ops.FlowControl.html#opJumpIfFalse"><span class="hs-identifier hs-var hs-var">opJumpIfFalse</span></a></span></span><span> </span><span id="local-6989586621679066513"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679066513"><span class="hs-identifier hs-var">addr</span></a></span></span><span> </span><span id="local-6989586621679066514"><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679066514"><span class="hs-identifier hs-var">state</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-26"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">VMState -&gt; [Value]
+</span><a href="Execution.State.html#stack"><span class="hs-identifier hs-var">stack</span></a></span><span> </span><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679066514"><span class="hs-identifier hs-var">state</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-27"></span><span>        </span><span class="hs-special">(</span><span class="annot"><a href="Types.html#BoolVal"><span class="hs-identifier hs-type">BoolVal</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span> </span><span id="local-6989586621679066515"><span class="annot"><span class="annottext">[Value]
+</span><a href="#local-6989586621679066515"><span class="hs-identifier hs-var">rest</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">VMState -&gt; Either String VMState
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="annot"><span class="annottext">(VMState -&gt; Either String VMState)
+-&gt; VMState -&gt; Either String VMState
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679066514"><span class="hs-identifier hs-var">state</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="Execution.State.html#stack"><span class="hs-identifier hs-var">stack</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679066515"><span class="hs-identifier hs-type">rest</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Execution.State.html#ip"><span class="hs-identifier hs-var">ip</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679066513"><span class="hs-identifier hs-type">addr</span></a></span><span> </span><span class="annot"><span class="hs-glyph hs-type">-</span></span><span> </span><span class="annot"><span class="hs-number">1</span></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-28"></span><span>        </span><span class="hs-special">(</span><span class="annot"><a href="Types.html#BoolVal"><span class="hs-identifier hs-type">BoolVal</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span> </span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span> </span><span id="local-6989586621679066516"><span class="annot"><span class="annottext">[Value]
+</span><a href="#local-6989586621679066516"><span class="hs-identifier hs-var">rest</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">VMState -&gt; Either String VMState
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="annot"><span class="annottext">(VMState -&gt; Either String VMState)
+-&gt; VMState -&gt; Either String VMState
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679066514"><span class="hs-identifier hs-var">state</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="Execution.State.html#stack"><span class="hs-identifier hs-var">stack</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679066516"><span class="hs-identifier hs-type">rest</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-29"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Value
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span> </span><span class="annot"><span class="annottext">[Value]
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; Either String VMState
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Error: JumpIfFalse requires a boolean on the stack&quot;</span></span><span>
+</span><span id="line-30"></span><span>        </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; Either String VMState
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Error: JumpIfFalse requires a value on the stack&quot;</span></span></pre></body></html>
