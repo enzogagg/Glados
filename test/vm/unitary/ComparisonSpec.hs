@@ -60,3 +60,91 @@ spec = do
                 let state = newVMState instrs [] []
                 output <- capture_ (execLoop state)
                 output `shouldBe` "#t\n"
+
+    describe "Logical Operations" $ do
+        describe "And" $ do
+            it "True && True = True" $ do
+                let instrs = [PushBool True, PushBool True, And, Print, Halt]
+                let state = newVMState instrs [] []
+                output <- capture_ (execLoop state)
+                output `shouldBe` "#t\n"
+
+            it "True && False = False" $ do
+                let instrs = [PushBool True, PushBool False, And, Print, Halt]
+                let state = newVMState instrs [] []
+                output <- capture_ (execLoop state)
+                output `shouldBe` "#f\n"
+
+            it "False && True = False" $ do
+                let instrs = [PushBool False, PushBool True, And, Print, Halt]
+                let state = newVMState instrs [] []
+                output <- capture_ (execLoop state)
+                output `shouldBe` "#f\n"
+
+            it "False && False = False" $ do
+                let instrs = [PushBool False, PushBool False, And, Print, Halt]
+                let state = newVMState instrs [] []
+                output <- capture_ (execLoop state)
+                output `shouldBe` "#f\n"
+
+            it "And with comparison results" $ do
+                let instrs = [PushInt 5, PushInt 3, Lt, PushInt 10, PushInt 10, Eq, And, Print, Halt]
+                let state = newVMState instrs [] []
+                output <- capture_ (execLoop state)
+                output `shouldBe` "#t\n"
+
+        describe "Or" $ do
+            it "True || True = True" $ do
+                let instrs = [PushBool True, PushBool True, Or, Print, Halt]
+                let state = newVMState instrs [] []
+                output <- capture_ (execLoop state)
+                output `shouldBe` "#t\n"
+
+            it "True || False = True" $ do
+                let instrs = [PushBool True, PushBool False, Or, Print, Halt]
+                let state = newVMState instrs [] []
+                output <- capture_ (execLoop state)
+                output `shouldBe` "#t\n"
+
+            it "False || True = True" $ do
+                let instrs = [PushBool False, PushBool True, Or, Print, Halt]
+                let state = newVMState instrs [] []
+                output <- capture_ (execLoop state)
+                output `shouldBe` "#t\n"
+
+            it "False || False = False" $ do
+                let instrs = [PushBool False, PushBool False, Or, Print, Halt]
+                let state = newVMState instrs [] []
+                output <- capture_ (execLoop state)
+                output `shouldBe` "#f\n"
+
+            it "Or with comparison results" $ do
+                let instrs = [PushInt 5, PushInt 10, Gt, PushInt 20, PushInt 20, Eq, Or, Print, Halt]
+                let state = newVMState instrs [] []
+                output <- capture_ (execLoop state)
+                output `shouldBe` "#t\n"
+
+        describe "Not" $ do
+            it "Not True = False" $ do
+                let instrs = [PushBool True, Not, Print, Halt]
+                let state = newVMState instrs [] []
+                output <- capture_ (execLoop state)
+                output `shouldBe` "#f\n"
+
+            it "Not False = True" $ do
+                let instrs = [PushBool False, Not, Print, Halt]
+                let state = newVMState instrs [] []
+                output <- capture_ (execLoop state)
+                output `shouldBe` "#t\n"
+
+            it "Not with comparison result" $ do
+                let instrs = [PushInt 7, PushInt 7, Eq, Not, Print, Halt]
+                let state = newVMState instrs [] []
+                output <- capture_ (execLoop state)
+                output `shouldBe` "#f\n"
+
+            it "Double negation" $ do
+                let instrs = [PushBool True, Not, Not, Print, Halt]
+                let state = newVMState instrs [] []
+                output <- capture_ (execLoop state)
+                output `shouldBe` "#t\n"
