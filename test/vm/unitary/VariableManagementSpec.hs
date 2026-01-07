@@ -29,7 +29,7 @@ spec = describe "Variable Management" $ do
             opLoad "x" state `shouldBe` Right (state { stack = [IntVal 10] })
 
         it "fails if variable is undefined" $ do
-            let state = (newVMState [] [] []) { env = Map.fromList [] }
+            let state = (newVMState [] [] []) { env = Map.empty }
             opLoad "z" state `shouldSatisfy` isLeft
 
     describe "opStore" $ do
@@ -40,7 +40,7 @@ spec = describe "Variable Management" $ do
                  Left err -> expectationFailure err
 
         it "fails if variable is undefined (cannot store to unknown)" $ do
-            let state = (newVMState [] [] []) { stack = [IntVal 99], env = Map.fromList [] }
+            let state = (newVMState [] [] []) { stack = [IntVal 99], env = Map.empty }
             opStore "z" state `shouldSatisfy` isLeft
 
 isLeft :: Either a b -> Bool
