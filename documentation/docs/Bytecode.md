@@ -51,6 +51,7 @@ Le bytecode utilise un système de typage unifié basé sur des tags d'un octet 
 | 0A            | Array             | Tableau (vecteur)              |
 | 0B            | Struct            | Structure (champs nommés)      |
 | 0C            | Map               | Dictionnaire (Clé-Valeur)      |
+| 0D            | File              | Fichier                        |
 
 ### 2.2 Format des valeurs
 
@@ -207,6 +208,17 @@ Function 0 → adresse 200 Function 1 → adresse 350
 | 98     | MAKE_STRUCT count | Crée une struct de n champs (Stack: val1, ...)   |
 | 99     | STRUCT_GET nameId | Accès champ par nom (arg: index string pool)     |
 | 9A     | STRUCT_SET nameId | Modif champ par nom (arg: index string pool)     |
+
+---
+
+### 3.11 Gestion des fichiers
+
+| Opcode | Instruction | Description                      |
+| ------ | ----------- | -------------------------------- |
+| A0     | OPEN_FILE   | Ouvre un fichier                 |
+| A1     | READ_FILE   | Lit un fichier                   |
+| A2     | WRITE_FILE  | Écrit dans un fichier            |
+| A3     | CLOSE_FILE  | Ferme un fichier                 |
 
 ---
 
