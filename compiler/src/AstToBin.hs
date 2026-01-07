@@ -309,7 +309,7 @@ generateInstruction (IAFor iterVar startExpr endExpr bodyStmts) = do
         (_, _, Left err, _, _) -> return $ Left err
         (_, _, _, Left err, _) -> return $ Left err
         (_, _, _, _, Left err) -> return $ Left err
-        (Right initCode, Right endCode, Right condCode, Right bodyCodes, Right incrCode) -> do
+        (Right initCode, Right _, Right condCode, Right bodyCodes, Right incrCode) -> do
             let body = concat bodyCodes
             let condLength = length condCode
             let bodyLength = length body
