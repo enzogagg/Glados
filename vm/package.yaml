@@ -11,17 +11,31 @@ dependencies:
 - bytestring
 - binary
 
+library:
+  source-dirs: src
+
 executables:
   glados-vm:
     main:                Main.hs
-    source-dirs:         src
+    source-dirs:         app
     ghc-options:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
+    - glados-vm
+
+tests:
+  vm-test:
+    main:                Spec.hs
+    source-dirs:         ../test/vm/unitary
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - glados-vm
     - base
-    - containers
-    - bytestring
-    - binary
+    - hspec
+    - silently
 
