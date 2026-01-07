@@ -121,12 +121,12 @@ parseExpression = parseLogicalOr
 parseLogicalOr :: Parser AST
 parseLogicalOr = chainl1' parseLogicalAnd parseOrOp
   where
-    parseOrOp = (symbol "ou" >> return (`IAInfix` "ou"))
+    parseOrOp = symbol "ou" >> return (`IAInfix` "ou")
 
 parseLogicalAnd :: Parser AST
 parseLogicalAnd = chainl1' parseRelationnelle parseAndOp
   where
-    parseAndOp = (symbol "et" >> return (`IAInfix` "et"))
+    parseAndOp = symbol "et" >> return (`IAInfix` "et")
 
 parseRelationnelle :: Parser AST
 parseRelationnelle = chainl1' parseAdditive parseRelationnelleOp
@@ -207,14 +207,10 @@ parseMain = do
 parseDeclaration :: Parser AST
 parseDeclaration = do
     _ <- symbol "constante" <|> symbol "variable"
-
     typeAnnot <- parseExplicitType
-
     name <- parseIdentifier
     _ <- symbol "="
-    value <- parseExpression
-
-    return (IADeclare name (Just typeAnnot) value)
+    IADeclare name (Just typeAnnot) <$> parseExpression
 
 -- Assignation (Modification de variable)
 parseAssignment :: Parser AST
@@ -244,12 +240,8 @@ parseElseIf = do
     _ <- symbol "("
     cond <- parseExpression
     _ <- symbol ")"
-
     bodyThen <- parseBlock
-
-    elseBody <- parseElseClause
-
-    return (IAIf cond bodyThen elseBody)
+    IAIf cond bodyThen <$> parseElseClause
 
 parseConditional :: Parser AST
 parseConditional = do

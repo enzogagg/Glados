@@ -277,7 +277,7 @@ generateInstruction (IASymbol sym) = do
     let idxBytes = BL.unpack $ runPut $ putWord32be (fromIntegral idx)
     return $ Right $ opcodeToByte OpLoad : idxBytes
 
-generateInstruction (IAUnit) = do
+generateInstruction IAUnit = do
     return $ Right [opcodeToByte OpPushNil]
 
 generateInstruction (IAList exprs) = do
