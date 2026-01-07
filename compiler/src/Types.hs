@@ -13,6 +13,8 @@ module Types (
     Operator(..),
     CladType(..)) where
 
+import Data.List (intercalate)
+
 -- ==========================
 -- Nouveaux Types CLaD
 -- ==========================
@@ -65,7 +67,7 @@ data AST
     | IATuple [AST]                             -- Représente les Tuples (sous forme Variable (element, element))
 
     -- Expressions Infixées (Opérateurs Builtin ou Utilisateur)
-    | IAInfix AST String AST                    -- Left Symbole/Opérateur Right (Ex: 1 "+" 2)
+    | IAInfix AST String AST                    -- Left Symbole/Opérateur Right (ex: 1 "+" 2)
 
     -- Statements / Instructions (Blocs Impératifs)
     | IAProgram [AST]                           -- Le programme complet (Déclarations + Fonctions + Main)
@@ -79,7 +81,7 @@ data AST
     -- Structures de Contrôle
     | IAIf AST [AST] (Maybe [AST])              -- si cond then {body} else {body}
     | IAWhile AST [AST]                         -- tantque cond {body}
-    | IAFor AST AST AST [AST]                -- pour i de start à end {body}
+    | IAFor AST AST AST [AST]                   -- pour i de start à end {body}
     | IAReturn AST                              -- retourner expression
 
     -- Fonctions
