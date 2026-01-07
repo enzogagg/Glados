@@ -33,132 +33,6 @@ data BytecodeContext = BytecodeContext
 emptyContext :: BytecodeContext
 emptyContext = BytecodeContext [] Map.empty [] Map.empty 0 0
 
-data ConstantEntry
-    = ConstInt Integer
-    | ConstFloat Double
-    | ConstBool Bool
-    | ConstString String
-    | ConstSymbol String
-    deriving (Show, Eq)
-
-data FunctionEntry = FunctionEntry
-    { funcIndex :: Int
-    , funcAddress :: Int
-    , funcArgCount :: Int
-    } deriving (Show)
-
-data TypeTag
-    = TagInt        -- 0x00
-    | TagFloat      -- 0x01
-    | TagBool       -- 0x02
-    | TagChar       -- 0x03
-    | TagString     -- 0x04
-    | TagList       -- 0x05
-    | TagSymbol     -- 0x06
-    | TagNil        -- 0x07
-    | TagFunction   -- 0x08
-    deriving (Show, Eq)
-
-typeTagToByte :: TypeTag -> Word8
-typeTagToByte TagInt = 0x00
-typeTagToByte TagFloat = 0x01
-typeTagToByte TagBool = 0x02
-typeTagToByte TagChar = 0x03
-typeTagToByte TagString = 0x04
-typeTagToByte TagList = 0x05
-typeTagToByte TagSymbol = 0x06
-typeTagToByte TagNil = 0x07
-typeTagToByte TagFunction = 0x08
-
-data Opcode
-    = OpPushConst       -- 0x01
-    | OpPushInt         -- 0x02
-    | OpPushFloat       -- 0x03
-    | OpPushBool        -- 0x04
-    | OpPushString      -- 0x05
-    | OpPushNil         -- 0x06
-    | OpPop             -- 0x07
-    | OpAdd             -- 0x10
-    | OpSub             -- 0x11
-    | OpMul             -- 0x12
-    | OpDiv             -- 0x13
-    | OpMod             -- 0x14
-    | OpNeg             -- 0x15
-    | OpEq              -- 0x20
-    | OpNeq             -- 0x21
-    | OpLt              -- 0x22
-    | OpGt              -- 0x23
-    | OpLte             -- 0x24
-    | OpGte             -- 0x25
-    | OpAnd             -- 0x26
-    | OpOr              -- 0x27
-    | OpCons            -- 0x30
-    | OpHead            -- 0x31
-    | OpTail            -- 0x32
-    | OpList            -- 0x33
-    | OpLen             -- 0x34
-    | OpMakeSymbol      -- 0x40
-    | OpQuote           -- 0x41
-    | OpEval            -- 0x42
-    | OpLoad            -- 0x50
-    | OpStore           -- 0x51
-    | OpDefine          -- 0x52
-    | OpJmp             -- 0x60
-    | OpJmpIfTrue       -- 0x61
-    | OpJmpIfFalse      -- 0x62
-    | OpCall            -- 0x70
-    | OpReturn          -- 0x71
-    | OpClosure         -- 0x72
-    | OpLoadArg         -- 0x73
-    | OpPrint           -- 0x80
-    | OpInput           -- 0x81
-    | OpHalt            -- 0xFF
-    deriving (Show, Eq)
-
-opcodeToByte :: Opcode -> Word8
-opcodeToByte OpPushConst = 0x01
-opcodeToByte OpPushInt = 0x02
-opcodeToByte OpPushFloat = 0x03
-opcodeToByte OpPushBool = 0x04
-opcodeToByte OpPushString = 0x05
-opcodeToByte OpPushNil = 0x06
-opcodeToByte OpPop = 0x07
-opcodeToByte OpAdd = 0x10
-opcodeToByte OpSub = 0x11
-opcodeToByte OpMul = 0x12
-opcodeToByte OpDiv = 0x13
-opcodeToByte OpMod = 0x14
-opcodeToByte OpNeg = 0x15
-opcodeToByte OpEq = 0x20
-opcodeToByte OpNeq = 0x21
-opcodeToByte OpLt = 0x22
-opcodeToByte OpGt = 0x23
-opcodeToByte OpLte = 0x24
-opcodeToByte OpGte = 0x25
-opcodeToByte OpAnd = 0x26
-opcodeToByte OpOr = 0x27
-opcodeToByte OpCons = 0x30
-opcodeToByte OpHead = 0x31
-opcodeToByte OpTail = 0x32
-opcodeToByte OpList = 0x33
-opcodeToByte OpLen = 0x34
-opcodeToByte OpMakeSymbol = 0x40
-opcodeToByte OpQuote = 0x41
-opcodeToByte OpEval = 0x42
-opcodeToByte OpLoad = 0x50
-opcodeToByte OpStore = 0x51
-opcodeToByte OpDefine = 0x52
-opcodeToByte OpJmp = 0x60
-opcodeToByte OpJmpIfTrue = 0x61
-opcodeToByte OpJmpIfFalse = 0x62
-opcodeToByte OpCall = 0x70
-opcodeToByte OpReturn = 0x71
-opcodeToByte OpClosure = 0x72
-opcodeToByte OpLoadArg = 0x73
-opcodeToByte OpPrint = 0x80
-opcodeToByte OpInput = 0x81
-opcodeToByte OpHalt = 0xFF
-
 -- ==========================
 -- Génération du Header
 -- ==========================
@@ -337,6 +211,12 @@ generateInstruction (IACall "afficher" args) = do
     case sequence results of
         Left err -> return $ Left err
         Right codes -> return $ Right $ concat codes ++ [opcodeToByte OpPrint]
+
+generateInstruction (IACall "!" [arg]) = do
+    argResult <- generateInstruction arg
+    case argResult of
+        Left err -> return $ Left err
+        Right argCode -> return $ Right $ argCode ++ [opcodeToByte OpNot]
 
 generateInstruction (IACall fname args) = do
     results <- mapM generateInstruction args
