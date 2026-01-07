@@ -54,6 +54,9 @@ data Instruction
     | Gt                      -- 23
     | Le                      -- 24
     | Ge                      -- 25
+    | And                     -- 26
+    | Or                      -- 27
+    | Not                     -- 28
 
     | Cons                    -- 30
     | Head                    -- 31
