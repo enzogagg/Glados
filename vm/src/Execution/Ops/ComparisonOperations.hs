@@ -18,11 +18,20 @@ opEq state =
         (IntVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (fromIntegral a == b) : rest }
         (FloatVal a : IntVal b : rest) -> Right $ state { stack = BoolVal (a == fromIntegral b) : rest }
         (a : b : rest) -> Right $ state { stack = BoolVal (a == b) : rest } -- Fallback for other types
+        (IntVal a : IntVal b : rest) -> Right $ state { stack = BoolVal (a == b) : rest }
+        (FloatVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (a == b) : rest }
+        (IntVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (fromIntegral a == b) : rest }
+        (FloatVal a : IntVal b : rest) -> Right $ state { stack = BoolVal (a == fromIntegral b) : rest }
+        (a : b : rest) -> Right $ state { stack = BoolVal (a == b) : rest } -- Fallback for other types
         _ -> Left "Error: Eq requires two values on the stack"
 
 opNeq :: VMState -> Either String VMState
 opNeq state =
     case stack state of
+        (IntVal a : IntVal b : rest) -> Right $ state { stack = BoolVal (a /= b) : rest }
+        (FloatVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (a /= b) : rest }
+        (IntVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (fromIntegral a /= b) : rest }
+        (FloatVal a : IntVal b : rest) -> Right $ state { stack = BoolVal (a /= fromIntegral b) : rest }
         (IntVal a : IntVal b : rest) -> Right $ state { stack = BoolVal (a /= b) : rest }
         (FloatVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (a /= b) : rest }
         (IntVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (fromIntegral a /= b) : rest }
@@ -34,6 +43,10 @@ opLt :: VMState -> Either String VMState
 opLt state =
     case stack state of
         (IntVal a : IntVal b : rest) -> Right $ state { stack = BoolVal (b < a) : rest }
+        (FloatVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (b < a) : rest }
+        (IntVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (b < fromIntegral a) : rest }
+        (FloatVal a : IntVal b : rest) -> Right $ state { stack = BoolVal (fromIntegral b < a) : rest }
+        _ -> Left "Error: Lt requires two numeric values on the stack"
         (FloatVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (b < a) : rest }
         (IntVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (b < fromIntegral a) : rest }
         (FloatVal a : IntVal b : rest) -> Right $ state { stack = BoolVal (fromIntegral b < a) : rest }
