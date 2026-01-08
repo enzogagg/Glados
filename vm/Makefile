@@ -16,5 +16,8 @@ fclean: clean
 
 re: fclean all
 
+tests_run:
+	$(STACK) test --copy-bins --coverage
+
 .PHONY: all build clean fclean re
 

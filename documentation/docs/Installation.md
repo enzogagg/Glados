@@ -4,73 +4,60 @@ title: Installation
 sidebar_position: 2
 ---
 
-# Installation
+# Guide d'Installation
 
-Bienvenue dans le programme d'installation du GLaDOS (Generic Language and Data Operand Syntax).
-Veuillez suivre ces instructions avec une précision absolue.
+Ce guide vous explique comment configurer l'environnement CLaD et compiler les outils nécessaires (Compilateur et Machine Virtuelle).
 
 ## Prérequis
 
-Avant de commencer, assurez-vous que votre terminal de test dispose des éléments suivants :
+Assurez-vous d'avoir les outils suivants installés sur votre machine (Linux/macOS) :
 
-- **Stack** (Haskell Build Tool) : Pour compiler le noyau du système.
-- **Make** : Pour exécuter les protocoles de construction standard.
-- **Git** : Pour récupérer les données du sujet de test.
+- **Git** : Pour le versioning.
+- **Stack** : L'outil de build Haskell (`curl -sSL https://get.haskellstack.org/ | sh`).
+- **Make** : Pour l'automatisation.
+- **GCC/Clang** : Pour les dépendances système bas niveau.
 
-## Procédure d'Installation
+## Installation
 
-1.  **Clonage du Dépôt**
-
-    Récupérez le code source depuis les archives d'Aperture Science :
-
-    ```bash
-    git clone https://github.com/enzogagg/Glados.git
-    cd Glados
-    ```
-
-2.  **Configuration de l'Environnement**
-
-    Initialisez les protocoles de sécurité (hooks) :
-
-    ```bash
-    ./scripts/install-hooks.sh
-    ```
-
-3.  **Compilation**
-
-    Compilez le binaire GLaDOS. Cette étape peut prendre un certain temps, profitez-en pour réfléchir à vos erreurs passées.
-
-    ```bash
-    make
-    ```
-
-    *Note : Si la compilation échoue, c'est probablement de votre faute.*
-
-## Vérification
-
-Pour vérifier que GLaDOS est opérationnel, lancez la suite de tests fonctionnels :
+### 1. Cloner le Projet
 
 ```bash
-make tests_run
+git clone https://github.com/enzogagg/Glados.git
+cd Glados
 ```
 
-Si tous les tests passent (vert), vous êtes prêt à commencer l'enrichissement.
-Si des tests échouent (rouge), veuillez ne pas toucher au matériel et attendre l'arrivée d'un associé.
+### 2. Compiler la Suite CLaD
 
-## Lancement
-
-Vous pouvez maintenant lancer l'interpréteur en mode interactif :
+Le projet utilise un `Makefile` racine pour orchestrer la compilation du compilateur et de la VM.
 
 ```bash
-./glados
+make
 ```
 
-Ou exécuter un fichier de script :
+Cette commande va effectuer les actions suivantes :
+1. Compiler le compilateur Haskell (`glados-compiler`).
+2. Compiler la Machine Virtuelle (`glados-vm`).
+3. Copier les exécutables à la racine du projet.
+
+**Note :** La première compilation peut être longue car Stack doit télécharger et compiler les dépendances (GHC, bibliothèques...).
+
+### 3. Vérifier l'Installation
+
+Une fois la compilation terminée, vous devriez voir deux exécutables à la racine :
+
+- `glados-compiler` : Le compilateur (Source `.clad` -> Bytecode `.cbc`).
+- `glados-vm` : La machine virtuelle pour exécuter le bytecode.
+
+Vérifiez leur présence :
 
 ```bash
-./glados chemin/vers/votre/script.scm
+ls -l glados-compiler glados-vm
 ```
 
-:::info Note
-Le binaire se trouve à la racine du projet après la compilation.
-:::
+## Résolution de Problèmes
+
+**Erreur "Command not found: stack"** :
+Assurez-vous que Stack est dans votre PATH. Ajoutez `export PATH=$PATH:~/.local/bin` à votre fichier de configuration shell (`.zshrc` ou `.bashrc`).
+
+**Erreur durant le build GHC** :
+Vérifiez que vous avez les bibliothèques système nécessaires (comme `libgmp-dev` ou `libtinfo-dev` sur Linux).

@@ -1,69 +1,65 @@
 ---
 id: Tests
-title: Protocoles de Test
-sidebar_position: 4
+title: Lancer les Tests
+sidebar_position: 10
 ---
 
-# Protocoles de Test
+# Lancer les Tests
 
-Le Centre d'Enrichissement accorde une importance capitale à la validation des données. Tout code non testé sera considéré comme une violation du protocole de sécurité.
+Il est crucial de valider le bon fonctionnement du langage, que vous soyez développeur du noyau ou utilisateur.
 
-## Tests Unitaires
+## 1. Tests Unitaires du Projet
 
-Les tests unitaires vérifient le bon fonctionnement des composants individuels du noyau GLaDOS (parsing, évaluation, types).
+Ces tests valident le fonctionnement interne du Compilateur et de la VM (écrits en Haskell).
 
-### Localisation
-Les sujets de test se trouvent dans le secteur `test/` :
-- `ParseToExprSpec.hs` : Vérifie la transformation du texte en AST.
-- `ParseValueSpec.hs` : Valide l'évaluation des expressions et les primitives.
-- `MainSpec.hs` : Tests généraux du point d'entrée.
-
-### Exécution
-Pour lancer la séquence de tests unitaires via le terminal :
-
+### Lancer tous les tests
 ```bash
 make tests_run
 ```
-Ou directement avec Stack :
+Ou avec Stack directement :
 ```bash
 stack test
 ```
 
-### Ajouter un Test
-1. Créez ou modifiez un fichier `*Spec.hs` dans `test/`.
-2. Utilisez la syntaxe `hspec` pour définir vos assertions.
-3. Vérifiez que votre test ne provoque pas de paradoxe temporel.
+Cela exécutera :
+- Les tests du Parser (vérification de la syntaxe CLaD).
+- Les tests de la VM (vérification des opérations sur la pile, gestion mémoire).
 
----
+## 2. Tests Fonctionnels
 
-## Tests Fonctionnels
+Les tests fonctionnels vérifient que le langage "dans son ensemble" se comporte comme prévu. Ils compilent des programmes CLaD de référence et vérifient leur sortie.
 
-Les tests fonctionnels valident le comportement global de l'interpréteur en conditions réelles.
+### Le Script de Test
+Utilisez le script fourni dans `scripts/` (ou à la racine selon configuration).
 
-### Localisation
-Le script de contrôle est situé à : `scripts/functional_tests.sh`.
-
-### Fonctionnement
-Le script :
-1. Compile le binaire `glados`.
-2. Injecte des instructions (via `stdin` ou fichiers).
-3. Compare la sortie standard et le code de retour avec les valeurs attendues.
-
-### Exécution
 ```bash
 ./scripts/functional_tests.sh
 ```
 
-### Ajouter un Test
-Ouvrez `scripts/functional_tests.sh` et ajoutez une ligne `assert_output` :
+### Exemple de Test Fonctionnel
 
-```bash
-# assert_output "Nom du Test" "Entrée" "Code Retour Attendu" "Sortie Attendue"
-assert_output "Test Gâteau" "(eq? 'cake 'lie)" 0 "#t"
+Les tests fonctionnels ressemblent à ceci :
+
+**Fichier `test_fact.clad`** :
+```clad
+fonction factorielle(n)
+    si n <= 1
+        retourner 1
+    sinon
+        retourner n * factorielle(n - 1)
+    fin
+fin
+
+principal
+    afficher(factorielle(5))
+fin
 ```
 
----
+**Exécution attendue** :
+1. Compilation de `test_fact.clad` -> `test_fact.cbc`
+2. Exécution `./glados-vm test_fact.cbc`
+3. Sortie attendue : `120`
 
-:::tip Note du Superviseur
-Un code vert est un code joyeux. Un code rouge entraînera la libération de neurotoxine.
-:::
+## 3. Intégration Continue (CI)
+
+Le projet dispose d'une pipeline CI (GitHub Actions) qui lance automatiquement ces tests à chaque Push. Voir la section [CI/CD](Ci-cd.md) pour plus de détails.
