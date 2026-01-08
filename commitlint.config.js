@@ -26,7 +26,8 @@ module.exports = {
                 'TEST',
                 'CI',
                 'MERGE',
-                'REBASE'
+                'REBASE',
+                'DELETE'
             ],
         ],
         // The type must be in uppercase (ex: ADD, not add)
