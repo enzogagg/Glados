@@ -19,6 +19,7 @@ import Execution.Ops.FlowControl (opJump, opJumpIfTrue, opJumpIfFalse)
 import Execution.Ops.FunctionManagement (opCall, opReturn, opClosure, opLoadArg)
 import Execution.Ops.Input (opInput)
 import Execution.Ops.ComplexDataStructures (opMakeTuple, opTupleGet, opMakeArray, opArrayGet, opArraySet, opMakeMap, opMapGet, opMapSet, opMakeStruct, opStructGet, opStructSet)
+import Execution.Ops.FileManagement (opOpenFile, opReadFile, opWriteFile, opCloseFile)
 
 execLoop :: VMState -> IO ()
 execLoop state =

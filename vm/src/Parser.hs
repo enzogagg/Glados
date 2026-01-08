@@ -160,6 +160,11 @@ parseInstruction pool = do
         0x99 -> StructGet . getStringFromPool pool . fromIntegral <$> getInt32be
         0x9A -> StructSet . getStringFromPool pool . fromIntegral <$> getInt32be
 
+        0xA0 -> return OpenFile
+        0xA1 -> return ReadFile
+        0xA2 -> return WriteFile
+        0xA3 -> return CloseFile
+
         0xFF -> return Halt
         _ -> fail $ "Unknown Opcode: " ++ show opcode
 

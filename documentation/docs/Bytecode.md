@@ -51,6 +51,7 @@ Le bytecode utilise un système de typage unifié basé sur des tags d'un octet 
 | 0A            | Array             | Tableau (vecteur)              |
 | 0B            | Struct            | Structure (champs nommés)      |
 | 0C            | Map               | Dictionnaire (Clé-Valeur)      |
+| 0D            | File              | Fichier                        |
 
 ### 2.2 Format des valeurs
 
@@ -213,6 +214,17 @@ Function 0 → adresse 200 Function 1 → adresse 350
 
 ---
 
+### 3.11 Gestion des fichiers
+
+| Opcode | Instruction | Description                      |
+| ------ | ----------- | -------------------------------- |
+| A0     | OPEN_FILE   | Ouvre un fichier                 |
+| A1     | READ_FILE   | Lit un fichier                   |
+| A2     | WRITE_FILE  | Écrit dans un fichier            |
+| A3     | CLOSE_FILE  | Ferme un fichier                 |
+
+---
+
 ### 3.11 Terminaison
 
 | Opcode | Instruction | Description                |
@@ -255,8 +267,9 @@ La VM CLaD est conçue pour supporter :
 ```clad
 liste = [1, 2, 3]
 print(head(liste) + 10)
+```
 
-5.2 Représentation en bytecode assembleur
+### 5.2 Représentation en bytecode assembleur
 
 ```assembly
 PUSH_INT 1
