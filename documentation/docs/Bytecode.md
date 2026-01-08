@@ -117,6 +117,9 @@ Les opérations arithmétiques supportent automatiquement les types Int et Float
 | 23     | GT          | Supérieur strict         |
 | 24     | LTE         | Inférieur ou égal        |
 | 25     | GTE         | Supérieur ou égal        |
+| 26     | AND         | Conjonction              |
+| 27     | OR          | Disjonction              |
+| 28     | NOT         | Négation                 |
 
 ---
 
