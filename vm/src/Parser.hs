@@ -120,6 +120,9 @@ parseInstruction pool = do
         0x23 -> return Gt
         0x24 -> return Le
         0x25 -> return Ge
+        0x26 -> return And
+        0x27 -> return Or
+        0x28 -> return Not
 
         0x30 -> return Cons
         0x31 -> return Head
@@ -156,6 +159,11 @@ parseInstruction pool = do
         0x98 -> MakeStruct . fromIntegral <$> getInt32be
         0x99 -> StructGet . getStringFromPool pool . fromIntegral <$> getInt32be
         0x9A -> StructSet . getStringFromPool pool . fromIntegral <$> getInt32be
+
+        0xA0 -> return OpenFile
+        0xA1 -> return ReadFile
+        0xA2 -> return WriteFile
+        0xA3 -> return CloseFile
 
         0xFF -> return Halt
         _ -> fail $ "Unknown Opcode: " ++ show opcode

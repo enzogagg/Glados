@@ -51,6 +51,7 @@ Le bytecode utilise un système de typage unifié basé sur des tags d'un octet 
 | 0A            | Array             | Tableau (vecteur)              |
 | 0B            | Struct            | Structure (champs nommés)      |
 | 0C            | Map               | Dictionnaire (Clé-Valeur)      |
+| 0D            | File              | Fichier                        |
 
 ### 2.2 Format des valeurs
 
@@ -116,6 +117,9 @@ Les opérations arithmétiques supportent automatiquement les types Int et Float
 | 23     | GT          | Supérieur strict         |
 | 24     | LTE         | Inférieur ou égal        |
 | 25     | GTE         | Supérieur ou égal        |
+| 26     | AND         | Conjonction              |
+| 27     | OR          | Disjonction              |
+| 28     | NOT         | Négation                 |
 
 ---
 
@@ -210,6 +214,17 @@ Function 0 → adresse 200 Function 1 → adresse 350
 
 ---
 
+### 3.11 Gestion des fichiers
+
+| Opcode | Instruction | Description                      |
+| ------ | ----------- | -------------------------------- |
+| A0     | OPEN_FILE   | Ouvre un fichier                 |
+| A1     | READ_FILE   | Lit un fichier                   |
+| A2     | WRITE_FILE  | Écrit dans un fichier            |
+| A3     | CLOSE_FILE  | Ferme un fichier                 |
+
+---
+
 ### 3.11 Terminaison
 
 | Opcode | Instruction | Description                |
@@ -252,8 +267,9 @@ La VM CLaD est conçue pour supporter :
 ```clad
 liste = [1, 2, 3]
 print(head(liste) + 10)
+```
 
-5.2 Représentation en bytecode assembleur
+### 5.2 Représentation en bytecode assembleur
 
 ```assembly
 PUSH_INT 1
@@ -268,6 +284,7 @@ PUSH_INT 10
 ADD
 PRINT
 HALT
+```
 
 ### 5.3 Encôdage binaire
 
@@ -282,10 +299,11 @@ HALT
 10                ; ADD
 80                ; PRINT
 FF                ; HALT
+```
 
-### 6. Format du fichier .cbc
+## 6. Format du fichier .cbc
 
-#### 6.1 Vue d'ensemble de la structure
+### 6.1 Vue d'ensemble de la structure
 
 Pour visualiser clairement la structure du fichier .cbc, voici un diagramme Mermaid :
 
@@ -332,93 +350,118 @@ graph TD
     end
 ```
 
-#### 6.2 Header (10 bytes)
+### 6.2 Header (10 bytes)
 
-Offset   Taille   Champ Valeur / Description
-0x00  4  Magic Number   0x43 0x42 0x43 0x00 ("CBC\0")
-0x04  2  Version  0x01 0x00 (version 1.0)
-0x06  1  Flags 0x00 (réservé pour usage futur)
-0x07  3  Reserved 0x00 0x00 0x00 (padding)
+| Offset | Taille | Champ | Valeur / Description |
+|---|---|---|---|
+| 0x00 | 4 | Magic Number | `0x43 0x42 0x43 0x00` ("CBC\0") |
+| 0x04 | 2 | Version | `0x01 0x00` (version 1.0) |
+| 0x06 | 1 | Flags | `0x00` (réservé pour usage futur) |
+| 0x07 | 3 | Reserved | `0x00 0x00 0x00` (padding) |
 
 Exemple en hexadécimal :
 
+```text
 43 42 43 00 | 01 00 | 00 | 00 00 00
    Magic    | Ver.  |Flg | Reserved
+```
 
-#### 6.3 Constant Pool
+### 6.3 Constant Pool
 
-Structure :
-Champ Taille   Description
-Count 4 bytes  Nombre total d'entrées
-Entry N  variable Entrée de la pool
-Type Tag 1 byte   Type de l'entrée (voir section 2.1)
-Length   4 bytes  Taille des données
-Data  Length bytes   Données brutes
+**Structure :**
 
-Exemples d'entrées :
+| Champ | Taille | Description |
+|---|---|---|
+| Count | 4 bytes | Nombre total d'entrées |
+| Entry N | variable | Entrée de la pool |
+| Type Tag | 1 byte | Type de l'entrée (voir section 2.1) |
+| Length | 4 bytes | Taille des données |
+| Data | Length bytes | Données brutes |
+
+**Exemples d'entrées :**
 
 String "Hello":
+```text
 04 | 00 00 00 05 | 48 65 6C 6C 6F
 Type | Length | Data
+```
 
 Symbol 'x':
+```text
 06 | 00 00 00 01 | 78
 Type | Length | Data (ASCII 'x')
+```
 
 Int 42:
+```text
 00 | 00 00 00 04 | 00 00 00 2A
 Type | Length | Data (32-bit int)
+```
 
-#### 6.4 Function Table
+### 6.4 Function Table
 
-Structure :
-Champ Taille   Description
-Count 4 bytes  Nombre de fonctions
-Function Entry N  variable Entrée de la table
-Index 4 bytes  ID de la fonction
-Address  4 bytes  Adresse dans le bytecode
-ArgCount 1 byte   Nombre d'arguments
+**Structure :**
 
-Exemple :
+| Champ | Taille | Description |
+|---|---|---|
+| Count | 4 bytes | Nombre de fonctions |
+| Function Entry N | variable | Entrée de la table |
+| Index | 4 bytes | ID de la fonction |
+| Address | 4 bytes | Adresse dans le bytecode |
+| ArgCount | 1 byte | Nombre d'arguments |
+
+**Exemple :**
 
 Count: 2 fonctions
 
 Function 0: factorial (2 args, @ 0x00C8)
+```text
 00 00 00 00 | 00 00 00 C8 | 02
    Index       Address      Args
+```
 
 Function 1: main (0 args, @ 0x0150)
+```text
 00 00 00 01 | 00 00 01 50 | 00
    Index       Address      Args
+```
 
-#### 6.5 Instructions
+### 6.5 Instructions
 
-Structure :
-Champ Taille   Description
-Code Length 4 bytes  Taille totale du code
-Instruction N  variable Séquence d'Opcode et d'Opérandes
-Opcode   1 byte   Instruction
-Operands variable Arguments de l'instruction
+**Structure :**
 
-Exemple d'encodage :
+| Champ | Taille | Description |
+|---|---|---|
+| Code Length | 4 bytes | Taille totale du code |
+| Instruction N | variable | Séquence d'Opcode et d'Opérandes |
+| Opcode | 1 byte | Instruction |
+| Operands | variable | Arguments de l'instruction |
 
-Instruction: PUSH_INT 42
+**Exemple d'encodage :**
+
+Instruction: `PUSH_INT 42`
+```text
 02 | 00 00 00 2A
 Opcode | Operand (4 bytes)
+```
 
-Instruction: ADD
+Instruction: `ADD`
+```text
 10
 Opcode (pas d'opérande)
+```
 
-Instruction: CALL 0 with 2 args
+Instruction: `CALL` 0 with 2 args
+```text
 70 | 00 00 00 00 | 02
 Opcode | Function Index | ArgCount
+```
 
-#### 6.6 Exemple complet de fichier .cbc
+### 6.6 Exemple complet de fichier .cbc
 
-Programme : print(42)
+Programme : `print(42)`
 
-```binary
+```text
 43 42 43 00 01 00 00 00 00 00  ; HEADER (10 bytes)
 00 00 00 00                    ; CONSTANT POOL (Count: 0)
 00 00 00 00                    ; FUNCTION TABLE (Count: 0)
@@ -428,3 +471,4 @@ Programme : print(42)
 FF                             ; HALT
 
 Taille totale: 28 bytes
+```

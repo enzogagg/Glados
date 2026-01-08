@@ -14,7 +14,25 @@ data Value
     | ArrayVal [Value]        -- Tag 0A
     | StructVal [(String, Value)] -- Tag 0B
     | MapVal [(Value, Value)] -- Tag 0C
-    deriving (Show, Eq)
+    | FileVal String          -- Tag 0D
+    deriving (Eq)
+
+instance Show Value where
+    show (IntVal n) = show n
+    show (FloatVal n) = show n
+    show (BoolVal True) = "#t"
+    show (BoolVal False) = "#f"
+    show (CharVal c) = show c
+    show (StringVal s) = s
+    show (ListVal l) = "(" ++ unwords (map show l) ++ ")"
+    show (SymbolVal s) = s
+    show NilVal = "nil"
+    show (FunctionVal n) = "<function " ++ show n ++ ">"
+    show (TupleVal l) = "{" ++ unwords (map show l) ++ "}"
+    show (ArrayVal l) = "[" ++ unwords (map show l) ++ "]"
+    show (StructVal _) = "<struct>"
+    show (MapVal _) = "<map>"
+    show (FileVal s) = "<file " ++ s ++ ">"
 
 data Instruction
     = PushConst Int           -- 01
@@ -38,6 +56,9 @@ data Instruction
     | Gt                      -- 23
     | Le                      -- 24
     | Ge                      -- 25
+    | And                     -- 26
+    | Or                      -- 27
+    | Not                     -- 28
 
     | Cons                    -- 30
     | Head                    -- 31
@@ -79,6 +100,11 @@ data Instruction
     | MakeStruct Int          -- 98
     | StructGet String        -- 99
     | StructSet String        -- 9A
+    
+    | OpenFile                -- A0
+    | ReadFile                -- A1
+    | WriteFile               -- A2
+    | CloseFile               -- A3
 
     | Halt                    -- FF
     deriving (Show, Eq)
