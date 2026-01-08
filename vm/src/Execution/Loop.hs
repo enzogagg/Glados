@@ -11,7 +11,7 @@ import Execution.State (VMState(..))
 import Types (Instruction(..), Value(..))
 import Execution.Ops.ArithmeticOperations(opAdd, opSub, opMul, opDiv, opMod, opNeg)
 import Execution.Ops.AssetManagement(opPushConst, opPushInt, opPushFloat, opPushBool, opPushString, opPushNil, opPop)
-import Execution.Ops.ComparisonOperations(opEq, opNeq, opLt, opGt, opLte, opGte)
+import Execution.Ops.ComparisonOperations(opEq, opNeq, opLt, opGt, opLte, opGte, opAnd, opNot, opOr)
 import Execution.Ops.ListOperations (opCons, opHead, opTail, opList, opLen)
 import Execution.Ops.SymbolsAndEvaluation(opMakeSymbol, opQuote, opEval)
 import Execution.Ops.VariableManagement(opLoad, opStore, opDefine)
@@ -19,6 +19,7 @@ import Execution.Ops.FlowControl (opJump, opJumpIfTrue, opJumpIfFalse)
 import Execution.Ops.FunctionManagement (opCall, opReturn, opClosure, opLoadArg)
 import Execution.Ops.Input (opInput)
 import Execution.Ops.ComplexDataStructures (opMakeTuple, opTupleGet, opMakeArray, opArrayGet, opArraySet, opMakeMap, opMapGet, opMapSet, opMakeStruct, opStructGet, opStructSet)
+import Execution.Ops.FileManagement (opOpenFile, opReadFile, opWriteFile, opCloseFile)
 
 execLoop :: VMState -> IO ()
 execLoop state =
@@ -50,7 +51,9 @@ execLoop state =
         Gt -> nextStep (opGt state)
         Le -> nextStep (opLte state)
         Ge -> nextStep (opGte state)
-
+        And -> nextStep (opAnd state)
+        Or -> nextStep (opOr state)
+        Not -> nextStep (opNot state)
         Cons -> nextStep (opCons state)
         Head -> nextStep (opHead state)
         Tail -> nextStep (opTail state)
@@ -94,8 +97,18 @@ execLoop state =
         StructGet idx -> nextStep (opStructGet idx state)
         StructSet idx -> nextStep (opStructSet idx state)
 
+        OpenFile -> nextStepIO (opOpenFile state)
+        ReadFile -> nextStepIO (opReadFile state)
+        WriteFile -> nextStepIO (opWriteFile state)
+        CloseFile -> nextStepIO (opCloseFile state)
+
         _ -> nextStep (Left "Error: Unknown instruction")
     where
         nextStep :: Either String VMState -> IO ()
         nextStep (Left err) = putStrLn ("Runtime Error: " ++ err)
         nextStep (Right newState) = execLoop (newState {ip = ip newState + 1})
+
+        nextStepIO :: IO (Either String VMState) -> IO ()
+        nextStepIO action = do
+            result <- action
+            nextStep result

@@ -18,11 +18,20 @@ opEq state =
         (IntVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (fromIntegral a == b) : rest }
         (FloatVal a : IntVal b : rest) -> Right $ state { stack = BoolVal (a == fromIntegral b) : rest }
         (a : b : rest) -> Right $ state { stack = BoolVal (a == b) : rest } -- Fallback for other types
+        (IntVal a : IntVal b : rest) -> Right $ state { stack = BoolVal (a == b) : rest }
+        (FloatVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (a == b) : rest }
+        (IntVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (fromIntegral a == b) : rest }
+        (FloatVal a : IntVal b : rest) -> Right $ state { stack = BoolVal (a == fromIntegral b) : rest }
+        (a : b : rest) -> Right $ state { stack = BoolVal (a == b) : rest } -- Fallback for other types
         _ -> Left "Error: Eq requires two values on the stack"
 
 opNeq :: VMState -> Either String VMState
 opNeq state =
     case stack state of
+        (IntVal a : IntVal b : rest) -> Right $ state { stack = BoolVal (a /= b) : rest }
+        (FloatVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (a /= b) : rest }
+        (IntVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (fromIntegral a /= b) : rest }
+        (FloatVal a : IntVal b : rest) -> Right $ state { stack = BoolVal (a /= fromIntegral b) : rest }
         (IntVal a : IntVal b : rest) -> Right $ state { stack = BoolVal (a /= b) : rest }
         (FloatVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (a /= b) : rest }
         (IntVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (fromIntegral a /= b) : rest }
@@ -34,6 +43,10 @@ opLt :: VMState -> Either String VMState
 opLt state =
     case stack state of
         (IntVal a : IntVal b : rest) -> Right $ state { stack = BoolVal (b < a) : rest }
+        (FloatVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (b < a) : rest }
+        (IntVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (b < fromIntegral a) : rest }
+        (FloatVal a : IntVal b : rest) -> Right $ state { stack = BoolVal (fromIntegral b < a) : rest }
+        _ -> Left "Error: Lt requires two numeric values on the stack"
         (FloatVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (b < a) : rest }
         (IntVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (b < fromIntegral a) : rest }
         (FloatVal a : IntVal b : rest) -> Right $ state { stack = BoolVal (fromIntegral b < a) : rest }
@@ -55,7 +68,7 @@ opLte state =
         (FloatVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (b <= a) : rest }
         (IntVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (b <= fromIntegral a) : rest }
         (FloatVal a : IntVal b : rest) -> Right $ state { stack = BoolVal (fromIntegral b <= a) : rest }
-        _ -> Left "Error: Le requires two numeric values on the stack"
+        _ -> Left "Error: Lte requires two numeric values on the stack"
 
 opGte :: VMState -> Either String VMState
 opGte state =
@@ -64,4 +77,22 @@ opGte state =
         (FloatVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (b >= a) : rest }
         (IntVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (b >= fromIntegral a) : rest }
         (FloatVal a : IntVal b : rest) -> Right $ state { stack = BoolVal (fromIntegral b >= a) : rest }
-        _ -> Left "Error: Ge requires two numeric values on the stack"
+        _ -> Left "Error: Gte requires two numeric values on the stack"
+
+opAnd :: VMState -> Either String VMState
+opAnd state =
+    case stack state of
+        (BoolVal a : BoolVal b : rest) -> Right $ state { stack = BoolVal (b && a) : rest }
+        _ -> Left "Error: And requires two boolean values on the stack"
+
+opOr :: VMState -> Either String VMState
+opOr state =
+    case stack state of
+        (BoolVal a : BoolVal b : rest) -> Right $ state { stack = BoolVal (b || a) : rest }
+        _ -> Left "Error: Or requires two boolean values on the stack"
+
+opNot :: VMState -> Either String VMState
+opNot state =
+    case stack state of
+        (BoolVal a: rest) -> Right $ state { stack = BoolVal (not a) : rest }
+        _ -> Left "Error: Not requires one boolean value on the stack"
