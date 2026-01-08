@@ -1,0 +1,3 @@
+principal
+    print(10 + 20 * 2)
+fin

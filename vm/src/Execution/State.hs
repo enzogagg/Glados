@@ -25,7 +25,7 @@ data VMState = VMState {
     instructions :: [Instruction],      -- The instructions of the virtual machine. (Store instructions)
     constants :: [Value],               -- The constants of the virtual machine. (Store constants)
     functions :: [FunctionMeta]        -- The functions of the virtual machine. (Store functions)
-} deriving (Show)
+} deriving (Show, Eq)
 
 newVMState :: [Instruction] -> [Value] -> [FunctionMeta] -> VMState
 newVMState insts consts funcs = VMState {

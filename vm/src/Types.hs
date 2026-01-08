@@ -14,6 +14,7 @@ data Value
     | ArrayVal [Value]        -- Tag 0A
     | StructVal [(String, Value)] -- Tag 0B
     | MapVal [(Value, Value)] -- Tag 0C
+    | FileVal String          -- Tag 0D
     deriving (Eq)
 
 instance Show Value where
@@ -31,6 +32,7 @@ instance Show Value where
     show (ArrayVal l) = "[" ++ unwords (map show l) ++ "]"
     show (StructVal _) = "<struct>"
     show (MapVal _) = "<map>"
+    show (FileVal s) = "<file " ++ s ++ ">"
 
 data Instruction
     = PushConst Int           -- 01
@@ -54,6 +56,9 @@ data Instruction
     | Gt                      -- 23
     | Le                      -- 24
     | Ge                      -- 25
+    | And                     -- 26
+    | Or                      -- 27
+    | Not                     -- 28
 
     | Cons                    -- 30
     | Head                    -- 31
@@ -95,6 +100,11 @@ data Instruction
     | MakeStruct Int          -- 98
     | StructGet String        -- 99
     | StructSet String        -- 9A
+    
+    | OpenFile                -- A0
+    | ReadFile                -- A1
+    | WriteFile               -- A2
+    | CloseFile               -- A3
 
     | Halt                    -- FF
     deriving (Show, Eq)
