@@ -24,10 +24,12 @@ fclean:
 	$(MAKE) -C $(COMPILER_DIR) fclean
 	$(MAKE) -C $(VM_DIR) fclean
 
-re: fclean all
+re: fclean
+	$(MAKE) all
 
 tests_run:
 	$(MAKE) -C $(COMPILER_DIR) tests_run
 	$(MAKE) -C $(VM_DIR) tests_run	
 
 .PHONY: all clean fclean re tests_run compiler vm
+.NOTPARALLEL:

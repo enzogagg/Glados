@@ -97,8 +97,18 @@ execLoop state =
         StructGet idx -> nextStep (opStructGet idx state)
         StructSet idx -> nextStep (opStructSet idx state)
 
+        OpenFile -> nextStepIO (opOpenFile state)
+        ReadFile -> nextStepIO (opReadFile state)
+        WriteFile -> nextStepIO (opWriteFile state)
+        CloseFile -> nextStepIO (opCloseFile state)
+
         _ -> nextStep (Left "Error: Unknown instruction")
     where
         nextStep :: Either String VMState -> IO ()
         nextStep (Left err) = putStrLn ("Runtime Error: " ++ err)
         nextStep (Right newState) = execLoop (newState {ip = ip newState + 1})
+
+        nextStepIO :: IO (Either String VMState) -> IO ()
+        nextStepIO action = do
+            result <- action
+            nextStep result
