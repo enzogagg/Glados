@@ -129,6 +129,13 @@ parseInstruction pool = do
         0x32 -> return Tail
         0x33 -> ListMake . fromIntegral <$> getInt32be
         0x34 -> return Len
+        0x35 -> return IsEmpty
+        0x36 -> return Nth
+        0x37 -> return Insert
+        0x38 -> return Remove
+        0x39 -> return Contains
+        0x3A -> return Append
+        0x3B -> return Reverse
 
         0x50 -> Load . getStringFromPool pool . fromIntegral <$> getInt32be
         0x51 -> Store . getStringFromPool pool . fromIntegral <$> getInt32be

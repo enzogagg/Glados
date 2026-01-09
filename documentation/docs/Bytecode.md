@@ -79,14 +79,15 @@ Chaque valeur sur la pile respecte le format suivant :
 
 ### 3.1 Gestion des valeurs
 
-| Opcode | Instruction      | Description                                |
-| ------ | ---------------- | ------------------------------------------ |
-| 01     | PUSH_CONST index | Pousse une constante (String, List, etc.)  |
-| 02     | PUSH_INT value   | Pousse un entier immédiat (4 bytes)        |
-| 03     | PUSH_FLOAT value | Pousse un flottant immédiat (4 bytes)      |
-| 04     | PUSH_BOOL value  | Pousse un booléen immédiat (1 byte)        |
-| 05     | PUSH_NIL         | Pousse la valeur nulle sur la pile         |
-| 06     | POP              | Retire la valeur au sommet de la pile      |
+| Opcode | Instruction        | Description                                |
+| ------ | ------------------ | ------------------------------------------ |
+| 01     | PUSH_CONST index   | Pousse une constante (String, List, etc.)  |
+| 02     | PUSH_INT value     | Pousse un entier immédiat (4 bytes)        |
+| 03     | PUSH_FLOAT value   | Pousse un flottant immédiat (4 bytes)      |
+| 04     | PUSH_BOOL value    | Pousse un booléen immédiat (1 byte)        |
+| 05     | PUSH_STRING index  | Pousse une chaîne depuis le Constant Pool  |
+| 06     | PUSH_NIL           | Pousse la valeur nulle sur la pile         |
+| 07     | POP                | Retire la valeur au sommet de la pile      |
 
 **Note importante** : Les types complexes (Strings, Symboles, Listes) doivent être stockés dans le Constant Pool et chargés via `PUSH_CONST`. Les types immédiats (Int, Float, Bool) peuvent être encodés directement dans l'instruction.
 
@@ -132,6 +133,13 @@ Les opérations arithmétiques supportent automatiquement les types Int et Float
 | 32     | TAIL (CDR)  | Extraction de la queue d'une liste             |
 | 33     | LIST size   | Crée une liste de n éléments depuis la pile    |
 | 34     | LEN         | Retourne la longueur d'une liste               |
+| 35     | IS_EMPTY    | Vérifie si une liste est vide (retourne Bool)  |
+| 36     | NTH         | Accès au nième élément d'une liste (0-indexed) |
+| 37     | INSERT      | Insère un élément à un index donné             |
+| 38     | REMOVE      | Retire l'élément à un index donné              |
+| 39     | CONTAINS    | Vérifie la présence d'un élément, retourne Bool|
+| 3A     | APPEND      | Concatène deux listes (list1 ++ list2)         |
+| 3B     | REVERSE     | Inverse l'ordre des éléments d'une liste       |
 
 **Exemple** : `LIST 3` consomme les 3 valeurs au sommet de la pile pour créer `[a, b, c]`.
 
