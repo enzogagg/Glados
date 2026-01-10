@@ -37,6 +37,13 @@ parseTupleType = do
     _ <- symbol ")"
     return (TupleT types)
 
+parseTupleType :: Parser CladType
+parseTupleType = do
+    _ <- symbol "("
+    types <- parseExplicitType `sepBy1` symbol ","
+    _ <- symbol ")"
+    return (TupleT types)
+
 parseExplicitType :: Parser CladType
 parseExplicitType =
       try parseTupleType
