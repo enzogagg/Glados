@@ -22,5 +22,5 @@ main = do
             content <- readFile inputFile
             case parseAST content of
                 Left err -> putStrLn (errorBundlePretty err) >> exitFailure 
-                Right ast -> putStrLn "Compilation réussie (AST généré)."
+                Right _ -> putStrLn "Compilation réussie (AST généré)."
         _ -> putStrLn "Usage: ./glados-compiler [file.clad]"

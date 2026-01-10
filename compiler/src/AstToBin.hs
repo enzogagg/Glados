@@ -14,6 +14,7 @@ import Data.Word
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import Data.Binary.Put
+import Data.Maybe (fromMaybe)
 import Control.Monad.State
 import Control.Applicative ((<|>))
 import qualified Data.Map.Strict as Map
@@ -416,7 +417,7 @@ genProgram _ = Nothing
 
 generateInstruction :: AST -> CodeGen
 generateInstruction ast =
-    maybe unsupported id $
+    fromMaybe unsupported $
             genNumber ast
         <|> genFloat ast
         <|> genBoolean ast

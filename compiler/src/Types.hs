@@ -21,8 +21,6 @@ module Types (
 
 import Data.List (intercalate)
 import Data.Word
-
-import Data.List (intercalate)
 import qualified Data.Map as Map
 
 -- ==========================
@@ -145,6 +143,8 @@ instance Eq Value where
     Void == Void = True
     ErrorVal a == ErrorVal b = a == b -- Les erreurs sont égales si leurs messages sont égaux (ou si on considère que toutes les erreurs sont égales)
     _ == _ = False
+
+type Env = Map.Map String Value
 
 -- ==========================
 -- Types pour le Bytecode

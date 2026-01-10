@@ -85,7 +85,7 @@ checkType FloatT (FloatVal _)   = True
 checkType StringT (StringVal _) = True
 checkType BoolT (BoolVal _)     = True
 checkType (TupleT ts) (TupleVal vs) = 
-    length ts == length vs && all (\(t, v) -> checkType t v) (zip ts vs)
+    length ts == length vs && all (uncurry checkType) (zip ts vs)
 checkType (ListT t) (ListVal vs) = 
     all (checkType t) vs
 checkType _ _ = False
