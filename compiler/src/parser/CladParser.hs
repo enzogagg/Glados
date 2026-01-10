@@ -133,10 +133,10 @@ parseRelationnelle = chainl1' parseAdditive parseRelationnelleOp
   where
     parseRelationnelleOp =
           (symbol "=="  >> return (`IAInfix` "=="))
+      <|> try (symbol ">=" >> return (`IAInfix` ">="))
+      <|> try (symbol "<=" >> return (`IAInfix` "<="))
       <|> (symbol "<"  >> return (`IAInfix` "<"))
       <|> (symbol ">"  >> return (`IAInfix` ">"))
-      <|> (symbol ">=" >> return (`IAInfix` ">="))
-      <|> (symbol "<=" >> return (`IAInfix` "<="))
 
 parseAdditive :: Parser AST
 parseAdditive = chainl1' parseMultiplicative parseAdditiveOp
