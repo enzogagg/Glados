@@ -57,7 +57,7 @@ executables:
 
 
 tests:
-  glados-test:
+  compiler-test:
     main:                Spec.hs
     source-dirs:         ../test/compiler/unitary
     ghc-options:
@@ -68,3 +68,5 @@ tests:
     - glados
     - hspec
     - megaparsec
+    - bytestring
+    - binary

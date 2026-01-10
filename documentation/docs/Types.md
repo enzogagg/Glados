@@ -1,69 +1,45 @@
 ---
-id: Tests
-title: Protocoles de Test
-sidebar_position: 4
+id: types
+title: Système de Types
+sidebar_position: 3
 ---
 
-# Protocoles de Test
+# Types de Données
 
-Le Centre d'Enrichissement accorde une importance capitale à la validation des données. Tout code non testé sera considéré comme une violation du protocole de sécurité.
+Bien que CLaD soit dynamiquement typé à l'exécution (dans la machine virtuelle), il manipule des concepts de types précis. Voici les types que vous manipulerez dans votre code.
 
-## Tests Unitaires
+## Types Primitifs
 
-Les tests unitaires vérifient le bon fonctionnement des composants individuels du noyau GLaDOS (parsing, évaluation, types).
+| Type | Mot-clé (Doc) | Description | Exemple |
+|---|---|---|---|
+| **Entier** | `entier` | Nombre entier signé 64-bit. | `42`, `-7` |
+| **Flottant** | `flottant` | Nombre décimal double précision. | `3.14`, `-0.01` |
+| **Booléen** | `booleen` | Valeur de vérité. | `vrai`, `faux` |
+| **Chaîne** | `phrase` | Séquence de caractères. | `"CLaD est génial"` |
+| **Symbole**| `symbole` | Identifiant unique (rarement utilisé directement). | `atom` |
+| **Rien** | `vide` / `unit` | Absence de valeur (retour de procédure). | (Résultat d'un `afficher`) |
 
-### Localisation
-Les sujets de test se trouvent dans le secteur `test/` :
-- `ParseToExprSpec.hs` : Vérifie la transformation du texte en AST.
-- `ParseValueSpec.hs` : Valide l'évaluation des expressions et les primitives.
-- `MainSpec.hs` : Tests généraux du point d'entrée.
+## Structures Complexes
 
-### Exécution
-Pour lancer la séquence de tests unitaires via le terminal :
+Ces types permettent d'organiser les données. Voir la section [Structures de Données](Builtins/DataStructures.md) pour leur manipulation détaillée.
 
-```bash
-make tests_run
-```
-Ou directement avec Stack :
-```bash
-stack test
-```
+### Liste
+Collection chaînée d'éléments.
+- Création : `(1 2 3)` (Via `cons` ou citation).
+- Usage : Traitement séquentiel récursif.
 
-### Ajouter un Test
-1. Créez ou modifiez un fichier `*Spec.hs` dans `test/`.
-2. Utilisez la syntaxe `hspec` pour définir vos assertions.
-3. Vérifiez que votre test ne provoque pas de paradoxe temporel.
+### Tableau (`Array`)
+Collection indexée mutable.
+- Syntaxe : `[1, 2, 3]`
+- Accès rapide par index `tab[0]`.
 
----
+### Tuple
+Collection fixe et immuable de valeurs hétérogènes.
+- Syntaxe : `{1, "A", vrai}`
+- Idéal pour retourner plusieurs valeurs d'une fonction.
 
-## Tests Fonctionnels
+### Dictionnaire (`Map`)
+Association Clé -> Valeur.
 
-Les tests fonctionnels valident le comportement global de l'interpréteur en conditions réelles.
-
-### Localisation
-Le script de contrôle est situé à : `scripts/functional_tests.sh`.
-
-### Fonctionnement
-Le script :
-1. Compile le binaire `glados`.
-2. Injecte des instructions (via `stdin` ou fichiers).
-3. Compare la sortie standard et le code de retour avec les valeurs attendues.
-
-### Exécution
-```bash
-./scripts/functional_tests.sh
-```
-
-### Ajouter un Test
-Ouvrez `scripts/functional_tests.sh` et ajoutez une ligne `assert_output` :
-
-```bash
-# assert_output "Nom du Test" "Entrée" "Code Retour Attendu" "Sortie Attendue"
-assert_output "Test Gâteau" "(eq? 'cake 'lie)" 0 "#t"
-```
-
----
-
-:::tip Note du Superviseur
-Un code vert est un code joyeux. Un code rouge entraînera la libération de neurotoxine.
-:::
+### Structure (`Struct`)
+Objet composé avec champs nommés.
