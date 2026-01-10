@@ -12,12 +12,12 @@ spec = do
         it "returns error when wrong number of arguments" $ do
             let args = ["file1.clad", "file2.clad"]
             result <- parseContent args
-            result `shouldBe` Left "wrong number of arguments"
+            result `shouldBe` Left "USAGE\n    ./glados-compiler (-h | <file_input.clad> [-o <file_output.cbc>])"
 
         it "returns error when file has invalid extension" $ do
             let args = ["file.txt"]
             result <- parseContent args
-            result `shouldBe` Left "invalid type file"
+            result `shouldBe` Left "invalid file extension (expected .clad)"
 
         it "returns error when file does not exist" $ do
             let args = ["nofile.clad"]
@@ -26,7 +26,8 @@ spec = do
 
         it "returns error when no input file provided" $ do
             let args = []
-            pendingWith "Testing parseContent with empty args requires more context setup"
+            result <- parseContent args
+            result `shouldBe` Left "USAGE\n    ./glados-compiler (-h | <file_input.clad> [-o <file_output.cbc>])"
 
     describe "getCladExtension" $ do
         it "returns True for .clad files" $ do

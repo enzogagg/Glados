@@ -18,7 +18,7 @@ module CladLexer (
     parseOperator
 ) where
 
-import Types (IAST(..))
+import Types (AST(..))
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
@@ -30,8 +30,8 @@ type Parser = Parsec Void String
 reservedWords :: [String]
 reservedWords = [
     "fonction", "fin", "principal", "constante", "variable", "retourner",
-    "si", "sinon", "sinon si", "tantque", "pour", "de", "à",
-    "vrai", "faux",
+    "si", "sinon", "sinon si", "tantque", "pour",
+    "vrai", "faux", "et", "ou",
     "entier", "flottant", "pileouface", "phrase", "liste", "neant"
     ]
 
@@ -67,22 +67,22 @@ parseOperator = lexeme $ many (oneOf "+-*/=<>!%^&|")
 -- Lexing des Terminaux (Littéraux) - Retourne des nœuds AST directs
 -- ====================================================================
 
-parseNumber :: Parser IAST
+parseNumber :: Parser AST
 parseNumber = lexeme $ try $ do
     n <- L.signed sc L.decimal
     return (IANumber n)
 
-parseFloat :: Parser IAST
+parseFloat :: Parser AST
 parseFloat = lexeme $ try $ do
     n <- L.signed sc L.float
     return (IAFloatLiteral n)
 
-parseBoolean :: Parser IAST
+parseBoolean :: Parser AST
 parseBoolean =
         IABoolean True <$ symbol "vrai"
     <|> IABoolean False <$ symbol "faux"
 
-parseString :: Parser IAST
+parseString :: Parser AST
 parseString = lexeme $ do
     _ <- char '"'
     xs <- many (noneOf ['"'])
