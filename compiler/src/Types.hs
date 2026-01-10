@@ -23,6 +23,7 @@ import Data.List (intercalate)
 import Data.Word
 
 import Data.List (intercalate)
+import qualified Data.Map as Map
 
 -- ==========================
 -- Nouveaux Types CLaD
@@ -120,15 +121,15 @@ data Value
 instance Show Value where
     show (IntVal n) = show n
     show (FloatVal n) = show n
-    show (BoolVal True) = "#t"
-    show (BoolVal False) = "#f"
+    show (BoolVal True) = "vrai"
+    show (BoolVal False) = "faux"
     show FuncVal {} = "#<procedure>"
     show (Primitive _) = "#<primitive-procedure>"
     show (ListVal list) = "(" ++ unwords (map show list) ++ ")"
     show (TupleVal t) = "(" ++ intercalate ", " (map show t) ++ ")"
     show (SymbolVal s) = s
     show (StringVal s) = s
-    show Void = "#<void>"
+    show Void = "neant"
     show (ErrorVal s) = "*** ERROR: " ++ s -- Affichage d'erreur
 
 -- Instance Eq personnalisée
@@ -144,8 +145,6 @@ instance Eq Value where
     Void == Void = True
     ErrorVal a == ErrorVal b = a == b -- Les erreurs sont égales si leurs messages sont égaux (ou si on considère que toutes les erreurs sont égales)
     _ == _ = False
-
-type Env = [(String, Value)] -- simple environment as an association list
 
 -- ==========================
 -- Types pour le Bytecode
