@@ -355,6 +355,7 @@ getOpcodeSize op
     | op == 0x12 = 0  -- MUL
     | op == 0x13 = 0  -- DIV
     | op == 0x14 = 0  -- MOD
+    | op == 0x15 = 0  -- NEG
     | op == 0x20 = 0  -- EQ
     | op == 0x21 = 0  -- NEQ
     | op == 0x22 = 0  -- LT
