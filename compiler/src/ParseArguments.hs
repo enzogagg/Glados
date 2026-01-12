@@ -23,6 +23,7 @@ import ParseToAST (parseAST)
 import AstToBin (parseBin)
 import Resolver (resolveIncludes)
 import Visualizer (astToDot)
+import ConstantFolding (foldConstants)
 
 import Data.List (isSuffixOf)
 import Data.Maybe (fromMaybe)
@@ -55,14 +56,15 @@ useContent content cArgs =
             resolvedResult <- resolveIncludes initialAst
             case resolvedResult of
                 Left err -> return (Left err)
-                Right finalAst ->
+                Right finalAst -> do
+                    let optimizedAst = foldConstants finalAst
                     case runMode cArgs of
                         Visualize -> do
-                            writeFile "ast.dot" (astToDot finalAst)
+                            writeFile "ast.dot" (astToDot optimizedAst)
                             putStrLn "Fichier 'ast.dot' généré.\ndot -Tpng ast.dot -o ast.png pour visualiser."
                             return (Right ())
                         Compile -> do
-                            parseBin finalAst (outputFile cArgs)
+                            parseBin optimizedAst (outputFile cArgs)
 
 parseArgs :: [String] -> IO (Either String CompilerArgs)
 parseArgs args = return $ parseArgsInternal args Nothing Compile

@@ -43,6 +43,7 @@ library:
   - src
   - src/parser
   - src/visualizer
+  - src/optimisation
 
 executables:
 
