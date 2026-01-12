@@ -1,69 +1,164 @@
 ---
-id: Tests
-title: Protocoles de Test
-sidebar_position: 4
+id: Listes
+title: Listes
+sidebar_position: 5
 ---
 
-# Protocoles de Test
+# Protocoles de Manipulation des Listes
 
-Le Centre d'Enrichissement accorde une importance capitale à la validation des données. Tout code non testé sera considéré comme une violation du protocole de sécurité.
-
-## Tests Unitaires
-
-Les tests unitaires vérifient le bon fonctionnement des composants individuels du noyau GLaDOS (parsing, évaluation, types).
-
-### Localisation
-Les sujets de test se trouvent dans le secteur `test/` :
-- `ParseToExprSpec.hs` : Vérifie la transformation du texte en AST.
-- `ParseValueSpec.hs` : Valide l'évaluation des expressions et les primitives.
-- `MainSpec.hs` : Tests généraux du point d'entrée.
-
-### Exécution
-Pour lancer la séquence de tests unitaires via le terminal :
-
-```bash
-make tests_run
-```
-Ou directement avec Stack :
-```bash
-stack test
-```
-
-### Ajouter un Test
-1. Créez ou modifiez un fichier `*Spec.hs` dans `test/`.
-2. Utilisez la syntaxe `hspec` pour définir vos assertions.
-3. Vérifiez que votre test ne provoque pas de paradoxe temporel.
+Les listes sont des structures fondamentales du CLaD.  
+Toute tentative de manipulation incorrecte entraînera une perte irréversible de cohérence logique.  
+Merci de coopérer.
 
 ---
 
-## Tests Fonctionnels
+## Primitives sur les Listes
 
-Les tests fonctionnels valident le comportement global de l'interpréteur en conditions réelles.
+Les primitives suivantes permettent d’inspecter, modifier et analyser des listes.
 
-### Localisation
-Le script de contrôle est situé à : `scripts/functional_tests.sh`.
+---
 
-### Fonctionnement
-Le script :
-1. Compile le binaire `glados`.
-2. Injecte des instructions (via `stdin` ou fichiers).
-3. Compare la sortie standard et le code de retour avec les valeurs attendues.
+# Fonctions de manipulation de listes
 
-### Exécution
-```bash
-./scripts/functional_tests.sh
-```
+## `tete(liste)`
+Récupère le **premier élément** de la liste.
+- Erreur si la liste est vide.
+- Ne modifie pas la liste originale.
 
-### Ajouter un Test
-Ouvrez `scripts/functional_tests.sh` et ajoutez une ligne `assert_output` :
-
-```bash
-# assert_output "Nom du Test" "Entrée" "Code Retour Attendu" "Sortie Attendue"
-assert_output "Test Gâteau" "(eq? 'cake 'lie)" 0 "#t"
+**Exemple :**
+```lisp
+(tete '(1 2 3))
+=> 1
 ```
 
 ---
 
-:::tip Note du Superviseur
-Un code vert est un code joyeux. Un code rouge entraînera la libération de neurotoxine.
-:::
+## `reste(liste)`
+Récupère la **liste sans le premier élément**.
+- Erreur si la liste est vide.
+- Ne modifie pas la liste originale.
+
+**Exemple :**
+```lisp
+(reste '(1 2 3))
+=> (2 3)
+```
+
+---
+
+## `est_vide(liste)`
+Renvoie **vrai** si la liste est vide, **faux** sinon.
+
+**Exemple :**
+```lisp
+(est_vide '())
+=> vrai
+
+(est_vide '(1 2))
+=> faux
+```
+
+---
+
+## `fusion(el, liste)`
+Ajoute un **élément au début** de la liste.
+- Retourne une nouvelle liste.
+- Ne modifie pas la liste originale.
+
+**Exemple :**
+```lisp
+(fusion 0 '(1 2 3))
+=> (0 1 2 3)
+```
+
+---
+
+## `ajouter(liste, element)`
+Ajoute un **élément à la fin** de la liste.
+- Retourne une nouvelle liste.
+- Ne modifie pas la liste originale.
+
+**Exemple :**
+```lisp
+(ajouter '(1 2 3) 4)
+=> (1 2 3 4)
+```
+
+---
+
+## `insere(liste, index, element)`
+Insère un élément à une **position donnée**.
+- Erreur si l'index est hors limites.
+- Retourne une nouvelle liste.
+
+**Exemple :**
+```lisp
+(insere '(1 2 4) 2 3)
+=> (1 2 3 4)
+```
+
+---
+
+## `taille(liste)`
+Renvoie le **nombre d'éléments** dans la liste.
+- Retourne 0 pour une liste vide.
+
+**Exemple :**
+```lisp
+(taille '(1 2 3))
+=> 3
+
+(taille '())
+=> 0
+```
+
+---
+
+## `supprimer(liste, index)`
+Enlève l'élément à l'**index X**.
+- Erreur si l'index est hors limites.
+- Retourne une nouvelle liste.
+
+**Exemple :**
+```lisp
+(supprimer '(1 2 3 4) 2)
+=> (1 2 4)
+```
+
+---
+
+## `nieme(liste, index)`
+Récupère l'élément à l'**index donné**.
+- Erreur si l'index est hors limites.
+- Équivalent de `liste[index]`.
+
+**Exemple :**
+```lisp
+(nieme '(a b c d) 2)
+=> c
+```
+
+---
+
+## `contient(liste, element)`
+Renvoie **vrai** si l'élément est dans la liste, **faux** sinon.
+
+**Exemple :**
+```lisp
+(contient '(1 2 3) 2)
+=> vrai
+
+(contient '(1 2 3) 5)
+=> faux
+```
+
+---
+
+## `vider(liste)`
+Efface **tous les éléments** de la liste.
+
+**Exemple :**
+```lisp
+(vider '(1 2 3))
+=> ()
+```
