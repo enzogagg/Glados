@@ -33,7 +33,8 @@ reservedWords = [
     "fonction", "fin", "principal", "constante", "variable", "retourner",
     "si", "sinon", "sinon si", "tantque", "pour",
     "vrai", "faux", "et", "ou",
-    "entier", "flottant", "pileouface", "phrase", "liste", "neant"
+    "entier", "flottant", "pileouface", "phrase", "liste", "neant",
+    "inclure"
     ]
 
 -- ====================================================================

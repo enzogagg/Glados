@@ -83,6 +83,7 @@ data AST
     | IABlock [AST]                             -- Utilisé pour les blocs locaux
 
     -- Déclarations & Assignations
+    | IAInclude String                          -- inclure "file.clad"
     | IADeclare String (Maybe CladType) AST     -- constante/variable Nom (Type) = Value
     | IAAssign String AST                       -- Ré-assignation (x = value)
 

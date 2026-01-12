@@ -21,6 +21,7 @@ import System.IO()
 import Text.Megaparsec (errorBundlePretty)
 import ParseToAST (parseAST)
 import AstToBin (parseBin)
+import Resolver (resolveIncludes)
 import Visualizer (astToDot)
 
 import Data.List (isSuffixOf)
@@ -44,20 +45,23 @@ parseContent args = do
                 Left err -> return (Left err)
                 Right content -> useContent content cArgs
 
+
 useContent :: String -> CompilerArgs -> IO (Either String ())
 useContent content cArgs =
     case parseAST content of
-        Left errBundle ->
-            return (Left (errorBundlePretty errBundle))
-        Right ast ->
-            case runMode cArgs of
-                Visualize -> do
-                    writeFile "ast.dot" (astToDot ast)
-                    putStrLn "Fichier 'ast.dot' généré.\ndot -Tpng ast.dot -o ast.png pour visualiser."
-                    return (Right ())
-                Compile -> do
-                    parseBin ast (outputFile cArgs)
-                    return (Right ())
+        Left errBundle -> return (Left (errorBundlePretty errBundle))
+        Right initialAst -> do
+            resolvedResult <- resolveIncludes initialAst
+            case resolvedResult of
+                Left err -> return (Left err)
+                Right finalAst ->
+                    case runMode cArgs of
+                        Visualize -> do
+                            writeFile "ast.dot" (astToDot finalAst)
+                            putStrLn "Fichier 'ast.dot' généré.\ndot -Tpng ast.dot -o ast.png pour visualiser."
+                            return (Right ())
+                        Compile -> do
+                            parseBin finalAst (outputFile cArgs)
 
 parseArgs :: [String] -> IO (Either String CompilerArgs)
 parseArgs args = return $ parseArgsInternal args Nothing Compile

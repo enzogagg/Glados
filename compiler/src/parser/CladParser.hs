@@ -16,7 +16,7 @@ import CladLexer
 import Text.Megaparsec
 import Text.Megaparsec.Char (char)
 import Data.Void()
-import Control.Monad()
+import Control.Monad (void)
 
 -- ====================================================================
 -- Parsing des Types (Annotations)
@@ -168,6 +168,7 @@ parseInstruction :: Parser AST
 parseInstruction =
         parseFunctionDef
     <|> parseMain
+    <|> parseInclude
     <|> parseDeclaration
     <|> parseReturn
     <|> parseConditional
@@ -224,6 +225,13 @@ parseMain = do
         Just (c, Nothing) -> return (IAMain [c] body)
         Just (c, Just l)  -> return (IAMain [c, l] body)
 
+parseInclude :: Parser AST
+parseInclude = do
+    void $ symbol "inclure"
+    astString <- parseString
+    case astString of
+        IAString path -> return $ IAInclude path
+        _             -> fail "Chemin d'inclusion invalide"
 parseDeclaration :: Parser AST
 parseDeclaration = do
     _ <- keyword "constante" <|> keyword "variable"
