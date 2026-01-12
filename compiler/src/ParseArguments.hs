@@ -53,7 +53,7 @@ useContent content cArgs =
             case runMode cArgs of
                 Visualize -> do
                     writeFile "ast.dot" (astToDot ast)
-                    putStrLn "Fichier 'ast.dot' généré."
+                    putStrLn "Fichier 'ast.dot' généré.\ndot -Tpng ast.dot -o ast.png pour visualiser."
                     return (Right ())
                 Compile -> do
                     parseBin ast (outputFile cArgs)
@@ -63,20 +63,17 @@ parseArgs :: [String] -> IO (Either String CompilerArgs)
 parseArgs args = return $ parseArgsInternal args Nothing Compile
   where
     parseArgsInternal :: [String] -> Maybe String -> RunMode -> Either String CompilerArgs
-    
-    -- Cas -o au début
+
     parseArgsInternal ("-o":outName:rest) _ mode = parseArgsInternal rest (Just outName) mode
-    
-    -- Cas --visualize au début ou milieu
+
     parseArgsInternal ("--visualize":rest) out _ = parseArgsInternal rest out Visualize
-    
-    -- Le dernier argument doit être le fichier d'entrée
+
     parseArgsInternal [file] out mode =
         if getCladExtension file
             then Right $ CompilerArgs file (ensureCbc (maybe "a.out.cbc" id out)) mode
             else Left "Erreur : Extension de fichier invalide (attendu .clad)"
-            
-    parseArgsInternal _ _ _ = Left "USAGE\n    ./glados-compiler <file.clad> [-o <out.cbc>] [--visualize]"
+
+    parseArgsInternal _ _ _ = Left "USAGE\n    ./glados-compiler [-o <out.cbc>] [--visualize] <file.clad>"
 
     ensureCbc name = if ".cbc" `isSuffixOf` name then name else name ++ ".cbc"
 

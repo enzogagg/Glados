@@ -3,35 +3,31 @@ module Visualizer (astToDot) where
 import Types
 import Data.List (intercalate)
 
--- Fonction principale qui génère le contenu du fichier .dot au format Graphviz
 astToDot :: AST -> String
-astToDot tree = 
+astToDot tree =
     "digraph AST {\n" ++
     "  node [fontname=\"Arial\", shape=box, style=filled, fillcolor=white];\n" ++
     "  edge [fontname=\"Arial\", fontsize=10];\n" ++
     snd (go tree 0) ++
     "}"
   where
-    -- go :: AST -> Int -> (Prochain ID disponible, Texte DOT généré)
     go :: AST -> Int -> (Int, String)
 
-    -- Littéraux et Symboles
-    go (IANumber n) i = 
+    go (IANumber n) i =
         (i + 1, "  node" ++ show i ++ " [label=\"Nombre: " ++ show n ++ "\", fillcolor=\"#e1f5fe\"];\n")
-    
-    go (IAFloatLiteral n) i = 
+
+    go (IAFloatLiteral n) i =
         (i + 1, "  node" ++ show i ++ " [label=\"Flottant: " ++ show n ++ "\", fillcolor=\"#e1f5fe\"];\n")
-    
-    go (IAString s) i = 
+
+    go (IAString s) i =
         (i + 1, "  node" ++ show i ++ " [label=\"Phrase: \\\"" ++ s ++ "\\\"\", fillcolor=\"#fff9c4\"];\n")
-    
-    go (IABoolean b) i = 
+
+    go (IABoolean b) i =
         (i + 1, "  node" ++ show i ++ " [label=\"Bool: " ++ show b ++ "\", fillcolor=\"#f3e5f5\"];\n")
-    
-    go (IASymbol s) i = 
+
+    go (IASymbol s) i =
         (i + 1, "  node" ++ show i ++ " [label=\"Symbole: " ++ s ++ "\", color=blue, fontcolor=blue];\n")
 
-    -- Opérations Infixées (Binaires)
     go (IAInfix left op right) i =
         let (nextI1, leftStr) = go left (i + 1)
             (nextI2, rightStr) = go right nextI1
@@ -40,7 +36,6 @@ astToDot tree =
                          "  node" ++ show i ++ " -> node" ++ show nextI1 ++ " [label=\"R\"];\n"
         in (nextI2, currentStr ++ leftStr ++ rightStr)
 
-    -- Structures de contrôle
     go (IAIf cond thenB elseB) i =
         let (nextI1, condStr) = go cond (i + 1)
             (nextI2, thenStr) = go (IAProgram thenB) nextI1
@@ -49,7 +44,7 @@ astToDot tree =
                      "  node" ++ show i ++ " -> node" ++ show nextI1 ++ " [label=\"alors\"];\n"
         in case elseB of
             Nothing -> (nextI2, resStr ++ condStr ++ thenStr)
-            Just b -> 
+            Just b ->
                 let (nextI3, elseStr) = go (IAProgram b) nextI2
                     finalStr = resStr ++ "  node" ++ show i ++ " -> node" ++ show nextI2 ++ " [label=\"sinon\"];\n"
                 in (nextI3, finalStr ++ condStr ++ thenStr ++ elseStr)
@@ -62,7 +57,6 @@ astToDot tree =
                          "  node" ++ show i ++ " -> node" ++ show nextI1 ++ " [label=\"corps\"];\n"
         in (nextI2, currentStr ++ condStr ++ bodyStr)
 
-    -- Déclarations et Assignations
     go (IADeclare name _ expr) i =
         let (nextI, exprStr) = go expr (i + 1)
             currentStr = "  node" ++ show i ++ " [label=\"Déclarer: " ++ name ++ "\", fillcolor=\"#c8e6c9\"];\n" ++
@@ -75,7 +69,6 @@ astToDot tree =
                          "  node" ++ show i ++ " -> node" ++ show (i + 1) ++ ";\n"
         in (nextI, currentStr ++ exprStr)
 
-    -- Fonctions et Principal
     go (IAFunctionDef name params _ body) i =
         let paramNames = intercalate ", " [pName | (pName, _) <- params]
             label = "Fonction: " ++ name ++ "\\nArgs: (" ++ paramNames ++ ")"
@@ -91,9 +84,8 @@ astToDot tree =
                          "  node" ++ show i ++ " -> node" ++ show (i + 1) ++ ";\n"
         in (nextI, currentStr ++ bodyStr)
 
-    -- Appels de fonction
     go (IACall name args) i =
-        let folder (currentId, accStr, childIds) arg = 
+        let folder (currentId, accStr, childIds) arg =
                 let (newId, newStr) = go arg currentId
                 in (newId, accStr ++ newStr, childIds ++ [currentId])
             (lastId, allArgsStr, ids) = foldl folder (i + 1, "", []) args
@@ -101,9 +93,8 @@ astToDot tree =
             currentStr = "  node" ++ show i ++ " [label=\"Appel: " ++ name ++ "\", color=green];\n" ++ connect
         in (lastId, currentStr ++ allArgsStr)
 
-    -- Listes et Tuples
     go (IAList exprs) i =
-        let folder (currentId, accStr, childIds) expr = 
+        let folder (currentId, accStr, childIds) expr =
                 let (newId, newStr) = go expr currentId
                 in (newId, accStr ++ newStr, childIds ++ [currentId])
             (lastId, allStr, ids) = foldl folder (i + 1, "", []) exprs
@@ -111,9 +102,8 @@ astToDot tree =
             currentStr = "  node" ++ show i ++ " [label=\"Liste\", shape=parallelogram];\n" ++ connect
         in (lastId, currentStr ++ allStr)
 
-    -- Programme / Blocs d'instructions
     go (IAProgram instrs) i =
-        let folder (currentId, accStr, childIds) inst = 
+        let folder (currentId, accStr, childIds) inst =
                 let (newId, newStr) = go inst currentId
                 in (newId, accStr ++ newStr, childIds ++ [currentId])
             (lastId, allNodesStr, ids) = foldl folder (i + 1, "", []) instrs
