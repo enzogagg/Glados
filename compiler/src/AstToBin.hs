@@ -510,11 +510,7 @@ genProgram _ = Nothing
 
 generateInstruction :: AST -> CodeGen
 generateInstruction ast =
-<<<<<<< HEAD
-    fromMaybe unsupported $
-=======
     maybe unsupported id $
->>>>>>> 96453d11 ([UPDATE] generateInstruction function with alternative)
             genNumber ast
         <|> genFloat ast
         <|> genBoolean ast
