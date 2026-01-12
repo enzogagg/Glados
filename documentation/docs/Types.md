@@ -1,164 +1,150 @@
 ---
-id: Listes
-title: Listes
-sidebar_position: 5
----
 
-# Protocoles de Manipulation des Listes
+id: Types
+title: Types
+sidebar_position: 3
+-------------------
 
-Les listes sont des structures fondamentales du CLaD.  
-Toute tentative de manipulation incorrecte entraînera une perte irréversible de cohérence logique.  
-Merci de coopérer.
+# **CLaD – Types de base**
 
----
-
-## Primitives sur les Listes
-
-Les primitives suivantes permettent d’inspecter, modifier et analyser des listes.
+Ce document décrit l’ensemble des **types fondamentaux** du langage **CLaD**, leurs opérations natives ainsi que des exemples d’utilisation.
 
 ---
 
-# Fonctions de manipulation de listes
+## 1. Nombres
 
-## `tete(liste)`
-Récupère le **premier élément** de la liste.
-- Erreur si la liste est vide.
-- Ne modifie pas la liste originale.
+Les nombres sont divisés en deux catégories :
 
-**Exemple :**
-```lisp
-(tete '(1 2 3))
-=> 1
+* **Entiers** (`Entiers`)
+* **Flottants** (`Virgule`)
+
+### Fonctions natives
+
+* `a + b` — Addition
+* `a - b` — Soustraction
+* `a * b` — Multiplication
+* `a / b` — Division flottante
+* `a div b` — Division entière
+* `a mod b` — Modulo
+* `abs x` — Valeur absolue
+* `arrondi x` — Arrondi
+
+### Exemples
+
+```clad
+(2 + 3)        ;; => 5
+(7 / 2)        ;; => 3.5
+(7 div 2)      ;; => 3
+(7 mod 2)      ;; => 1
+(abs -42)      ;; => 42
+(arrondi 3.14) ;; => 3
 ```
 
 ---
 
-## `reste(liste)`
-Récupère la **liste sans le premier élément**.
-- Erreur si la liste est vide.
-- Ne modifie pas la liste originale.
+## 2. Chaînes de caractères (`Phrase`)
 
-**Exemple :**
-```lisp
-(reste '(1 2 3))
-=> (2 3)
+Les chaînes permettent la manipulation de texte — utiles, par exemple, pour menacer des sujets de test.
+
+### Fonctions natives
+
+* `phr-long s` — Longueur de la chaîne
+* `phr-ajout a b` — Concaténation
+* `phr-coupe s sep` — Découpage (split)
+* `phr-cherche? s sub` — Recherche d’une sous-chaîne
+
+### Exemples
+
+```clad
+(phr-long "CLaD")                    ;; => 6
+(phr-ajout "Bonjour, " "Sujet 17") ;; => "Bonjour, Sujet 17"
+(phr-coupe "a,b,c" ",")            ;; => ["a" "b" "c"]
+(phr-cherche? "neurotoxine" "tox") ;; => vrai
 ```
 
 ---
 
-## `est_vide(liste)`
-Renvoie **vrai** si la liste est vide, **faux** sinon.
+## 3. Booléens (`PileOuFace`)
 
-**Exemple :**
-```lisp
-(est_vide '())
-=> vrai
+Deux valeurs possibles :
 
-(est_vide '(1 2))
-=> faux
+* `vrai`
+* `faux`
+
+### Fonctions natives
+
+* `a et b` — ET logique
+* `a ou b` — OU logique
+* `non a` — Négation
+* `=` — Égalité
+* `>` `<` `>=` `<=` — Comparaisons
+
+### Exemples
+
+```clad
+(vrai et faux) ;; => faux
+(vrai ou faux) ;; => vrai
+(non vrai)     ;; => faux
+(= 3 3)        ;; => vrai
+(> 5 2)        ;; => vrai
 ```
 
 ---
 
-## `fusion(el, liste)`
-Ajoute un **élément au début** de la liste.
-- Retourne une nouvelle liste.
-- Ne modifie pas la liste originale.
+## 4. Listes (`Liste`)
 
-**Exemple :**
-```lisp
-(fusion 0 '(1 2 3))
-=> (0 1 2 3)
+Les listes sont des collections ordonnées d’éléments, souvent utilisées pour stocker des résultats de tests ou des données de sujets.
+
+### Fonctions natives
+
+* `Liste a b c ...` — Création d’une liste
+* `Premier lst` — Premier élément
+* `reste lst` — Reste de la liste
+* `ajout lst1 lst2` — Concaténation de listes
+* `map fn lst` — Application d’une fonction
+* `filtre fn lst` — Filtrage
+* `réduis fn init lst` — Réduction
+
+### Exemples
+
+```clad
+(Liste 1 2 3)                         ;; => [1 2 3]
+(Premier [1 2 3])                     ;; => 1
+(reste [1 2 3])                       ;; => [2 3]
+(ajout [1 2] [3 4])                   ;; => [1 2 3 4]
+(map (lambda (x) (* x 2)) [1 2 3])    ;; => [2 4 6]
+(filtre (lambda (x) (> x 2)) [1 2 3]) ;; => [3]
+(réduis + 0 [1 2 3])                  ;; => 6
 ```
 
 ---
 
-## `ajouter(liste, element)`
-Ajoute un **élément à la fin** de la liste.
-- Retourne une nouvelle liste.
-- Ne modifie pas la liste originale.
+## 5. Le type `Neant`
 
-**Exemple :**
-```lisp
-(ajouter '(1 2 3) 4)
-=> (1 2 3 4)
+Type spécial indiquant l’absence de valeur. Comparable à `null`, `none` ou `void` dans d’autres langages.
+
+### Exemple
+
+```clad
+(print "Test en cours...") ;; => :Neant
 ```
 
 ---
 
-## `insere(liste, index, element)`
-Insère un élément à une **position donnée**.
-- Erreur si l'index est hors limites.
-- Retourne une nouvelle liste.
+## 6. Le type `Erreur`
 
-**Exemple :**
-```lisp
-(insere '(1 2 4) 2 3)
-=> (1 2 3 4)
+Toutes les exceptions internes (division par zéro, accès hors limites, surcharge de tourelle, etc.) retournent un objet de type `Erreur`.
+
+### Exemple
+
+```clad
+(/ 1 0) ;; => Erreur: DivisionParZero
 ```
 
 ---
 
-## `taille(liste)`
-Renvoie le **nombre d'éléments** dans la liste.
-- Retourne 0 pour une liste vide.
+## Conclusion
 
-**Exemple :**
-```lisp
-(taille '(1 2 3))
-=> 3
+Cette section présente l’ensemble des types fondamentaux disponibles dans le langage **CLaD**. Ils constituent les briques essentielles pour écrire des programmes fiables, reproductibles et scientifiquement cruels.
 
-(taille '())
-=> 0
-```
-
----
-
-## `supprimer(liste, index)`
-Enlève l'élément à l'**index X**.
-- Erreur si l'index est hors limites.
-- Retourne une nouvelle liste.
-
-**Exemple :**
-```lisp
-(supprimer '(1 2 3 4) 2)
-=> (1 2 4)
-```
-
----
-
-## `nieme(liste, index)`
-Récupère l'élément à l'**index donné**.
-- Erreur si l'index est hors limites.
-- Équivalent de `liste[index]`.
-
-**Exemple :**
-```lisp
-(nieme '(a b c d) 2)
-=> c
-```
-
----
-
-## `contient(liste, element)`
-Renvoie **vrai** si l'élément est dans la liste, **faux** sinon.
-
-**Exemple :**
-```lisp
-(contient '(1 2 3) 2)
-=> vrai
-
-(contient '(1 2 3) 5)
-=> faux
-```
-
----
-
-## `vider(liste)`
-Efface **tous les éléments** de la liste.
-
-**Exemple :**
-```lisp
-(vider '(1 2 3))
-=> ()
-```
+**Bonne expérimentation.**

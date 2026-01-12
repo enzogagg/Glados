@@ -21,6 +21,8 @@ const sidebars = {
     'Ci-cd',
     'Struct',
     'Bytecode',
+    'Liste',
+    'File',
   ],
 };
 
