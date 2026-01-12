@@ -345,9 +345,11 @@ getOpcodeSize :: Word8 -> Int
 getOpcodeSize op
     | op == 0x01 = 4  -- PUSH_CONST
     | op == 0x02 = 4  -- PUSH_INT
-    | op == 0x03 = 8  -- PUSH_FLOAT
+    | op == 0x03 = 4  -- PUSH_FLOAT (Float32 IEEE-754)
     | op == 0x04 = 1  -- PUSH_BOOL
+    | op == 0x05 = 4  -- PUSH_STRING
     | op == 0x06 = 0  -- PUSH_NIL
+    | op == 0x07 = 0  -- POP
     | op == 0x10 = 0  -- ADD
     | op == 0x11 = 0  -- SUB
     | op == 0x12 = 0  -- MUL

@@ -207,7 +207,7 @@ genNumber _ = Nothing
 
 genFloat :: AST -> Maybe CodeGen
 genFloat (IAFloatLiteral f) = Just $ do
-    let bytes = BL.unpack $ runPut $ putDoublebe f
+    let bytes = BL.unpack $ runPut $ putFloatbe (realToFrac f)
     return $ Right $ opcodeToByte OpPushFloat : bytes
 genFloat _ = Nothing
 
