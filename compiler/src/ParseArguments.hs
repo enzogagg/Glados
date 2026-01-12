@@ -10,54 +10,74 @@ module ParseArguments
   , parseArgs
   , handleInput
   , getCladExtension
-  , debugParse
+  , useContent
+  , CompilerArgs(..)
   ) where
 
-import Types
+import Types()
 import System.Directory (doesFileExist)
-import System.IO (stdin, hIsTerminalDevice, isEOF, hFlush, stdout)
-import Text.Megaparsec (parse, errorBundlePretty)
-import ParseToExpr (parseProgram)
-import ParseValue (parseValue, runExprs, builtins)
+import System.IO()
+import Text.Megaparsec (errorBundlePretty)
+import ParseToAST (parseAST)
+import AstToBin (parseBin)
+
+data CompilerArgs = CompilerArgs
+  { inputFile :: String
+  , outputFile :: String
+  } deriving (Show, Eq)
 
 parseContent :: [String] -> IO (Either String ())
 parseContent args = do
     result <- parseArgs args
     case result of
         Left err -> return (Left err)
-        Right "__REPL__" -> startRepl
-        Right content -> debugParse content
+        Right compilerArgs -> do
+            contentResult <- handleInput (inputFile compilerArgs)
+            case contentResult of
+                Left err -> return (Left err)
+                Right content -> useContent content (outputFile compilerArgs)
 
-debugParse :: String -> IO (Either String ())
-debugParse content =
-    case parse parseProgram "" content of
+useContent :: String -> String -> IO (Either String ())
+useContent content outputName =
+    case parseAST content of
         Left errBundle ->
             return (Left (errorBundlePretty errBundle))
-        Right exprs ->
-            parseValue exprs
+        Right ast -> do
+            parseBin ast outputName
 
-parseArgs :: [String] -> IO (Either String String)
-parseArgs args = case args of
-    [] -> do
-        isTerm <- hIsTerminalDevice stdin
-        if isTerm
-            then return (Right "__REPL__")
-        else do
-            content <- getContents
-            if null content
-                then return (Left "empty stdin")
-            else return (Right content)
-    [file] -> do
+parseArgs :: [String] -> IO (Either String CompilerArgs)
+parseArgs args = return $ parseArgsInternal args Nothing
+  where
+    parseArgsInternal :: [String] -> Maybe String -> Either String CompilerArgs
+    parseArgsInternal [] _ = Left "USAGE\n    ./glados-compiler (-h | <file_input.clad> [-o <file_output.cbc>])"
+    parseArgsInternal ["-h"] _ = Left "USAGE\n    ./glados-compiler (-h | <file_input.clad> [-o <file_output.cbc>])"
+    parseArgsInternal [file] Nothing =
         if getCladExtension file
-            then handleInput file
+            then Right $ CompilerArgs file (ensureCbcExtension "a.out.cbc")
+            else Left "invalid file extension (expected .clad)"
+    parseArgsInternal [file] (Just output) =
+        if getCladExtension file
+            then Right $ CompilerArgs file (ensureCbcExtension output)
+            else Left "invalid file extension (expected .clad)"
+    parseArgsInternal (file:"-o":outName:rest) _ =
+        if getCladExtension file && null rest
+            then Right $ CompilerArgs file (ensureCbcExtension outName)
+            else Left "USAGE\n    ./glados-compiler (-h | <file_input.clad> [-o <file_output.cbc>])"
+    parseArgsInternal _ _ = Left "USAGE\n    ./glados-compiler (-h | <file_input.clad> [-o <file_output.cbc>])"
 
-        else return (Left "invalid type file")
-    _ -> return (Left "wrong number of arguments")
+    ensureCbcExtension :: String -> String
+    ensureCbcExtension name =
+        if ".cbc" `isSuffixOf` name
+            then name
+            else name ++ ".cbc"
+
+    isSuffixOf :: String -> String -> Bool
+    isSuffixOf suffix str = suffix == reverse (take (length suffix) (reverse str))
 
 getCladExtension :: String -> Bool
-getCladExtension file = case reverse (takeWhile (/= '.') (reverse file)) of
-    "clad" -> True
-    _      -> False
+getCladExtension file =
+    let ext = reverse (takeWhile (/= '.') (reverse file))
+    in ext == "clad"
 
 handleInput :: String -> IO (Either String String)
 handleInput input = do
@@ -67,35 +87,3 @@ handleInput input = do
             content <- readFile input
             return (Right content)
     else return (Left ("file does not exist: " ++ input))
-
--- =========================
--- REPL MODE
--- =========================
-
-startRepl :: IO (Either String ())
-startRepl = do
-    putStrLn "Glados REPL. Press Ctrl+D to exit."
-    replLoop builtins
-
-replLoop :: Env -> IO (Either String ())
-replLoop env = do
-    putStr "> "
-    hFlush stdout
-    eof <- isEOF
-    if eof
-        then return (Right ())
-    else do
-        line <- getLine
-        case parse parseProgram "" line of
-            Left errBundle -> do
-                putStr "*** ERROR : "
-                putStrLn (errorBundlePretty errBundle)
-                replLoop env
-            Right exprs -> do
-                result <- runExprs env exprs
-                case result of
-                    Left err -> do
-                        putStrLn ("*** ERROR : " ++ err)
-                        replLoop env
-                    Right newEnv ->
-                        replLoop newEnv

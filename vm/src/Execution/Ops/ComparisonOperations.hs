@@ -17,7 +17,7 @@ opEq state =
         (FloatVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (a == b) : rest }
         (IntVal a : FloatVal b : rest) -> Right $ state { stack = BoolVal (fromIntegral a == b) : rest }
         (FloatVal a : IntVal b : rest) -> Right $ state { stack = BoolVal (a == fromIntegral b) : rest }
-        (a : b : rest) -> Right $ state { stack = BoolVal (a == b) : rest } -- Fallback for other types
+        (a : b : rest) -> Right $ state { stack = BoolVal (a == b) : rest }
         _ -> Left "Error: Eq requires two values on the stack"
 
 opNeq :: VMState -> Either String VMState

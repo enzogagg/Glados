@@ -33,16 +33,16 @@ fin
 Déclarées avec le mot-clé `constante`. Elles ne peuvent pas être modifiées.
 
 ```clad
-constante PI 3.14159
-constante NOM_APP "CLaD v1.0"
+constante flottant PI = 3.14159
+constante phrase NOM_APP = "CLaD v1.0"
 ```
 
 ### Variables
 Déclarées avec `variable`.
 
 ```clad
-variable compteur 0
-variable message "Initial"
+variable entier compteur = 0
+variable phrase message = "Initial"
 
 compteur = compteur + 1
 ```
@@ -55,7 +55,7 @@ Les mots-clés de type (utilisés dans les futures versions typées ou pour la d
 - `entier` : Nombres entiers (ex: `42`, `-10`).
 - `flottant` : Nombres à virgule (ex: `3.14`).
 - `phrase` : Chaînes de caractères (ex: `"Bonjour"`).
-- `booleen` : `vrai` ou `faux`.
+- `pileouface` : `vrai` ou `faux`.
 
 ---
 
@@ -64,9 +64,9 @@ Les mots-clés de type (utilisés dans les futures versions typées ou pour la d
 ### Conditionnelle (`si` / `sinon`)
 
 ```clad
-si score > 100
+si (score > 100)
     afficher("Nouveau record !")
-sinon si score > 50
+sinon si (score > 50)
     afficher("Bien joué")
 sinon
     afficher("Essaie encore")
@@ -76,8 +76,8 @@ fin
 ### Boucle (`tantque`)
 
 ```clad
-variable i 0
-tantque i < 10
+variable entier i = 0
+tantque (i < 10)
     afficher(i)
     i = i + 1
 fin
@@ -86,7 +86,7 @@ fin
 ### Boucle (`pour`)
 
 ```clad
-pour i de 0 à 5
+pour (; i < 5; i = i + 1)
     afficher("Itération : " + i)
 fin
 ```
@@ -100,11 +100,11 @@ Les fonctions permettent de structurer le code. Elles sont définies par `foncti
 ### Déclaration
 
 ```clad
-fonction addition(a, b)
+fonction addition(a, b) : entier
     retourner a + b
 fin
 
-fonction dire_bonjour(nom)
+fonction dire_bonjour(nom) : neant
     afficher("Salut " + nom)
 fin
 ```

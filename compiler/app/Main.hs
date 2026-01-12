@@ -8,15 +8,19 @@
 module Main (main) where
 
 import System.Environment (getArgs)
-import System.Exit (exitWith, ExitCode(..))
-import ParseArguments (parseContent)
+import ParseToAST (parseAST)
+import Text.Megaparsec (errorBundlePretty) 
+import Interpreter (runREPL)
+import System.Exit (exitFailure)
 
 main :: IO ()
 main = do
     args <- getArgs
-    result <- parseContent args
-    case result of
-        Right () -> return ()
-        Left err -> do
-            putStrLn ("*** ERROR : " ++ err)
-            exitWith (ExitFailure 84)
+    case args of
+        [] -> runREPL
+        [inputFile] -> do
+            content <- readFile inputFile
+            case parseAST content of
+                Left err -> putStrLn (errorBundlePretty err) >> exitFailure 
+                Right _ -> putStrLn "Compilation réussie (AST généré)."
+        _ -> putStrLn "Usage: ./glados-compiler [file.clad]"
