@@ -25,6 +25,7 @@ import Resolver (resolveIncludes)
 import Visualizer (astToDot)
 
 import Data.List (isSuffixOf)
+import Data.Maybe (fromMaybe)
 
 data RunMode = Compile | Visualize deriving (Show, Eq)
 
@@ -74,7 +75,7 @@ parseArgs args = return $ parseArgsInternal args Nothing Compile
 
     parseArgsInternal [file] out mode =
         if getCladExtension file
-            then Right $ CompilerArgs file (ensureCbc (maybe "a.out.cbc" id out)) mode
+            then Right $ CompilerArgs file (ensureCbc (fromMaybe "a.out.cbc" out)) mode
             else Left "Erreur : Extension de fichier invalide (attendu .clad)"
 
     parseArgsInternal _ _ _ = Left "USAGE\n    ./glados-compiler [-o <out.cbc>] [--visualize] <file.clad>"
