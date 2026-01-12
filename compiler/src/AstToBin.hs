@@ -367,7 +367,7 @@ genBlock (IABlock stmts) = Just $ do
 genBlock _ = Nothing
 
 genMain :: AST -> Maybe CodeGen
-genMain (IAMain stmts) = Just $ do
+genMain (IAMain args stmts) = Just $ do
     results <- mapM generateInstruction stmts
     case sequence results of
         Left err -> return $ Left err
