@@ -17,7 +17,8 @@ module Types (
     ConstantEntry(..),
     FunctionEntry(..),
     opcodeToByte,
-    typeTagToByte) where
+    typeTagToByte,
+    getOpcodeSize) where
 
 import Data.List (intercalate)
 import Data.Word
@@ -231,6 +232,17 @@ data Opcode
     | OpLoadArg         -- 0x73
     | OpPrint           -- 0x80
     | OpInput           -- 0x81
+    | OpMakeTuple       -- 0x90
+    | OpTupleGet        -- 0x91
+    | OpMakeArray       -- 0x92
+    | OpArrayGet        -- 0x93
+    | OpArraySet        -- 0x94
+    | OpMakeMap         -- 0x95
+    | OpMapGet          -- 0x96
+    | OpMapSet          -- 0x97
+    | OpMakeStruct      -- 0x98
+    | OpStructGet       -- 0x99
+    | OpStructSet       -- 0x9A
     | OpHalt            -- 0xFF
     deriving (Show, Eq)
 
@@ -277,4 +289,56 @@ opcodeToByte OpClosure = 0x72
 opcodeToByte OpLoadArg = 0x73
 opcodeToByte OpPrint = 0x80
 opcodeToByte OpInput = 0x81
+opcodeToByte OpMakeTuple = 0x90
+opcodeToByte OpTupleGet = 0x91
+opcodeToByte OpMakeArray = 0x92
+opcodeToByte OpArrayGet = 0x93
+opcodeToByte OpArraySet = 0x94
+opcodeToByte OpMakeMap = 0x95
+opcodeToByte OpMapGet = 0x96
+opcodeToByte OpMapSet = 0x97
+opcodeToByte OpMakeStruct = 0x98
+opcodeToByte OpStructGet = 0x99
+opcodeToByte OpStructSet = 0x9A
 opcodeToByte OpHalt = 0xFF
+
+-- ==========================
+-- Taille des opérandes pour chaque opcode
+-- ==========================
+
+getOpcodeSize :: Word8 -> Int
+getOpcodeSize op
+    | op == 0x01 = 4  -- PUSH_CONST
+    | op == 0x02 = 4  -- PUSH_INT
+    | op == 0x03 = 8  -- PUSH_FLOAT
+    | op == 0x04 = 1  -- PUSH_BOOL
+    | op == 0x06 = 0  -- PUSH_NIL
+    | op == 0x10 = 0  -- ADD
+    | op == 0x11 = 0  -- SUB
+    | op == 0x12 = 0  -- MUL
+    | op == 0x13 = 0  -- DIV
+    | op == 0x14 = 0  -- MOD
+    | op == 0x20 = 0  -- EQ
+    | op == 0x21 = 0  -- NEQ
+    | op == 0x22 = 0  -- LT
+    | op == 0x23 = 0  -- GT
+    | op == 0x24 = 0  -- LTE
+    | op == 0x25 = 0  -- GTE
+    | op == 0x30 = 0  -- AND
+    | op == 0x31 = 0  -- OR
+    | op == 0x32 = 0  -- NOT
+    | op == 0x40 = 4  -- LIST
+    | op == 0x41 = 0  -- LIST_GET
+    | op == 0x50 = 4  -- LOAD
+    | op == 0x51 = 4  -- STORE
+    | op == 0x52 = 4  -- DEFINE
+    | op == 0x60 = 4  -- JMP
+    | op == 0x61 = 4  -- JMP_IF_TRUE
+    | op == 0x62 = 4  -- JMP_IF_FALSE
+    | op == 0x70 = 5  -- CALL
+    | op == 0x71 = 0  -- RETURN
+    | op == 0x72 = 4  -- CLOSURE
+    | op == 0x73 = 4  -- LOAD_ARG
+    | op == 0x80 = 0  -- PRINT
+    | op == 0xFF = 0  -- HALT
+    | otherwise = 0
