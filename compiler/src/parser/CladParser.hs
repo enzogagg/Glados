@@ -14,6 +14,7 @@ module CladParser (
 import Types
 import CladLexer
 import Text.Megaparsec
+import Text.Megaparsec.Char (char)
 import Data.Void()
 import Control.Monad()
 
@@ -74,7 +75,7 @@ parseTerm =
     <|> parseNumber
     <|> parseBoolean
     <|> parseString
-    <|> parseUnaryNot
+    <|> try parseUnaryNot
     <|> try parseCall
     <|> (IASymbol <$> parseIdentifier)
     <|> parseListCreation
@@ -92,7 +93,7 @@ parseTupleOrParenthesized = do
 
 parseUnaryNot :: Parser AST
 parseUnaryNot = do
-    _ <- symbol "!"
+    _ <- lexeme $ try $ char '!' <* notFollowedBy (char '=')
     term <- parseTerm
     return (IACall "!" [term])
 
@@ -132,7 +133,8 @@ parseRelationnelle :: Parser AST
 parseRelationnelle = chainl1' parseAdditive parseRelationnelleOp
   where
     parseRelationnelleOp =
-          (symbol "=="  >> return (`IAInfix` "=="))
+          try (symbol "=="  >> return (`IAInfix` "=="))
+      <|> try (symbol "!=" >> return (`IAInfix` "!="))
       <|> try (symbol ">=" >> return (`IAInfix` ">="))
       <|> try (symbol "<=" >> return (`IAInfix` "<="))
       <|> (symbol "<"  >> return (`IAInfix` "<"))
@@ -200,9 +202,27 @@ parseFunctionDef = do
 parseMain :: Parser AST
 parseMain = do
     _ <- keyword "principal"
+    args <- optional $ between (symbol "(") (symbol ")") $ do
+        _ <- keyword "entier"
+        countName <- parseIdentifier
+
+        maybeList <- optional $ do
+            _ <- symbol ","
+            _ <- keyword "liste"
+            _ <- symbol "<"
+            _ <- keyword "phrase"
+            _ <- symbol ">"
+            parseIdentifier
+
+        return (countName, maybeList)
+
     body <- parseBlock
     _ <- keyword "fin"
-    return (IAMain body)
+
+    case args of
+        Nothing -> return (IAMain [] body)
+        Just (c, Nothing) -> return (IAMain [c] body)
+        Just (c, Just l)  -> return (IAMain [c, l] body)
 
 parseDeclaration :: Parser AST
 parseDeclaration = do

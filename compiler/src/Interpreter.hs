@@ -26,8 +26,8 @@ replLoop :: Env -> IO ()
 replLoop env = do
     putStr "clad> "
     hFlush stdout
-    input <- readMultiLine "" 0 
-    if input == "quitter" 
+    input <- readMultiLine "" 0
+    if input == "quitter"
         then putStrLn "Au revoir !"
         else do
             result <- try $ handleInput env input
@@ -42,11 +42,11 @@ readMultiLine acc balance = do
     line <- getLine
     let newAcc = if null acc then line else acc ++ "\n" ++ line
     let newBalance = balance + countOpenings line - countClosings line
-    
+
     if newBalance <= 0 && not (null line)
         then return newAcc
         else do
-            putStr "      " 
+            putStr "      "
             hFlush stdout
             readMultiLine newAcc newBalance
 
@@ -84,9 +84,9 @@ checkType IntT (IntVal _)       = True
 checkType FloatT (FloatVal _)   = True
 checkType StringT (StringVal _) = True
 checkType BoolT (BoolVal _)     = True
-checkType (TupleT ts) (TupleVal vs) = 
+checkType (TupleT ts) (TupleVal vs) =
     length ts == length vs && all (uncurry checkType) (zip ts vs)
-checkType (ListT t) (ListVal vs) = 
+checkType (ListT t) (ListVal vs) =
     all (checkType t) vs
 checkType _ _ = False
 
@@ -133,7 +133,7 @@ evalExpr env (IACall name argsExprs) = do
             if length argNames /= length argVals
                 then error $ "La fonction " ++ name ++ " attend " ++ show (length argNames) ++ " arguments."
                 else do
-                    let localEnv = Map.fromList (zip argNames argVals) 
+                    let localEnv = Map.fromList (zip argNames argVals)
                                    `Map.union` Map.insert name (FuncVal argNames body closureEnv) closureEnv
                     evalBody localEnv body
         _ -> handleBuiltin name argVals
@@ -156,7 +156,7 @@ evalBody env (inst:rest) = do
         IAReturn expr -> evalExpr env expr
         _ -> do
             (val, newEnv) <- evalInstruction env inst
-            if null rest 
+            if null rest
                 then return val
                 else evalBody newEnv rest
 
@@ -179,14 +179,14 @@ handleBuiltin "ajouter" [ListVal l, el] = return (ListVal (l ++ [el]))
 handleBuiltin "taille" [ListVal l] = return (IntVal (fromIntegral $ length l))
 handleBuiltin "taille" [TupleVal t] = return (IntVal (fromIntegral $ length t))
 
-handleBuiltin "nieme" [ListVal l, IntVal i] = 
-    let idx = fromIntegral i 
-    in if idx < 0 || idx >= length l 
+handleBuiltin "nieme" [ListVal l, IntVal i] =
+    let idx = fromIntegral i
+    in if idx < 0 || idx >= length l
        then error $ "Erreur : Index " ++ show idx ++ " hors limites pour la liste"
        else return (l !! idx)
 
-handleBuiltin "nieme" [TupleVal t, IntVal i] = 
-    let idx = fromIntegral i 
+handleBuiltin "nieme" [TupleVal t, IntVal i] =
+    let idx = fromIntegral i
     in if idx < 0 || idx >= length t
        then error $ "Erreur : Index " ++ show idx ++ " hors limites pour le tuple"
        else return (t !! idx)
@@ -195,7 +195,7 @@ handleBuiltin "contient" [ListVal l, el] = return (BoolVal (el `elem` l))
 
 handleBuiltin "vider" [_] = return (ListVal [])
 
-handleBuiltin "supprimer" [ListVal l, IntVal i] = 
+handleBuiltin "supprimer" [ListVal l, IntVal i] =
     let idx = fromIntegral i
     in if idx < 0 || idx >= length l
        then error "Erreur : Index hors limites pour 'supprimer'"
@@ -203,7 +203,7 @@ handleBuiltin "supprimer" [ListVal l, IntVal i] =
               (before, _:after) -> return (ListVal (before ++ after))
               (before, [])      -> return (ListVal before)
 
-handleBuiltin "inserer" [ListVal l, IntVal i, el] = 
+handleBuiltin "inserer" [ListVal l, IntVal i, el] =
     let idx = fromIntegral i
     in if idx < 0 || idx > length l
        then error "Erreur : Index hors limites pour 'inserer'"
@@ -212,11 +212,11 @@ handleBuiltin "inserer" [ListVal l, IntVal i, el] =
 
 handleBuiltin "lire" [StringVal path] = do
     exists <- doesFileExist path
-    if exists 
+    if exists
         then StringVal <$> readFile path
         else error $ "Erreur : Le fichier '" ++ path ++ "' n'existe pas"
 
-handleBuiltin "ecrire" [StringVal path, StringVal txt] = 
+handleBuiltin "ecrire" [StringVal path, StringVal txt] =
     writeFile path txt >> return Void
 
 handleBuiltin "ouvert" [StringVal path] = return (StringVal path)
@@ -240,10 +240,10 @@ applyBinaryOp :: String -> Value -> Value -> Value
 applyBinaryOp "+" (IntVal a) (IntVal b) = IntVal (a + b)
 applyBinaryOp "-" (IntVal a) (IntVal b) = IntVal (a - b)
 applyBinaryOp "*" (IntVal a) (IntVal b) = IntVal (a * b)
-applyBinaryOp "div" (IntVal a) (IntVal b) 
+applyBinaryOp "div" (IntVal a) (IntVal b)
     | b == 0    = error "Division par zéro !"
     | otherwise = IntVal (a `div` b)
-applyBinaryOp "/" (IntVal a) (IntVal b) 
+applyBinaryOp "/" (IntVal a) (IntVal b)
     | b == 0    = error "Division par zéro !"
     | otherwise = IntVal (a `div` b)
 applyBinaryOp "mod" (IntVal a) (IntVal b)

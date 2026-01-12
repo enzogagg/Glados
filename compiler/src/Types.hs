@@ -79,7 +79,7 @@ data AST
 
     -- Statements / Instructions (Blocs Impératifs)
     | IAProgram [AST]                           -- Le programme complet (Déclarations + Fonctions + Main)
-    | IAMain [AST]                              -- Le corps du bloc 'principal' (liste d'instructions)
+    | IAMain [String] [AST]                     -- Le corps du bloc 'principal' (arguments) (liste d'instructions)
     | IABlock [AST]                             -- Utilisé pour les blocs locaux
 
     -- Déclarations & Assignations
