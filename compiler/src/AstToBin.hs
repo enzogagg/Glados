@@ -14,7 +14,6 @@ import Data.Word
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import Data.Binary.Put
-import Data.Maybe (fromMaybe)
 import Control.Monad.State
 import Control.Applicative ((<|>))
 import qualified Data.Map.Strict as Map
@@ -70,13 +69,18 @@ putConstantEntry (ConstInt n) = do
 
 putConstantEntry (ConstFloat f) = do
     putWord8 (typeTagToByte TagFloat)
-    putWord32be 8
-    putDoublebe f
+    putWord32be 4  -- Float32 = 4 bytes (pas 8)
+    putFloatbe (realToFrac f)
 
 putConstantEntry (ConstBool b) = do
     putWord8 (typeTagToByte TagBool)
     putWord32be 1
     putWord8 (if b then 0x01 else 0x00)
+
+putConstantEntry (ConstChar c) = do
+    putWord8 (typeTagToByte TagChar)
+    putWord32be 1
+    putWord8 (fromIntegral $ fromEnum c)
 
 putConstantEntry (ConstString s) = do
     putWord8 (typeTagToByte TagString)
@@ -84,11 +88,59 @@ putConstantEntry (ConstString s) = do
     putWord32be (fromIntegral $ length bytes)
     mapM_ putWord8 bytes
 
+putConstantEntry (ConstList entries) = do
+    putWord8 (typeTagToByte TagList)
+    let entriesBytes = BL.toStrict $ runPut $ mapM_ putConstantEntry entries
+    putWord32be (fromIntegral $ BS.length entriesBytes)
+    putByteString entriesBytes
+
 putConstantEntry (ConstSymbol s) = do
     putWord8 (typeTagToByte TagSymbol)
     let bytes = map (fromIntegral . fromEnum) s
     putWord32be (fromIntegral $ length bytes)
     mapM_ putWord8 bytes
+
+putConstantEntry ConstNil = do
+    putWord8 (typeTagToByte TagNil)
+    putWord32be 0
+
+putConstantEntry (ConstTuple entries) = do
+    putWord8 (typeTagToByte TagTuple)
+    let entriesBytes = BL.toStrict $ runPut $ do
+            putWord32be (fromIntegral $ length entries)
+            mapM_ putConstantEntry entries
+    putWord32be (fromIntegral $ BS.length entriesBytes)
+    putByteString entriesBytes
+
+putConstantEntry (ConstArray entries) = do
+    putWord8 (typeTagToByte TagArray)
+    let entriesBytes = BL.toStrict $ runPut $ do
+            putWord32be (fromIntegral $ length entries)
+            mapM_ putConstantEntry entries
+    putWord32be (fromIntegral $ BS.length entriesBytes)
+    putByteString entriesBytes
+
+putConstantEntry (ConstStruct fields) = do
+    putWord8 (typeTagToByte TagStruct)
+    let entriesBytes = BL.toStrict $ runPut $ do
+            putWord32be (fromIntegral $ length fields)
+            mapM_ (\(name, value) -> do
+                let nameBytes = map (fromIntegral . fromEnum) name
+                putWord32be (fromIntegral $ length nameBytes)
+                mapM_ putWord8 nameBytes
+                putConstantEntry value) fields
+    putWord32be (fromIntegral $ BS.length entriesBytes)
+    putByteString entriesBytes
+
+putConstantEntry (ConstMap pairs) = do
+    putWord8 (typeTagToByte TagMap)
+    let entriesBytes = BL.toStrict $ runPut $ do
+            putWord32be (fromIntegral $ length pairs)
+            mapM_ (\(key, value) -> do
+                putConstantEntry key
+                putConstantEntry value) pairs
+    putWord32be (fromIntegral $ BS.length entriesBytes)
+    putByteString entriesBytes
 
 generateConstantPool :: [ConstantEntry] -> Put
 generateConstantPool entries = do
