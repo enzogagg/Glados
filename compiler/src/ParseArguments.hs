@@ -12,6 +12,7 @@ module ParseArguments
   , getCladExtension
   , useContent
   , CompilerArgs(..)
+  , RunMode(..)
   ) where
 
 import Types()
@@ -20,10 +21,16 @@ import System.IO()
 import Text.Megaparsec (errorBundlePretty)
 import ParseToAST (parseAST)
 import AstToBin (parseBin)
+import Visualizer (astToDot)
+
+import Data.List (isSuffixOf)
+
+data RunMode = Compile | Visualize deriving (Show, Eq)
 
 data CompilerArgs = CompilerArgs
   { inputFile :: String
   , outputFile :: String
+  , runMode    :: RunMode
   } deriving (Show, Eq)
 
 parseContent :: [String] -> IO (Either String ())
@@ -31,48 +38,47 @@ parseContent args = do
     result <- parseArgs args
     case result of
         Left err -> return (Left err)
-        Right compilerArgs -> do
-            contentResult <- handleInput (inputFile compilerArgs)
+        Right cArgs -> do
+            contentResult <- handleInput (inputFile cArgs)
             case contentResult of
                 Left err -> return (Left err)
-                Right content -> useContent content (outputFile compilerArgs)
+                Right content -> useContent content cArgs
 
-useContent :: String -> String -> IO (Either String ())
-useContent content outputName =
+useContent :: String -> CompilerArgs -> IO (Either String ())
+useContent content cArgs =
     case parseAST content of
         Left errBundle ->
             return (Left (errorBundlePretty errBundle))
-        Right ast -> do
-            parseBin ast outputName
+        Right ast ->
+            case runMode cArgs of
+                Visualize -> do
+                    writeFile "ast.dot" (astToDot ast)
+                    putStrLn "Fichier 'ast.dot' généré."
+                    return (Right ())
+                Compile -> do
+                    parseBin ast (outputFile cArgs)
+                    return (Right ())
 
 parseArgs :: [String] -> IO (Either String CompilerArgs)
-parseArgs args = return $ parseArgsInternal args Nothing
+parseArgs args = return $ parseArgsInternal args Nothing Compile
   where
-    parseArgsInternal :: [String] -> Maybe String -> Either String CompilerArgs
-    parseArgsInternal [] _ = Left "USAGE\n    ./glados-compiler (-h | <file_input.clad> [-o <file_output.cbc>])"
-    parseArgsInternal ["-h"] _ = Left "USAGE\n    ./glados-compiler (-h | <file_input.clad> [-o <file_output.cbc>])"
-    parseArgsInternal [file] Nothing =
+    parseArgsInternal :: [String] -> Maybe String -> RunMode -> Either String CompilerArgs
+    
+    -- Cas -o au début
+    parseArgsInternal ("-o":outName:rest) _ mode = parseArgsInternal rest (Just outName) mode
+    
+    -- Cas --visualize au début ou milieu
+    parseArgsInternal ("--visualize":rest) out _ = parseArgsInternal rest out Visualize
+    
+    -- Le dernier argument doit être le fichier d'entrée
+    parseArgsInternal [file] out mode =
         if getCladExtension file
-            then Right $ CompilerArgs file (ensureCbcExtension "a.out.cbc")
-            else Left "invalid file extension (expected .clad)"
-    parseArgsInternal [file] (Just output) =
-        if getCladExtension file
-            then Right $ CompilerArgs file (ensureCbcExtension output)
-            else Left "invalid file extension (expected .clad)"
-    parseArgsInternal (file:"-o":outName:rest) _ =
-        if getCladExtension file && null rest
-            then Right $ CompilerArgs file (ensureCbcExtension outName)
-            else Left "USAGE\n    ./glados-compiler (-h | <file_input.clad> [-o <file_output.cbc>])"
-    parseArgsInternal _ _ = Left "USAGE\n    ./glados-compiler (-h | <file_input.clad> [-o <file_output.cbc>])"
+            then Right $ CompilerArgs file (ensureCbc (maybe "a.out.cbc" id out)) mode
+            else Left "Erreur : Extension de fichier invalide (attendu .clad)"
+            
+    parseArgsInternal _ _ _ = Left "USAGE\n    ./glados-compiler <file.clad> [-o <out.cbc>] [--visualize]"
 
-    ensureCbcExtension :: String -> String
-    ensureCbcExtension name =
-        if ".cbc" `isSuffixOf` name
-            then name
-            else name ++ ".cbc"
-
-    isSuffixOf :: String -> String -> Bool
-    isSuffixOf suffix str = suffix == reverse (take (length suffix) (reverse str))
+    ensureCbc name = if ".cbc" `isSuffixOf` name then name else name ++ ".cbc"
 
 getCladExtension :: String -> Bool
 getCladExtension file =

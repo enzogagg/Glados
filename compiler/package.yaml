@@ -42,6 +42,7 @@ library:
   source-dirs:
   - src
   - src/parser
+  - src/visualizer
 
 executables:
 

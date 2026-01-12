@@ -7,10 +7,9 @@
 
 module Main (main) where
 
-import System.Environment (getArgs)
-import ParseToAST (parseAST)
-import Text.Megaparsec (errorBundlePretty) 
+import ParseArguments (parseContent)
 import Interpreter (runREPL)
+import System.Environment (getArgs)
 import System.Exit (exitFailure)
 
 main :: IO ()
@@ -18,9 +17,8 @@ main = do
     args <- getArgs
     case args of
         [] -> runREPL
-        [inputFile] -> do
-            content <- readFile inputFile
-            case parseAST content of
-                Left err -> putStrLn (errorBundlePretty err) >> exitFailure 
-                Right _ -> putStrLn "Compilation réussie (AST généré)."
-        _ -> putStrLn "Usage: ./glados-compiler [file.clad]"
+        _  -> do
+            result <- parseContent args
+            case result of
+                Left err -> putStrLn err >> exitFailure
+                Right _  -> return ()
