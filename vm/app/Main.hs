@@ -15,6 +15,7 @@ main :: IO ()
 main = do
     args <- getArgs
     input <- case args of
+        ["-h"] -> printHelp >> exitSuccess
         [file] -> BL.readFile file
         [] -> BL.getContents
         _ -> do
@@ -34,3 +35,8 @@ main = do
                     let state = newVMState instrs consts funcs
                     execLoop state
                     exitSuccess
+
+printHelp :: IO ()
+printHelp = do
+    putStrLn "USAGE: ./glados-vm [file.cbc]"
+    putStrLn "       file.cbc   file to execute"
