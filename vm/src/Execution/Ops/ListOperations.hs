@@ -51,3 +51,61 @@ opLen state =
             ListVal lst -> Right $ state {stack = IntVal (length lst) : rest}
             _ -> Left "Error: Len requires a list on the stack"
         _ -> Left "Error: Len requires a value on the stack"
+
+opIsEmpty :: VMState -> Either String VMState
+opIsEmpty state =
+    case stack state of
+        (v:rest) -> case v of
+            ListVal lst -> Right $ state {stack = BoolVal (null lst) : rest}
+            _ -> Left "Error: IsEmpty requires a list on the stack"
+        _ -> Left "Error: IsEmpty requires a value on the stack"
+
+opNth :: VMState -> Either String VMState
+opNth state =
+    case stack state of
+        (IntVal n : ListVal lst : rest) ->
+            if n < 0 || n >= length lst
+            then Left "Error: Nth index out of bounds"
+            else Right $ state {stack = lst !! n : rest}
+        _ -> Left "Error: Nth requires an integer and a list on the stack"
+
+opInsert :: VMState -> Either String VMState
+opInsert state =
+    case stack state of
+        (v : IntVal n : ListVal lst : rest) ->
+            if n < 0 || n > length lst
+            then Left "Error: Insert index out of bounds"
+            else let (front, back) = splitAt n lst
+                 in Right $ state {stack = ListVal (front ++ (v : back)) : rest}
+        _ -> Left "Error: Insert requires a value, an integer, and a list on the stack"
+
+opRemove :: VMState -> Either String VMState
+opRemove state =
+    case stack state of
+        (IntVal n : ListVal lst : rest) ->
+            if n < 0 || n >= length lst
+            then Left "Error: Remove index out of bounds"
+            else let (front, _:back) = splitAt n lst
+                 in Right $ state {stack = ListVal (front ++ back) : rest}
+        _ -> Left "Error: Remove requires an integer and a list on the stack"
+
+opContains :: VMState -> Either String VMState
+opContains state =
+    case stack state of
+        (v : ListVal lst : rest) ->
+            Right $ state {stack = BoolVal (v `elem` lst) : rest}
+        _ -> Left "Error: Contains requires a value and a list on the stack"
+
+opAppend :: VMState -> Either String VMState
+opAppend state =
+    case stack state of
+        (ListVal lst2 : ListVal lst1 : rest) ->
+            Right $ state {stack = ListVal (lst1 ++ lst2) : rest}
+        _ -> Left "Error: Append requires two lists on the stack"
+
+opReverse :: VMState -> Either String VMState
+opReverse state =
+    case stack state of
+        (ListVal lst : rest) ->
+            Right $ state {stack = ListVal (reverse lst) : rest}
+        _ -> Left "Error: Reverse requires a list on the stack"
