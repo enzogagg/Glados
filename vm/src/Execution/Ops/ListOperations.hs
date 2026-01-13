@@ -13,9 +13,9 @@ import Execution.State (VMState(..))
 opCons :: VMState -> Either String VMState
 opCons state =
     case stack state of
-        (v1:v2:rest) -> case v2 of
-            ListVal lst -> Right $ state {stack = ListVal (v1:lst) : rest}
-            NilVal -> Right $ state {stack = ListVal [v1] : rest}
+        (v1:v2:rest) -> case v1 of
+            ListVal lst -> Right $ state {stack = ListVal (v2:lst) : rest}
+            NilVal -> Right $ state {stack = ListVal [v2] : rest}
             _ -> Left "Error: Cons requires second value to be a list"
         _ -> Left "Error: Cons requires two values on the stack"
 

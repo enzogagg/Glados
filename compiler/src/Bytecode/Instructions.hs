@@ -91,7 +91,7 @@ genList (IAList exprs) = Just $ do
     case sequence results of
         Left err -> return $ Left err
         Right codes -> do
-            let listCode = opcodeToByte OpList : BL.unpack (runPut $ putWord8 (fromIntegral $ length exprs))
+            let listCode = opcodeToByte OpList : BL.unpack (runPut $ putWord32be (fromIntegral $ length exprs))
             return $ Right $ concat codes ++ listCode
 genList _ = Nothing
 
@@ -172,6 +172,25 @@ genCallNot (IACall "!" [arg]) = Just $ do
         Left err -> return $ Left err
         Right argCode -> return $ Right $ argCode ++ [opcodeToByte OpNot]
 genCallNot _ = Nothing
+
+genCallListOps :: AST -> Maybe CodeGen
+genCallListOps (IACall name args) =
+    case name of
+        "cons" -> checkArgs 2 OpCons
+        "head" -> checkArgs 1 OpHead
+        "tail" -> checkArgs 1 OpTail
+        "len" -> checkArgs 1 OpLen
+        _ -> Nothing
+  where
+    checkArgs count op =
+        if length args == count
+        then Just $ do
+            results <- mapM generateInstruction args
+            case sequence results of
+                Left err -> return $ Left err
+                Right codes -> return $ Right $ concat codes ++ [opcodeToByte op]
+        else Just $ return $ Left $ "Function '" ++ name ++ "' expects " ++ show count ++ " arguments"
+genCallListOps _ = Nothing
 
 genCall :: AST -> Maybe CodeGen
 genCall (IACall fname args) = Just $ do
@@ -401,6 +420,7 @@ generateInstruction ast =
         <|> genAssign ast
         <|> genCallAfficher ast
         <|> genCallNot ast
+        <|> genCallListOps ast
         <|> genCall ast
         <|> genReturn ast
         <|> genIf ast
