@@ -5,24 +5,21 @@
 -- TailCallOptimization
 -}
 
-module TailCallOptimization (
-    Bounce(..),
-    runTrampoline
-) where
+module TailCallOptimization (optimizeTailCalls) where
 
-import Types (Value, Env)
+import Types
 
-data Bounce =
-    Done (Either String Value)
-    | Call (Env -> IO Bounce) Env
+optimizeTailCalls :: AST -> AST
+optimizeTailCalls (IAProgram instrs) = IAProgram (map optimizeTailCalls instrs)
+optimizeTailCalls (IAFunctionDef name params ret body) = 
+    IAFunctionDef name params ret (markLastInstruction body)
+optimizeTailCalls (IAMain args body) = IAMain args (markLastInstruction body)
+optimizeTailCalls node = node
 
--- =========================
--- TCO
--- =========================
-
-runTrampoline :: Bounce -> IO (Either String Value)
-runTrampoline bounce = case bounce of
-    Done value -> return value
-    Call f env -> do
-        newEnv <- f env
-        runTrampoline newEnv
+-- Fonction qui cherche la dernière instruction pour y trouver un appel
+markLastInstruction :: [AST] -> [AST]
+markLastInstruction [] = []
+markLastInstruction [IAReturn (IACall name args)] = [IAReturn (IATailCall name args)]
+markLastInstruction [IAIf cond thenB elseB] = 
+    [IAIf cond (markLastInstruction thenB) (fmap markLastInstruction elseB)]
+markLastInstruction (x:xs) = x : markLastInstruction xs
