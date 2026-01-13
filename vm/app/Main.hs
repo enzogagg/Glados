@@ -14,13 +14,15 @@ import Execution.Loop (execLoop)
 main :: IO ()
 main = do
     args <- getArgs
-    input <- case args of
-        [file] -> BL.readFile file
-        [] -> BL.getContents
-        _ -> do
-            putStrLn "Usage: glados-vm [file.cbc]"
-            exitWith (ExitFailure 84)
-
+    (input, vmArgs) <- case args of
+        ("-h":_) -> printHelp >> exitSuccess
+        [] -> do
+            c <- BL.getContents
+            return (c, [])
+        (file:rest) -> do
+            c <- BL.readFile file
+            return (c, args)
+            
     if BL.null input
         then do
             putStrLn "Error: No input provided"
@@ -31,6 +33,11 @@ main = do
                     putStrLn $ "Error parsing bytecode: " ++ err
                     exitWith (ExitFailure 84)
                 Right (_, _, BytecodeFile _ consts funcs instrs) -> do
-                    let state = newVMState instrs consts funcs
+                    let state = newVMState instrs consts funcs vmArgs
                     execLoop state
                     exitSuccess
+
+printHelp :: IO ()
+printHelp = do
+    putStrLn "USAGE: ./glados-vm [file.cbc]"
+    putStrLn "       file.cbc   file to execute"

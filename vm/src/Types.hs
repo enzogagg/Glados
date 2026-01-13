@@ -65,6 +65,13 @@ data Instruction
     | Tail                    -- 32
     | ListMake Int            -- 33
     | Len                     -- 34
+    | IsEmpty                 -- 35
+    | Nth                     -- 36
+    | Insert                  -- 37
+    | Remove                  -- 38
+    | Contains                -- 39
+    | Append                  -- 3A
+    | Reverse                 -- 3B
 
     | MakeSymbol              -- 40
     | Quote                   -- 41
