@@ -222,98 +222,136 @@ genReturn _ = Nothing
 
 genIf :: AST -> Maybe CodeGen
 genIf (IAIf condExpr thenStmts maybeElseStmts) = Just $ do
-    ctx <- get
-    let startInstr = instructionCount ctx
+    startInstr <- gets instructionCount
 
-    condResult <- generateInstruction condExpr
-    thenResults <- mapM generateInstruction thenStmts
+    code <- do
+        condResult <- generateInstructionWithCount condExpr
+        modify $ \c -> c { instructionCount = instructionCount c + 1 } -- JmpIfFalse
 
-    case (condResult, sequence thenResults) of
-        (Left err, _) -> return $ Left err
-        (_, Left err) -> return $ Left err
-        (Right condCode, Right thenCodes) -> do
-            let thenBody = concat thenCodes
-            let condInstrCount = countInstructions condCode
-            let thenInstrCount = countInstructions thenBody
+        thenResults <- mapM generateInstructionWithCount thenStmts
 
-            case maybeElseStmts of
-                Nothing -> do
-                    let jmpTarget = fromIntegral (startInstr + condInstrCount + 1 + thenInstrCount)
-                    let jmpBytes = BL.unpack $ runPut $ putWord32be jmpTarget
-                    modify $ \c -> c { instructionCount = startInstr + condInstrCount + 1 + thenInstrCount }
-                    return $ Right $ condCode ++ (opcodeToByte OpJmpIfFalse : jmpBytes) ++ thenBody
+        case maybeElseStmts of
+            Nothing -> do
+                endInstr <- gets instructionCount
 
-                Just elseStmts -> do
-                    elseResults <- mapM generateInstruction elseStmts
-                    case sequence elseResults of
-                        Left err -> return $ Left err
-                        Right elseCodes -> do
-                            let elseBody = concat elseCodes
-                            let elseInstrCount = countInstructions elseBody
-                            let jmpIfFalseTarget = fromIntegral (startInstr + condInstrCount + 1 + thenInstrCount + 1)
-                            let jmpTarget = fromIntegral (startInstr + condInstrCount + 1 + thenInstrCount + 1 + elseInstrCount)
-                            let jmpIfFalseBytes = BL.unpack $ runPut $ putWord32be jmpIfFalseTarget
-                            let jmpBytes = BL.unpack $ runPut $ putWord32be jmpTarget
-                            modify $ \c -> c { instructionCount = startInstr + condInstrCount + 1 + thenInstrCount + 1 + elseInstrCount }
-                            return $ Right $ condCode
-                                ++ (opcodeToByte OpJmpIfFalse : jmpIfFalseBytes)
-                                ++ thenBody
-                                ++ (opcodeToByte OpJmp : jmpBytes)
-                                ++ elseBody
+                case (condResult, sequence thenResults) of
+                    (Right condCode, Right thenCodes) -> do
+                        let jmpBytes = BL.unpack $ runPut $ putWord32be (fromIntegral endInstr)
+                        return $ Right $ condCode ++ (opcodeToByte OpJmpIfFalse : jmpBytes) ++ concat thenCodes
+                    (Left err, _) -> return $ Left err
+                    (_, Left err) -> return $ Left err
+
+            Just elseStmts -> do
+                modify $ \c -> c { instructionCount = instructionCount c + 1 } -- Jmp
+                elseResults <- mapM generateInstructionWithCount elseStmts
+                endInstr <- gets instructionCount
+
+                case (condResult, sequence thenResults, sequence elseResults) of
+                    (Right condCode, Right thenCodes, Right elseCodes) -> do
+                        let condLen = countInstructions condCode
+                        let thenLen = countInstructions (concat thenCodes)
+
+                        -- JmpIfFalse Target: Start + Cond + 1 + Then + 1 (Start of Else)
+                        let elseStart = startInstr + condLen + 1 + thenLen + 1
+                        let jmpIfFalseBytes = BL.unpack $ runPut $ putWord32be (fromIntegral elseStart)
+
+                        -- Jmp Target: End
+                        let jmpBytes = BL.unpack $ runPut $ putWord32be (fromIntegral endInstr)
+
+                        return $ Right $ condCode
+                            ++ (opcodeToByte OpJmpIfFalse : jmpIfFalseBytes)
+                            ++ concat thenCodes
+                            ++ (opcodeToByte OpJmp : jmpBytes)
+                            ++ concat elseCodes
+                    (Left err, _, _) -> return $ Left err
+                    (_, Left err, _) -> return $ Left err
+                    (_, _, Left err) -> return $ Left err
+
+    modify $ \c -> c { instructionCount = startInstr }
+    return code
 genIf _ = Nothing
 
 genWhile :: AST -> Maybe CodeGen
 genWhile (IAWhile condExpr bodyStmts) = Just $ do
-    condResult <- generateInstruction condExpr
-    bodyResults <- mapM generateInstruction bodyStmts
+    startInstr <- gets instructionCount
 
-    case (condResult, sequence bodyResults) of
-        (Left err, _) -> return $ Left err
-        (_, Left err) -> return $ Left err
-        (Right condCode, Right bodyCodes) -> do
-            let body = concat bodyCodes
-            let condLength = length condCode
-            let bodyLength = length body
-            let jmpIfFalseOffset = fromIntegral (bodyLength + 5)
-            let jmpBackOffset = fromIntegral (condLength + bodyLength + 5)
-            let jmpIfFalseBytes = BL.unpack $ runPut $ putWord32be jmpIfFalseOffset
-            let jmpBackBytes = BL.unpack $ runPut $ putWord32be jmpBackOffset
-            return $ Right $ condCode
-                ++ (opcodeToByte OpJmpIfFalse : jmpIfFalseBytes)
-                ++ body
-                ++ (opcodeToByte OpJmp : jmpBackBytes)
+    code <- do
+        condResult <- generateInstructionWithCount condExpr
+        modify $ \c -> c { instructionCount = instructionCount c + 1 }
+
+        bodyResults <- mapM generateInstructionWithCount bodyStmts
+        modify $ \c -> c { instructionCount = instructionCount c + 1 }
+
+        case (condResult, sequence bodyResults) of
+            (Left err, _) -> return $ Left err
+            (_, Left err) -> return $ Left err
+            (Right condCode, Right bodyCodes) -> do
+                let body = concat bodyCodes
+                let condInstrCount = countInstructions condCode
+                let bodyInstrCount = countInstructions body
+
+                let jmpIfFalseTarget = fromIntegral (startInstr + condInstrCount + 1 + bodyInstrCount + 1)
+                let jmpBackTarget = fromIntegral startInstr
+
+                let jmpIfFalseBytes = BL.unpack $ runPut $ putWord32be jmpIfFalseTarget
+                let jmpBackBytes = BL.unpack $ runPut $ putWord32be jmpBackTarget
+
+                return $ Right $ condCode
+                    ++ (opcodeToByte OpJmpIfFalse : jmpIfFalseBytes)
+                    ++ body
+                    ++ (opcodeToByte OpJmp : jmpBackBytes)
+
+    modify $ \c -> c { instructionCount = startInstr }
+    return code
 genWhile _ = Nothing
 
 genFor :: AST -> Maybe CodeGen
-genFor (IAFor iterVar startExpr endExpr bodyStmts) = Just $ do
-    let symbolName = getSymbolName iterVar
-    initResult <- generateInstruction (IAAssign symbolName startExpr)
-    _ <- generateInstruction endExpr
-    condResult <- generateInstruction (IAInfix iterVar "<=" endExpr)
-    bodyResults <- mapM generateInstruction bodyStmts
-    let incrExpr = IAAssign symbolName (IAInfix iterVar "+" (IANumber 1))
-    incrResult <- generateInstruction incrExpr
+genFor (IAFor initExpr condExpr incrExpr bodyStmts) = Just $ do
+    startInstr <- gets instructionCount
 
-    case (initResult, condResult, sequence bodyResults, incrResult) of
-        (Left err, _, _, _) -> return $ Left err
-        (_, Left err, _, _) -> return $ Left err
-        (_, _, Left err, _) -> return $ Left err
-        (_, _, _, Left err) -> return $ Left err
-        (Right initCode, Right condCode, Right bodyCodes, Right incrCode) -> do
-            let body = concat bodyCodes
-            let condLength = length condCode
-            let bodyLength = length body
-            let incrLength = length incrCode
-            let jmpIfFalseOffset = fromIntegral (bodyLength + incrLength + 5)
-            let jmpBackOffset = fromIntegral (condLength + bodyLength + incrLength + 5)
-            let jmpIfFalseBytes = BL.unpack $ runPut $ putWord32be jmpIfFalseOffset
-            let jmpBackBytes = BL.unpack $ runPut $ putWord32be jmpBackOffset
-            return $ Right $ initCode
-                ++ condCode
-                ++ (opcodeToByte OpJmpIfFalse : jmpIfFalseBytes)
-                ++ body
-                ++ incrCode
-                ++ (opcodeToByte OpJmp : jmpBackBytes)
+    code <- do
+        -- Init
+        initResult <- generateInstructionWithCount initExpr
+
+        -- Loop Start
+        loopStartInstr <- gets instructionCount
+
+        -- Cond
+        condResult <- generateInstructionWithCount condExpr
+        modify $ \c -> c { instructionCount = instructionCount c + 1 } -- JmpIfFalse
+
+        -- Body
+        bodyResults <- mapM generateInstructionWithCount bodyStmts
+
+        -- Incr
+        incrResult <- generateInstructionWithCount incrExpr
+
+        modify $ \c -> c { instructionCount = instructionCount c + 1 } -- Jmp Back
+
+        case (initResult, condResult, sequence bodyResults, incrResult) of
+            (Right initCode, Right condCode, Right bodyCodes, Right incrCode) -> do
+                let body = concat bodyCodes
+
+                -- Target for JmpIfFalse is AFTER JmpBack
+                endInstr <- gets instructionCount
+
+                let jmpIfFalseBytes = BL.unpack $ runPut $ putWord32be (fromIntegral endInstr)
+                let jmpBackBytes = BL.unpack $ runPut $ putWord32be (fromIntegral loopStartInstr)
+
+                return $ Right $ initCode
+                    ++ condCode
+                    ++ (opcodeToByte OpJmpIfFalse : jmpIfFalseBytes)
+                    ++ body
+                    ++ incrCode
+                    ++ (opcodeToByte OpJmp : jmpBackBytes)
+
+            (Left err, _, _, _) -> return $ Left err
+            (_, Left err, _, _) -> return $ Left err
+            (_, _, Left err, _) -> return $ Left err
+            (_, _, _, Left err) -> return $ Left err
+
+    modify $ \c -> c { instructionCount = startInstr }
+    return code
     where
         getSymbolName (IASymbol name) = name
         getSymbolName _ = "i"
@@ -321,7 +359,9 @@ genFor _ = Nothing
 
 genBlock :: AST -> Maybe CodeGen
 genBlock (IABlock stmts) = Just $ do
-    results <- mapM generateInstruction stmts
+    startInstr <- gets instructionCount
+    results <- mapM generateInstructionWithCount stmts
+    modify $ \c -> c { instructionCount = startInstr }
     case sequence results of
         Left err -> return $ Left err
         Right codes -> return $ Right $ concat codes
@@ -329,7 +369,9 @@ genBlock _ = Nothing
 
 genMain :: AST -> Maybe CodeGen
 genMain (IAMain _ stmts) = Just $ do
-    results <- mapM generateInstruction stmts
+    startInstr <- gets instructionCount
+    results <- mapM generateInstructionWithCount stmts
+    modify $ \c -> c { instructionCount = startInstr }
     case sequence results of
         Left err -> return $ Left err
         Right codes -> return $ Right $ concat codes
@@ -395,7 +437,7 @@ genFunctionDef _ = Nothing
 
 genProgram :: AST -> Maybe CodeGen
 genProgram (IAProgram stmts) = Just $ do
-    results <- mapM generateInstruction stmts
+    results <- mapM generateInstructionWithCount stmts
     case sequence results of
         Left err -> return $ Left err
         Right codes -> return $ Right $ concat codes ++ [opcodeToByte OpHalt]
