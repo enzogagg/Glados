@@ -21,8 +21,18 @@ example/*
 *.clad
 *.cbc
 
-# *.scm
+# *.other file
 *.pdf
+*.dot
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.mp4
+*.mp3
+*.wav
+*.ico
 
 # Documentation
 documentation/node_modules

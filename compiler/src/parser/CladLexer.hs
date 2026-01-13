@@ -10,6 +10,7 @@ module CladLexer (
     sc,
     lexeme,
     symbol,
+    keyword,
     parseIdentifier,
     parseNumber,
     parseFloat,
@@ -32,7 +33,8 @@ reservedWords = [
     "fonction", "fin", "principal", "constante", "variable", "retourner",
     "si", "sinon", "sinon si", "tantque", "pour",
     "vrai", "faux", "et", "ou",
-    "entier", "flottant", "pileouface", "phrase", "liste", "neant"
+    "entier", "flottant", "pileouface", "phrase", "liste", "neant",
+    "inclure"
     ]
 
 -- ====================================================================
@@ -50,6 +52,11 @@ lexeme = L.lexeme sc
 -- Symbole (un lexeme de chaîne littérale)
 symbol :: String -> Parser String
 symbol = L.symbol sc
+
+keyword :: String -> Parser ()
+keyword w = lexeme $ try $ do
+    _ <- string w
+    notFollowedBy (alphaNumChar <|> char '_')
 
 -- Un identifiant valide qui n'est pas un mot-clé réservé
 parseIdentifier :: Parser String

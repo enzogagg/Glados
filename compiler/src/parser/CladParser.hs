@@ -14,8 +14,9 @@ module CladParser (
 import Types
 import CladLexer
 import Text.Megaparsec
+import Text.Megaparsec.Char (char)
 import Data.Void()
-import Control.Monad()
+import Control.Monad (void)
 
 -- ====================================================================
 -- Parsing des Types (Annotations)
@@ -24,11 +25,11 @@ import Control.Monad()
 -- Analyse un type de base (entier, flottant, bool, phrase, neant)
 parseBaseType :: Parser CladType
 parseBaseType =
-      (symbol "entier" >> return IntT)
-  <|> (symbol "flottant" >> return FloatT)
-  <|> (symbol "pileouface" >> return BoolT)
-  <|> (symbol "phrase" >> return StringT)
-  <|> (symbol "neant" >> return VoidT)
+      (keyword "entier" >> return IntT)
+  <|> (keyword "flottant" >> return FloatT)
+  <|> (keyword "pileouface" >> return BoolT)
+  <|> (keyword "phrase" >> return StringT)
+  <|> (keyword "neant" >> return VoidT)
 
 parseTupleType :: Parser CladType
 parseTupleType = do
@@ -41,7 +42,7 @@ parseExplicitType :: Parser CladType
 parseExplicitType =
       try parseTupleType
   <|> (do
-        _ <- symbol "liste"
+        _ <- keyword "liste"
         _ <- symbol "<"
         elementType <- parseExplicitType
         _ <- symbol ">"
@@ -74,7 +75,7 @@ parseTerm =
     <|> parseNumber
     <|> parseBoolean
     <|> parseString
-    <|> parseUnaryNot
+    <|> try parseUnaryNot
     <|> try parseCall
     <|> (IASymbol <$> parseIdentifier)
     <|> parseListCreation
@@ -92,7 +93,7 @@ parseTupleOrParenthesized = do
 
 parseUnaryNot :: Parser AST
 parseUnaryNot = do
-    _ <- symbol "!"
+    _ <- lexeme $ try $ char '!' <* notFollowedBy (char '=')
     term <- parseTerm
     return (IACall "!" [term])
 
@@ -121,18 +122,19 @@ parseExpression = parseLogicalOr
 parseLogicalOr :: Parser AST
 parseLogicalOr = chainl1' parseLogicalAnd parseOrOp
   where
-    parseOrOp = symbol "ou" >> return (`IAInfix` "ou")
+    parseOrOp = keyword "ou" >> return (`IAInfix` "ou")
 
 parseLogicalAnd :: Parser AST
 parseLogicalAnd = chainl1' parseRelationnelle parseAndOp
   where
-    parseAndOp = symbol "et" >> return (`IAInfix` "et")
+    parseAndOp = keyword "et" >> return (`IAInfix` "et")
 
 parseRelationnelle :: Parser AST
 parseRelationnelle = chainl1' parseAdditive parseRelationnelleOp
   where
     parseRelationnelleOp =
-          (symbol "=="  >> return (`IAInfix` "=="))
+          try (symbol "=="  >> return (`IAInfix` "=="))
+      <|> try (symbol "!=" >> return (`IAInfix` "!="))
       <|> try (symbol ">=" >> return (`IAInfix` ">="))
       <|> try (symbol "<=" >> return (`IAInfix` "<="))
       <|> (symbol "<"  >> return (`IAInfix` "<"))
@@ -160,12 +162,13 @@ parseMultiplicative = chainl1' parseTerm parseMultiplicativeOp
 -- ====================================================================
 
 parseBlock :: Parser [AST]
-parseBlock = many $ notFollowedBy (symbol "fin" <|> symbol "sinon") >> parseInstruction
+parseBlock = many $ notFollowedBy (keyword "fin" <|> keyword "sinon") >> parseInstruction
 
 parseInstruction :: Parser AST
 parseInstruction =
         parseFunctionDef
     <|> parseMain
+    <|> parseInclude
     <|> parseDeclaration
     <|> parseReturn
     <|> parseConditional
@@ -182,7 +185,7 @@ parseFunctionArgument = do
 
 parseFunctionDef :: Parser AST
 parseFunctionDef = do
-    _ <- symbol "fonction"
+    _ <- keyword "fonction"
     name <- parseIdentifier
 
     _ <- symbol "("
@@ -193,20 +196,45 @@ parseFunctionDef = do
     returnTypeAnnot <- parseExplicitType
 
     body <- parseBlock
-    _ <- symbol "fin"
+    _ <- keyword "fin"
 
     return (IAFunctionDef name params (Just returnTypeAnnot) body)
 
 parseMain :: Parser AST
 parseMain = do
-    _ <- symbol "principal"
-    body <- parseBlock
-    _ <- symbol "fin"
-    return (IAMain body)
+    _ <- keyword "principal"
+    args <- optional $ between (symbol "(") (symbol ")") $ do
+        _ <- keyword "entier"
+        countName <- parseIdentifier
 
+        maybeList <- optional $ do
+            _ <- symbol ","
+            _ <- keyword "liste"
+            _ <- symbol "<"
+            _ <- keyword "phrase"
+            _ <- symbol ">"
+            parseIdentifier
+
+        return (countName, maybeList)
+
+    body <- parseBlock
+    _ <- keyword "fin"
+
+    case args of
+        Nothing -> return (IAMain [] body)
+        Just (c, Nothing) -> return (IAMain [c] body)
+        Just (c, Just l)  -> return (IAMain [c, l] body)
+
+parseInclude :: Parser AST
+parseInclude = do
+    void $ symbol "inclure"
+    astString <- parseString
+    case astString of
+        IAString path -> return $ IAInclude path
+        _             -> fail "Chemin d'inclusion invalide"
 parseDeclaration :: Parser AST
 parseDeclaration = do
-    _ <- symbol "constante" <|> symbol "variable"
+    _ <- keyword "constante" <|> keyword "variable"
     typeAnnot <- parseExplicitType
     name <- parseIdentifier
     _ <- symbol "="
@@ -221,22 +249,23 @@ parseAssignment = do
 
 parseReturn :: Parser AST
 parseReturn = do
-    _ <- symbol "retourner"
+    _ <- keyword "retourner"
     IAReturn <$> parseExpression
 
 parseElseClause :: Parser (Maybe [AST])
 parseElseClause = optional $ do
-    maybeElseIf <- optional parseElseIf
+    maybeElseIf <- optional (try parseElseIf)
     case maybeElseIf of
         Just elseIf -> return [elseIf]
 
         Nothing -> do
-            _ <- symbol "sinon"
+            _ <- keyword "sinon"
             parseBlock
 
 parseElseIf :: Parser AST
 parseElseIf = do
-    _ <- symbol "sinon si"
+    _ <- keyword "sinon"
+    _ <- keyword "si"
     _ <- symbol "("
     cond <- parseExpression
     _ <- symbol ")"
@@ -245,7 +274,7 @@ parseElseIf = do
 
 parseConditional :: Parser AST
 parseConditional = do
-    _ <- symbol "si"
+    _ <- keyword "si"
     _ <- symbol "("
     cond <- parseExpression
     _ <- symbol ")"
@@ -254,22 +283,22 @@ parseConditional = do
 
     elseBody <- parseElseClause
 
-    _ <- symbol "fin"
+    _ <- keyword "fin"
     return (IAIf cond bodyThen elseBody)
 
 parseWhile :: Parser AST
 parseWhile = do
-    _ <- symbol "tantque"
+    _ <- keyword "tantque"
     _ <- symbol "("
     cond <- parseExpression
     _ <- symbol ")"
     body <- parseBlock
-    _ <- symbol "fin"
+    _ <- keyword "fin"
     return (IAWhile cond body)
 
 parseFor :: Parser AST
 parseFor = do
-    _ <- symbol "pour"
+    _ <- keyword "pour"
     _ <- symbol "("
 
     initExpr <- parseDeclaration <|> parseAssignment <|> return IAUnit
@@ -282,7 +311,7 @@ parseFor = do
     _ <- symbol ")"
 
     body <- parseBlock
-    _ <- symbol "fin"
+    _ <- keyword "fin"
 
     return (IAFor initExpr condExpr incExpr body)
 

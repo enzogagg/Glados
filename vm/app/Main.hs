@@ -27,11 +27,7 @@ main = do
             return (c, [])
         (file:rest) -> do
             c <- BL.readFile file
-            return (c, args) -- Pass original args including flags for VM argv, or regularArgs?
-            -- Usually VM argv shouldn't contain VM flags. Let's pass regularArgs (minus -d)
-            -- But wait, standard practice is argv[0] is program name.
-            -- If user does `./vm prog -d arg1`, regularArgs is `["prog", "arg1"]`.
-            -- Returning `regularArgs` seems correct to clean `-d`.
+            return (c, args)
             
     if BL.null input
         then do
@@ -44,7 +40,6 @@ main = do
                     exitWith (ExitFailure 84)
                 Right (_, _, bytecode@(BytecodeFile _ consts funcs instrs)) -> do
                     when debug $ disassemble bytecode
-                    -- Use regularArgs to avoid passing -d to the program
                     let state = newVMState instrs consts funcs regularArgs
                     execLoop state
                     exitSuccess

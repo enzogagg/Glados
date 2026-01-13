@@ -97,7 +97,7 @@ spec = describe "ParseToAST" $ do
 
         it "parses program with declaration and main block" $ do
             let expectedDecl = IADeclare "FOO" (Just IntT) (IANumber 42)
-            let expectedMain = IAMain [IAReturn (IASymbol "FOO")]
+            let expectedMain = IAMain [] [IAReturn (IASymbol "FOO")] 
             let input = "constante entier FOO = 42 principal retourner FOO fin"
             let expected = IAProgram [expectedDecl, expectedMain]
             parse parseProgramAST "" input `shouldBe` Right expected
@@ -169,7 +169,7 @@ spec = describe "ParseToAST" $ do
             let incExpr  = IAAssign "i" (IAInfix (IASymbol "i") "+" (IANumber 1)) 
             let body     = [IAReturn (IASymbol "i")]
             let expected = Right (IAProgram [IAFor initExpr condExpr incExpr body])
-            
+
             let input = "pour (variable entier i = 0 ; i < 10 ; i = i + 1) retourner i fin"
             parseAST input `shouldBe` expected
 
