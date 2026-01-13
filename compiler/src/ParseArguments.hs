@@ -63,8 +63,6 @@ useContent content cArgs =
                     case validateAST finalAst of
                         Left semErr -> return (Left semErr)
                         Right () -> do
-                            -- let optimizedAst = optimizeTailCalls (foldConstants finalAst)
-                            -- let optimizedAst = foldConstants finalAst
                             let optimizedAst = eliminateDeadCode
                                                 . foldConstants
                                                 . propagateConstants

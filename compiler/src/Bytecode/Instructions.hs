@@ -43,6 +43,13 @@ countInstructions (opcode:rest) = 1 + countInstructions (drop (getOpcodeSize opc
 -- Générateurs par type d'AST
 -- ==========================
 
+genTailCall :: AST -> Maybe CodeGen
+genTailCall (IATailCall name args) = Just $ do
+    -- Pour l'instant, on génère le même bytecode qu'un appel normal.
+    -- Cela permet de compiler sans erreur.
+    generateInstruction (IACall name args)
+genTailCall _ = Nothing
+
 genNumber :: AST -> Maybe CodeGen
 genNumber (IANumber n) = Just $ do
     if n >= -2147483648 && n <= 2147483647
@@ -422,6 +429,7 @@ generateInstruction ast =
         <|> genCallAfficher ast
         <|> genCallNot ast
         <|> genCallListOps ast
+        <|> genTailCall ast
         <|> genCall ast
         <|> genReturn ast
         <|> genIf ast

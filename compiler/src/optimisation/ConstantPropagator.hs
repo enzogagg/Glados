@@ -50,5 +50,5 @@ updateEnv (IADeclare name _ val) env =
         IABoolean _  -> Map.insert name val env
         _            -> Map.delete name env
 updateEnv (IAAssign name _) env = Map.delete name env
-updateEnv (IACall _ _) env = Map.empty
+updateEnv (IACall _ _) _ = Map.empty
 updateEnv _ env = env
