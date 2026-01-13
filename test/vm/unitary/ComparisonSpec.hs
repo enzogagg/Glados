@@ -88,7 +88,7 @@ spec = do
                 output `shouldBe` "#f\n"
 
             it "And with comparison results" $ do
-                let instrs = [PushInt 5, PushInt 3, Lt, PushInt 10, PushInt 10, Eq, And, Print, Halt]
+                let instrs = [PushInt 3, PushInt 5, Lt, PushInt 10, PushInt 10, Eq, And, Print, Halt]
                 let state = newVMState instrs [] [] []
                 output <- capture_ (execLoop state)
                 output `shouldBe` "#t\n"
