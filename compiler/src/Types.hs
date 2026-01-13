@@ -362,11 +362,14 @@ getOpcodeSize op
     | op == 0x23 = 0  -- GT
     | op == 0x24 = 0  -- LTE
     | op == 0x25 = 0  -- GTE
-    | op == 0x30 = 0  -- AND
-    | op == 0x31 = 0  -- OR
-    | op == 0x32 = 0  -- NOT
-    | op == 0x40 = 4  -- LIST
-    | op == 0x41 = 0  -- LIST_GET
+    | op == 0x26 = 0  -- AND
+    | op == 0x27 = 0  -- OR
+    | op == 0x28 = 0  -- NOT
+    | op == 0x30 = 0  -- CONS
+    | op == 0x31 = 0  -- HEAD
+    | op == 0x32 = 0  -- TAIL
+    | op == 0x33 = 4  -- LIST (Size as Int32)
+    | op == 0x34 = 0  -- LEN
     | op == 0x50 = 4  -- LOAD
     | op == 0x51 = 4  -- STORE
     | op == 0x52 = 4  -- DEFINE
