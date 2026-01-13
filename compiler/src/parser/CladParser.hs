@@ -240,7 +240,6 @@ parseDeclaration = do
     _ <- symbol "="
     IADeclare name (Just typeAnnot) <$> parseExpression
 
--- Assignation (Modification de variable)
 parseAssignment :: Parser AST
 parseAssignment = do
     name <- parseIdentifier
