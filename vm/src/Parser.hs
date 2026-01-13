@@ -183,5 +183,6 @@ getStringFromPool :: [Value] -> Int -> String
 getStringFromPool pool idx
     | idx < length pool = case pool !! idx of
         StringVal s -> s
+        SymbolVal s -> s
         _ -> "INVALID_TYPE"
     | otherwise = "INVALID_INDEX"
