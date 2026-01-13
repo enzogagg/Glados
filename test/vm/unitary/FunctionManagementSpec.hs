@@ -9,7 +9,7 @@ spec :: Spec
 spec = describe "Function Management Operations" $ do
     
     let sampleFunc = FunctionMeta { funcId = 1, funcArgCount = 2, funcAddress = 100 }
-    let stateWithFunc = (newVMState [] [] []) { functions = [sampleFunc], ip = 10, stack = [IntVal 1, IntVal 2] }
+    let stateWithFunc = (newVMState [] [] [] []) { functions = [sampleFunc], ip = 10, stack = [IntVal 1, IntVal 2] }
 
     describe "opCall" $ do
         it "jumps to function address and saves context" $ do
@@ -34,7 +34,7 @@ spec = describe "Function Management Operations" $ do
 
     describe "opReturn" $ do
         it "restores previous context from callStack" $ do
-            let stateInFunc = (newVMState [] [] []) { 
+            let stateInFunc = (newVMState [] [] [] []) { 
                 ip = 100, 
                 curArgs = [IntVal 99],
                 callStack = [(10, [IntVal 1000])] -- Saved return to 10, with old args [1000]
@@ -42,16 +42,16 @@ spec = describe "Function Management Operations" $ do
             opReturn stateInFunc `shouldBe` Right (stateInFunc { ip = 10, curArgs = [IntVal 1000], callStack = [] })
 
         it "fails if call stack empty (return outside function)" $ do
-             let state = (newVMState [] [] []) { callStack = [] }
+             let state = (newVMState [] [] [] []) { callStack = [] }
              opReturn state `shouldSatisfy` isLeft
 
     describe "opLoadArg" $ do
         it "loads argument from curArgs onto stack" $ do
-            let state = (newVMState [] [] []) { curArgs = [IntVal 10, IntVal 20] }
+            let state = (newVMState [] [] [] []) { curArgs = [IntVal 10, IntVal 20] }
             opLoadArg 1 state `shouldBe` Right (state { stack = [IntVal 20] })
 
         it "fails if index out of bounds" $ do
-            let state = (newVMState [] [] []) { curArgs = [IntVal 10] }
+            let state = (newVMState [] [] [] []) { curArgs = [IntVal 10] }
             opLoadArg 5 state `shouldSatisfy` isLeft
 
 isLeft :: Either a b -> Bool
