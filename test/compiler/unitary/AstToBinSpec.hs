@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 module AstToBinSpec (spec) where
 
 import Test.Hspec
@@ -8,9 +9,38 @@ import Data.Binary.Put
 import Data.Word
 import Control.Monad.State
 import qualified Data.Map.Strict as Map
+import System.Directory (removeFile, doesFileExist)
+import Control.Exception (catch, SomeException)
 
 import Types
 import AstToBin
+
+-- ==========================
+-- Helper pour nettoyer les fichiers de test
+-- ==========================
+
+cleanupTestFile :: FilePath -> IO ()
+cleanupTestFile path = do
+    exists <- doesFileExist path
+    if exists
+        then removeFile path `catch` (\(_ :: SomeException) -> return ())
+        else return ()
+
+-- Liste de tous les fichiers de test créés
+testFiles :: [FilePath]
+testFiles = [
+    "test_header.cbc", "test_header_size.cbc", "test_empty_pool.cbc",
+    "test_string_pool.cbc", "test_symbol_pool.cbc", "test_dedup.cbc",
+    "test_no_func.cbc", "test_one_func.cbc", "test_multi_func.cbc",
+    "test_push_int.cbc", "test_push_bool.cbc", "test_add.cbc",
+    "test_print.cbc", "test_halt.cbc", "test_if.cbc", "test_if_else.cbc",
+    "test_closure.cbc", "test_call.cbc", "test_return.cbc",
+    "test_load_arg.cbc", "test_define.cbc", "test_store.cbc",
+    "test_load.cbc", "test_overflow.cbc", "test_complex.cbc"
+    ]
+
+cleanupAllTestFiles :: IO ()
+cleanupAllTestFiles = mapM_ cleanupTestFile testFiles
 
 -- ==========================
 -- Helpers pour parser le bytecode généré
@@ -60,22 +90,23 @@ parseFunctionTableCount bs =
 
 spec :: Spec
 spec = do
-    describe "AstToBin" $ do
-        describe "Header Generation" $ do
-            it "génère un header valide avec le magic number CBC\\0" $ do
-                let ast = IAProgram []
-                result <- parseBin ast "test_header.cbc"
-                result `shouldBe` Right ()
+    afterAll_ cleanupAllTestFiles $ do
+        describe "AstToBin" $ do
+            describe "Header Generation" $ do
+                it "génère un header valide avec le magic number CBC\\0" $ do
+                    let ast = IAProgram []
+                    result <- parseBin ast "test_header.cbc"
+                    result `shouldBe` Right ()
 
-                bytecode <- BS.readFile "test_header.cbc"
-                let header = parseHeader (BL.fromStrict bytecode)
-                header `shouldBe` Just (0x43424300, 0x0100, 0x00)
+                    bytecode <- BS.readFile "test_header.cbc"
+                    let header = parseHeader (BL.fromStrict bytecode)
+                    header `shouldBe` Just (0x43424300, 0x0100, 0x00)
 
-            it "génère un header de 10 bytes" $ do
-                let ast = IAProgram []
-                _ <- parseBin ast "test_header_size.cbc"
-                bytecode <- BS.readFile "test_header_size.cbc"
-                BS.length bytecode `shouldSatisfy` (>= 10)
+                it "génère un header de 10 bytes" $ do
+                    let ast = IAProgram []
+                    _ <- parseBin ast "test_header_size.cbc"
+                    bytecode <- BS.readFile "test_header_size.cbc"
+                    BS.length bytecode `shouldSatisfy` (>= 10)
 
         describe "Constant Pool" $ do
             it "génère un constant pool vide pour un programme vide" $ do
