@@ -22,9 +22,8 @@ import AstToBin
 cleanupTestFile :: FilePath -> IO ()
 cleanupTestFile path = do
     exists <- doesFileExist path
-    if exists
-        then removeFile path `catch` (\(_ :: SomeException) -> return ())
-        else return ()
+    Control.Monad.when exists
+        $ removeFile path `catch` (\ (_ :: SomeException) -> return ())
 
 -- Liste de tous les fichiers de test créés
 testFiles :: [FilePath]

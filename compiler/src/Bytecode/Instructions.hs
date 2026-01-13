@@ -223,7 +223,7 @@ genIf :: AST -> Maybe CodeGen
 genIf (IAIf condExpr thenStmts maybeElseStmts) = Just $ do
     ctx <- get
     let startInstr = instructionCount ctx
-    
+
     condResult <- generateInstruction condExpr
     thenResults <- mapM generateInstruction thenStmts
 
@@ -337,23 +337,23 @@ genMain _ = Nothing
 genFunctionDef :: AST -> Maybe CodeGen
 genFunctionDef (IAFunctionDef name args _retType body) = Just $ do
     ctx <- get
-    
+
     let funcTableIdx = nextFuncIndex ctx
-    
+
     put ctx { funcMap = Map.insert name funcTableIdx (funcMap ctx)
             , nextFuncIndex = nextFuncIndex ctx + 1
             , instructionCount = 3
             }
-    
+
     let oldParams = currentFuncParams ctx
     let paramNames = map fst args
     let paramsList = zip paramNames [0..]
-    
+
     ctx' <- get
     put ctx' { currentFuncParams = paramsList }
-    
+
     results <- mapM generateInstructionWithCount body
-    
+
     case sequence results of
         Left err -> do
             ctx'' <- get
@@ -362,33 +362,33 @@ genFunctionDef (IAFunctionDef name args _retType body) = Just $ do
         Right bodyCodes -> do
             ctx'' <- get
             put ctx'' { currentFuncParams = oldParams }
-            
+
             let bodyCode = concat bodyCodes
             let hasReturn = not (null bodyCode) && last bodyCode == opcodeToByte OpReturn
             let finalBody = if hasReturn then bodyCode else bodyCode ++ [opcodeToByte OpReturn]
-            
+
             let currentOffset = 3
-            
+
             let funcEntry = FunctionEntry
                     { funcIndex = funcTableIdx
                     , funcAddress = currentOffset
                     , funcArgCount = length args
                     }
-            
+
             nameIdx <- addConstant (ConstSymbol name)
             let funcIndexBytes = BL.unpack $ runPut $ putWord32be (fromIntegral funcTableIdx)
             let defineBytes = BL.unpack $ runPut $ putWord32be (fromIntegral nameIdx)
-            
+
             let bodyInstrCount = countInstructions finalBody
             let jmpTarget = fromIntegral (3 + bodyInstrCount) :: Word32
             let jmpBytes = BL.unpack $ runPut $ putWord32be jmpTarget
-            
+
             ctx''' <- get
             put ctx''' { funcTable = funcTable ctx''' ++ [funcEntry] }
 
-            return $ Right $ opcodeToByte OpClosure : funcIndexBytes 
+            return $ Right $ opcodeToByte OpClosure : funcIndexBytes
                           ++ (opcodeToByte OpDefine : defineBytes)
-                          ++ (opcodeToByte OpJmp : jmpBytes) 
+                          ++ (opcodeToByte OpJmp : jmpBytes)
                           ++ finalBody
 genFunctionDef _ = Nothing
 
@@ -406,7 +406,7 @@ genProgram _ = Nothing
 
 generateInstruction :: AST -> CodeGen
 generateInstruction ast =
-    maybe unsupported id $
+    Data.Maybe.fromMaybe unsupported $
             genNumber ast
         <|> genFloat ast
         <|> genBoolean ast
