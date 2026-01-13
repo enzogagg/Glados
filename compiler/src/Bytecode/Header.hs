@@ -10,7 +10,7 @@ module Bytecode.Header (
 ) where
 
 import Data.Binary.Put
-import Data.Word
+import Data.Word()
 
 -- ==========================
 -- Génération du Header

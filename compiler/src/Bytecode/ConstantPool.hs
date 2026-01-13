@@ -12,7 +12,7 @@ module Bytecode.ConstantPool (
 
 import Types
 import Data.Binary.Put
-import Data.Word
+import Data.Word()
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import Control.Applicative ((<|>))

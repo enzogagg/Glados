@@ -16,7 +16,7 @@ import Bytecode.ConstantPool
 import Bytecode.FunctionTable
 import Bytecode.Instructions
 
-import Data.Word
+import Data.Word()
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import Data.Binary.Put

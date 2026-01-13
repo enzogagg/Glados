@@ -12,7 +12,7 @@ module Bytecode.FunctionTable (
 
 import Types
 import Data.Binary.Put
-import Data.Word
+import Data.Word()
 
 -- ==========================
 -- Génération de la Function Table
