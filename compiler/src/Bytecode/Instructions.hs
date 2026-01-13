@@ -335,11 +335,28 @@ genBlock (IABlock stmts) = Just $ do
 genBlock _ = Nothing
 
 genMain :: AST -> Maybe CodeGen
-genMain (IAMain _ stmts) = Just $ do
+genMain (IAMain args stmts) = Just $ do
+    let mappings = zip args ["n_args", "args"]
+    
+    preamble <- mapM bindArg mappings
+    
     results <- mapM generateInstruction stmts
     case sequence results of
         Left err -> return $ Left err
-        Right codes -> return $ Right $ concat codes
+        Right codes -> return $ Right $ concat (concat preamble) ++ concat codes
+
+  where
+    bindArg (userVarName, vmVarName) = do
+        vmVarIdx <- addConstant (ConstSymbol vmVarName)
+        let loadBytes = BL.unpack $ runPut $ putWord32be (fromIntegral vmVarIdx)
+        
+        userVarIdx <- addConstant (ConstSymbol userVarName)
+        let storeBytes = BL.unpack $ runPut $ putWord32be (fromIntegral userVarIdx)
+        
+        return [ opcodeToByte OpLoad : loadBytes
+               , opcodeToByte OpDefine : storeBytes
+               ]
+
 genMain _ = Nothing
 
 genFunctionDef :: AST -> Maybe CodeGen
