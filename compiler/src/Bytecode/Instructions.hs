@@ -19,6 +19,7 @@ import Data.Binary.Put
 import Control.Monad.State
 import Control.Applicative ((<|>))
 import qualified Data.Map.Strict as Map
+import Data.Maybe(fromMaybe)
 
 -- ==========================
 -- Helper Functions
@@ -406,7 +407,7 @@ genProgram _ = Nothing
 
 generateInstruction :: AST -> CodeGen
 generateInstruction ast =
-    Data.Maybe.fromMaybe unsupported $
+    fromMaybe unsupported $
             genNumber ast
         <|> genFloat ast
         <|> genBoolean ast
