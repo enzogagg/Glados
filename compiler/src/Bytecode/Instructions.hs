@@ -352,9 +352,6 @@ genFor (IAFor initExpr condExpr incrExpr bodyStmts) = Just $ do
 
     modify $ \c -> c { instructionCount = startInstr }
     return code
-    where
-        getSymbolName (IASymbol name) = name
-        getSymbolName _ = "i"
 genFor _ = Nothing
 
 genBlock :: AST -> Maybe CodeGen
