@@ -181,15 +181,15 @@ genCallListOps (IACall name args) =
         "tail" -> checkArgs 1 OpTail
         "len" -> checkArgs 1 OpLen
         _ -> Nothing
-  where
-    checkArgs count op =
-        if length args == count
-        then Just $ do
-            results <- mapM generateInstruction args
-            case sequence results of
-                Left err -> return $ Left err
-                Right codes -> return $ Right $ concat codes ++ [opcodeToByte op]
-        else Just $ return $ Left $ "Function '" ++ name ++ "' expects " ++ show count ++ " arguments"
+    where
+        checkArgs count op =
+            if length args == count
+            then Just $ do
+                results <- mapM generateInstruction args
+                case sequence results of
+                    Left err -> return $ Left err
+                    Right codes -> return $ Right $ concat codes ++ [opcodeToByte op]
+            else Just $ return $ Left $ "Function '" ++ name ++ "' expects " ++ show count ++ " arguments"
 genCallListOps _ = Nothing
 
 genCall :: AST -> Maybe CodeGen
