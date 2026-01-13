@@ -31,8 +31,8 @@ newVMState :: [Instruction] -> [Value] -> [FunctionMeta] -> [String] -> VMState
 newVMState insts consts funcs args = VMState {
     stack = [],
     env = Map.fromList [
-        ("argc", IntVal (length args)),
-        ("argv", ListVal (map StringVal args))
+        ("n_args", IntVal (length args)),
+        ("args", ListVal (map StringVal args))
     ],
     ip = 0,
     callStack = [],

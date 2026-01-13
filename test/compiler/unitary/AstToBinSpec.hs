@@ -8,6 +8,7 @@ import Data.Binary.Get
 import Data.Binary.Put
 import Data.Word
 import Control.Monad.State
+import Control.Monad (when)
 import qualified Data.Map.Strict as Map
 import System.Directory (removeFile, doesFileExist)
 import Control.Exception (catch, SomeException)
@@ -22,7 +23,7 @@ import AstToBin
 cleanupTestFile :: FilePath -> IO ()
 cleanupTestFile path = do
     exists <- doesFileExist path
-    Control.Monad.when exists
+    when exists
         $ removeFile path `catch` (\ (_ :: SomeException) -> return ())
 
 -- Liste de tous les fichiers de test créés

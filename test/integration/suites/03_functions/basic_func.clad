@@ -3,5 +3,5 @@ fonction add(entier a, entier b) : entier
 fin
 
 principal
-    print(add(3, 4))
+    afficher(add(3, 4))
 fin
