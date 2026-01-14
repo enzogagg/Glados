@@ -5,14 +5,10 @@ import Test.Hspec
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import Data.Binary.Get
-import Data.Binary.Put
 import Data.Word
-import Control.Monad.State
 import Control.Monad (when, replicateM, replicateM_)
-import qualified Data.Map.Strict as Map
 import System.Directory (removeFile, doesFileExist)
 import Control.Exception (catch, SomeException, finally)
-import System.IO.Unsafe (unsafePerformIO)
 
 import Types
 import AstToBin
