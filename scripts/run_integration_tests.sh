@@ -49,12 +49,12 @@ for src_file in $TEST_FILES; do
     # If compiler doesn't support -o, we rename the output.
     # Let's assume default is 'out.cbc' based on previous context.
     
-    if [ ! -f "out.cbc" ]; then
+    if [ ! -f "a.out.cbc" ]; then
          echo -e "${RED}[FAIL] Compilation failed${NC}"
          ((FAILED++))
          continue
     fi
-    mv out.cbc "$TEMP_CBC"
+    mv a.out.cbc "$TEMP_CBC"
 
     # Execute VM
     $VM "$TEMP_CBC" > "$TEMP_OUT" 2>&1

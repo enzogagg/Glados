@@ -137,6 +137,10 @@ parseInstruction pool = do
         0x3A -> return Append
         0x3B -> return Reverse
 
+        0x40 -> return MakeSymbol
+        0x41 -> return Quote
+        0x42 -> return Eval
+
         0x50 -> Load . getStringFromPool pool . fromIntegral <$> getInt32be
         0x51 -> Store . getStringFromPool pool . fromIntegral <$> getInt32be
         0x52 -> Define . getStringFromPool pool . fromIntegral <$> getInt32be
