@@ -453,8 +453,8 @@ Bien que non exprimée directement dans la BNF formelle, l'indentation est utili
 ### Sensibilité à la casse
 
 Les mots-clés sont sensibles à la casse :
-- ✅ `si`, `fonction`, `principal`
-- ❌ `Si`, `Fonction`, `Principal`
+- ✓ `si`, `fonction`, `principal`
+- ✖ `Si`, `Fonction`, `Principal`
 
 ### Espaces blancs
 
