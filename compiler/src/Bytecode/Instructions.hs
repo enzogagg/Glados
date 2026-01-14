@@ -405,11 +405,7 @@ genCall (IACall fname args) = Just $ do
                     let funcBytes = BL.unpack $ runPut $ putWord32be (fromIntegral funcTableIdx)
                     let argCountByte = fromIntegral $ length args
                     return $ Right $ concat codes ++ (opcodeToByte OpCall : funcBytes ++ [argCountByte])
-                Nothing -> do
-                    idx <- addConstant (ConstSymbol fname)
-                    let funcBytes = BL.unpack $ runPut $ putWord32be (fromIntegral idx)
-                    let argCountByte = fromIntegral $ length args
-                    return $ Right $ concat codes ++ (opcodeToByte OpCall : funcBytes ++ [argCountByte])
+                Nothing -> return $ Left $ "Function not found: " ++ fname
 genCall _ = Nothing
 
 genReturn :: AST -> Maybe CodeGen
