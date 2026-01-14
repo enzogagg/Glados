@@ -276,6 +276,42 @@ genCallCommon (IACall name args) = case name of
                 _ -> return $ Left $ "Type " ++ show objType ++ " does not support 'set'"
         _ -> return $ Left "Function 'set' expects 3 arguments (object, index/key, value)"
 
+    "open" -> Just $ do
+        if length args /= 2
+            then return $ Left "Function 'open' expects 2 arguments (path, mode)"
+            else do
+                results <- mapM generateInstruction args
+                case sequence results of
+                    Left err -> return $ Left err
+                    Right codes -> return $ Right $ concat codes ++ [opcodeToByte OpOpenFile]
+
+    "read" -> Just $ do
+        if length args /= 1
+            then return $ Left "Function 'read' expects 1 argument (file)"
+            else do
+                results <- mapM generateInstruction args
+                case sequence results of
+                    Left err -> return $ Left err
+                    Right codes -> return $ Right $ concat codes ++ [opcodeToByte OpReadFile]
+
+    "write" -> Just $ do
+        if length args /= 2
+            then return $ Left "Function 'write' expects 2 arguments (file, content)"
+            else do
+                 results <- mapM generateInstruction args
+                 case sequence results of
+                    Left err -> return $ Left err
+                    Right codes -> return $ Right $ concat codes ++ [opcodeToByte OpWriteFile]
+
+    "close" -> Just $ do
+        if length args /= 1
+            then return $ Left "Function 'close' expects 1 argument (file)"
+            else do
+                results <- mapM generateInstruction args
+                case sequence results of
+                    Left err -> return $ Left err
+                    Right codes -> return $ Right $ concat codes ++ [opcodeToByte OpCloseFile]
+
     _ -> Nothing
 
     where

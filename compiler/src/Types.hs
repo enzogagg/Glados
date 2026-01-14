@@ -269,6 +269,10 @@ data Opcode
     | OpMakeStruct      -- 0x98
     | OpStructGet       -- 0x99
     | OpStructSet       -- 0x9A
+    | OpOpenFile        -- 0xA0
+    | OpReadFile        -- 0xA1
+    | OpWriteFile       -- 0xA2
+    | OpCloseFile       -- 0xA3
     | OpHalt            -- 0xFF
     deriving (Show, Eq)
 
@@ -333,6 +337,10 @@ opcodeToByte OpMapSet = 0x97
 opcodeToByte OpMakeStruct = 0x98
 opcodeToByte OpStructGet = 0x99
 opcodeToByte OpStructSet = 0x9A
+opcodeToByte OpOpenFile = 0xA0
+opcodeToByte OpReadFile = 0xA1
+opcodeToByte OpWriteFile = 0xA2
+opcodeToByte OpCloseFile = 0xA3
 opcodeToByte OpHalt = 0xFF
 
 -- ==========================
