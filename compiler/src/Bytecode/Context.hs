@@ -29,11 +29,12 @@ data BytecodeContext = BytecodeContext
     , nextConstIndex :: Int
     , nextFuncIndex :: Int
     , currentFuncParams :: [(String, Int)]
+    , variableTypes :: Map.Map String CladType
     , instructionCount :: Int
     } deriving (Show)
 
 emptyContext :: BytecodeContext
-emptyContext = BytecodeContext [] Map.empty [] Map.empty 0 0 [] 0
+emptyContext = BytecodeContext [] Map.empty [] Map.empty 0 0 [] Map.empty 0
 
 type CodeGen = State BytecodeContext (Either String [Word8])
 

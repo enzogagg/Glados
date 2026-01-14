@@ -37,6 +37,9 @@ data CladType
     | ListT CladType                -- Liste d'un type spécifique
     | FuncT [CladType] CladType     -- (Args types) -> Return type
     | TupleT [CladType]
+    | ArrayT CladType               -- Array of Type
+    | MapT CladType CladType        -- Map KeyType ValueType
+    | StructT                       -- Structure
     | AnyT
     | VoidT
     | ErrorT
@@ -402,5 +405,21 @@ getOpcodeSize op
     | op == 0x72 = 4  -- CLOSURE
     | op == 0x73 = 4  -- LOAD_ARG
     | op == 0x80 = 0  -- PRINT
+    | op == 0x81 = 0  -- INPUT
+    | op == 0x90 = 4  -- MAKE_TUPLE (Size)
+    | op == 0x91 = 4  -- TUPLE_GET (Index)
+    | op == 0x92 = 4  -- MAKE_ARRAY (Size)
+    | op == 0x93 = 0  -- ARRAY_GET
+    | op == 0x94 = 0  -- ARRAY_SET
+    | op == 0x95 = 4  -- MAKE_MAP (Count)
+    | op == 0x96 = 0  -- MAP_GET
+    | op == 0x97 = 0  -- MAP_SET
+    | op == 0x98 = 4  -- MAKE_STRUCT (Count)
+    | op == 0x99 = 4  -- STRUCT_GET (Name Index)
+    | op == 0x9A = 4  -- STRUCT_SET (Name Index)
+    | op == 0xA0 = 0  -- OPEN_FILE
+    | op == 0xA1 = 0  -- READ_FILE
+    | op == 0xA2 = 0  -- WRITE_FILE
+    | op == 0xA3 = 0  -- CLOSE_FILE
     | op == 0xFF = 0  -- HALT
     | otherwise = 0

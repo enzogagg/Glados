@@ -30,6 +30,9 @@ parseBaseType =
   <|> (keyword "pileouface" >> return BoolT)
   <|> (keyword "phrase" >> return StringT)
   <|> (keyword "neant" >> return VoidT)
+  <|> (keyword "tableau" >> return (ArrayT AnyT))
+  <|> (keyword "dictionnaire" >> return (MapT AnyT AnyT))
+  <|> (keyword "structure" >> return StructT)
 
 parseTupleType :: Parser CladType
 parseTupleType = do
