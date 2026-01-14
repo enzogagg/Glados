@@ -185,12 +185,26 @@ genCallListOps (IACall name args) =
         "head" -> checkArgs 1 OpHead
         "tail" -> checkArgs 1 OpTail
         "len" -> checkArgs 1 OpLen
+        "is_empty" -> checkArgs 1 OpIsEmpty
+        "nth" -> checkArgs 2 OpNth
+        "append" -> checkArgs 2 OpAppend
+        "insert" -> checkArgs 3 OpInsert
+        "remove" -> checkArgs 2 OpRemove
+        "contains" -> checkArgs 2 OpContains
+        "reverse" -> checkArgs 1 OpReverse
         _ -> Nothing
     where
         checkArgs count op =
             if length args == count
             then Just $ do
-                results <- mapM generateInstruction args
+                let argsToGen = case name of
+                        "contains" -> reverse args
+                        "insert" -> reverse args
+                        "nth" -> reverse args
+                        "remove" -> reverse args
+                        _ -> args
+
+                results <- mapM generateInstruction argsToGen
                 case sequence results of
                     Left err -> return $ Left err
                     Right codes -> return $ Right $ concat codes ++ [opcodeToByte op]
