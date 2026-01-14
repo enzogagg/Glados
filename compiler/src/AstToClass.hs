@@ -10,7 +10,8 @@ parseClass ast outputName = do
     case result of
         Left err -> return $ Left err
         Right code -> do
-            -- On écrit le fichier .j que Jasmin pourra compiler
             writeFile (outputName ++ ".j") code
-            putStrLn $ "Jasmin source generated: " ++ outputName ++ ".j"
+            putStrLn $ "Jasmin source generated: " ++ outputName ++ ".j\n"
+                ++ "Please compile it with Jasmin to get the .class file.\n"
+                ++ "java -jar jasmin.jar a.out.class.j\n"
             return $ Right ()
