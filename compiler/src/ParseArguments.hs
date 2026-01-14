@@ -25,6 +25,9 @@ import Resolver (resolveIncludes)
 import Visualizer (astToDot)
 import ConstantFolding (foldConstants)
 import Validator (validateAST)
+import TailCallOptimization (optimizeTailCalls)
+import DeadCodeElimination (eliminateDeadCode)
+import ConstantPropagator (propagateConstants)
 
 import Data.List (isSuffixOf)
 import Data.Maybe (fromMaybe)
@@ -48,7 +51,6 @@ parseContent args = do
                 Left err -> return (Left err)
                 Right content -> useContent content cArgs
 
-
 useContent :: String -> CompilerArgs -> IO (Either String ())
 useContent content cArgs =
     case parseAST content of
@@ -61,7 +63,10 @@ useContent content cArgs =
                     case validateAST finalAst of
                         Left semErr -> return (Left semErr)
                         Right () -> do
-                            let optimizedAst = foldConstants finalAst
+                            let optimizedAst = eliminateDeadCode
+                                                . foldConstants
+                                                . propagateConstants
+                                                $ finalAst
 
                             case runMode cArgs of
                                 Visualize -> do

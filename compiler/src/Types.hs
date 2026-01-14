@@ -102,6 +102,7 @@ data AST
     | IAFunctionDef String [(String, Maybe CladType)] (Maybe CladType) [AST]
                                                 -- Nom, [(ArgName, Type)], (ReturnType), Corps (Statements)
     | IACall String [AST]                       -- Appel de fonction: func(args)
+    | IATailCall String [AST]                   -- Appel de fonction en queue: func(args)
     deriving (Show, Eq)
 
 -- ==========================
