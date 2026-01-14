@@ -233,57 +233,53 @@ genCallCommon (IACall name args) = case name of
                             let structCode = opcodeToByte OpMakeStruct : BL.unpack (runPut $ putWord32be (fromIntegral count))
                             return $ Right $ concat codes ++ structCode
 
-    "get" -> Just $ do
-        if length args /= 2
-            then return $ Left "Function 'get' expects 2 arguments (object, index/key)"
-            else do
-                let [obj, idx] = args
-                objType <- inferType obj
-                case objType of
-                    ArrayT _ -> genStackGet OpArrayGet args
-                    ListT _ -> genStackGet OpArrayGet args
-                    MapT _ _ -> genStackGet OpMapGet args
+    "get" -> Just $ case args of
+        [obj, idx] -> do
+            objType <- inferType obj
+            case objType of
+                ArrayT _ -> genStackGet OpArrayGet obj idx
+                ListT _ -> genStackGet OpArrayGet obj idx
+                MapT _ _ -> genStackGet OpMapGet obj idx
 
-                    TupleT _ -> case idx of
-                        IANumber n -> genImmediateGet OpTupleGet (fromIntegral n) obj
-                        _ -> return $ Left "Tuple get requires integer constant index"
+                TupleT _ -> case idx of
+                    IANumber n -> genImmediateGet OpTupleGet n obj
+                    _ -> return $ Left "Tuple get requires integer constant index"
 
-                    StructT -> case idx of
-                        IAString s -> genSymbolGet OpStructGet s obj
-                        _ -> return $ Left "Struct get requires string constant key"
+                StructT -> case idx of
+                    IAString s -> genSymbolGet OpStructGet s obj
+                    _ -> return $ Left "Struct get requires string constant key"
 
-                    AnyT -> case idx of
-                        IANumber _ -> genStackGet OpArrayGet args
-                        IAString _ -> genStackGet OpMapGet args
-                        _ -> genStackGet OpArrayGet args
+                AnyT -> case idx of
+                    IANumber _ -> genStackGet OpArrayGet obj idx
+                    IAString _ -> genStackGet OpMapGet obj idx
+                    _ -> genStackGet OpArrayGet obj idx
 
-                    _ -> return $ Left $ "Type " ++ show objType ++ " does not support 'get'"
+                _ -> return $ Left $ "Type " ++ show objType ++ " does not support 'get'"
+        _ -> return $ Left "Function 'get' expects 2 arguments (object, index/key)"
 
-    "set" -> Just $ do
-        if length args /= 3
-            then return $ Left "Function 'set' expects 3 arguments (object, index/key, value)"
-            else do
-                let [obj, idx, val] = args
-                objType <- inferType obj
-                case objType of
-                    ArrayT _ -> genStackSet OpArraySet args
-                    MapT _ _ -> genStackSet OpMapSet args
+    "set" -> Just $ case args of
+        [obj, idx, val] -> do
+            objType <- inferType obj
+            case objType of
+                ArrayT _ -> genStackSet OpArraySet obj idx val
+                MapT _ _ -> genStackSet OpMapSet obj idx val
 
-                    StructT -> case idx of
-                        IAString s -> genSymbolSet OpStructSet s obj val
-                        _ -> return $ Left "Struct set requires string constant key"
+                StructT -> case idx of
+                    IAString s -> genSymbolSet OpStructSet s obj val
+                    _ -> return $ Left "Struct set requires string constant key"
 
-                    AnyT -> case idx of
-                        IANumber _ -> genStackSet OpArraySet args
-                        IAString _ -> genStackSet OpMapSet args
-                        _ -> genStackSet OpArraySet args
+                AnyT -> case idx of
+                    IANumber _ -> genStackSet OpArraySet obj idx val
+                    IAString _ -> genStackSet OpMapSet obj idx val
+                    _ -> genStackSet OpArraySet obj idx val
 
-                    _ -> return $ Left $ "Type " ++ show objType ++ " does not support 'set'"
+                _ -> return $ Left $ "Type " ++ show objType ++ " does not support 'set'"
+        _ -> return $ Left "Function 'set' expects 3 arguments (object, index/key, value)"
 
     _ -> Nothing
 
     where
-        genStackGet op [obj, idx] = do
+        genStackGet op obj idx = do
             r1 <- generateInstruction obj
             r2 <- generateInstruction idx
             case (r1, r2) of
@@ -307,7 +303,7 @@ genCallCommon (IACall name args) = case name of
                     return $ Right $ c1 ++ (opcodeToByte op : bytes)
                 Left e -> return $ Left e
 
-        genStackSet op [obj, idx, val] = do
+        genStackSet op obj idx val = do
             r1 <- generateInstruction obj
             r2 <- generateInstruction idx
             r3 <- generateInstruction val
