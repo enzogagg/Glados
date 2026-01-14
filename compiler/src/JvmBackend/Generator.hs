@@ -5,171 +5,132 @@ import JvmBackend.Context
 import JvmBackend.Mapper
 import Control.Monad.State
 
--- | Point d'entrée pour la génération de toutes les méthodes d'un programme
+showType :: Maybe CladType -> String
+showType (Just IntT)    = "entier"
+showType (Just FloatT)  = "flottant"
+showType (Just StringT) = "phrase"
+showType _              = "entier"
+
+prefix :: String -> String
+prefix "entier"   = "i"
+prefix "flottant" = "f"
+prefix "phrase"   = "a"
+prefix _          = "a"
+
+getExprType :: AST -> State JvmContext String
+getExprType (IANumber _) = return "entier"
+getExprType (IAFloatLiteral _) = return "flottant"
+getExprType (IAString _) = return "phrase"
+getExprType (IASymbol name) = do
+    info <- getVarInfo name
+    return $ maybe "entier" snd info
+getExprType (IAInfix l _ r) = do
+    tL <- getExprType l
+    tR <- getExprType r
+    if tL == "flottant" || tR == "flottant" then return "flottant" else return "entier"
+getExprType _ = return "entier"
+
 generateMethods :: AST -> String
 generateMethods (IAProgram instrs) = concatMap generateMethods instrs
-
--- | Gestion du point d'entrée principal (Main)
 generateMethods (IAMain _ body) =
     let (bodyCode, _) = runState (genFunctionBody [] body) emptyContext
-        cleanBody = filterMainReturn bodyCode
     in ".method public static main([Ljava/lang/String;)V\n"
-       ++ "  .limit stack 10\n"
-       ++ "  .limit locals 10\n"
-       ++ cleanBody
-       ++ "  return\n"
-       ++ ".end method\n\n"
-
--- | Gestion des définitions de fonctions classiques
+       ++ "  .limit stack 10\n  .limit locals 10\n"
+       ++ filterMainReturn bodyCode ++ "  return\n.end method\n\n"
 generateMethods (IAFunctionDef name params _ body) =
     let paramNames = map fst params
         (bodyCode, _) = runState (genFunctionBody paramNames body) emptyContext
     in ".method public static " ++ name ++ "(" ++ replicate (length params) 'I' ++ ")I\n"
        ++ "  .limit stack 10\n"
        ++ "  .limit locals " ++ show (length params + 10) ++ "\n"
-       ++ bodyCode
-       ++ "  ireturn\n"
-       ++ ".end method\n\n"
-
+       ++ bodyCode ++ "  ireturn\n.end method\n\n"
 generateMethods _ = ""
 
--- | Nettoyage pour éviter le VerifyError dans le main (pas de ireturn autorisé)
 filterMainReturn :: String -> String
-filterMainReturn code =
-    let rows = lines code
-        cleanRows = map (\l -> if "ireturn" `elem` words l then "  pop" else l) rows
-    in unlines cleanRows
+filterMainReturn code = unlines $ map (\l -> if "ireturn" `elem` words l then "  pop" else l) (lines code)
 
--- | Génération du corps d'une fonction (réservation des variables locales)
 genFunctionBody :: [String] -> [AST] -> JvmGen
 genFunctionBody params body = do
-    mapM_ reserveVar params
-    codes <- mapM genInstr body
-    return $ concat codes
+    mapM_ (\p -> reserveVar p "entier") params
+    fmap concat (mapM genInstr body)
 
--- | Générateur d'instructions principal
 genInstr :: AST -> JvmGen
 genInstr (IANumber n) = return $ "  ldc " ++ show n ++ "\n"
+genInstr (IAFloatLiteral f) = return $ "  ldc " ++ show f ++ "\n"
+genInstr (IAString s) = return $ "  ldc \"" ++ s ++ "\"\n"
 
 genInstr (IASymbol name) = do
-    maybeIdx <- getVarIndex name
-    case maybeIdx of
-        Just idx -> return $ "  iload " ++ show idx ++ "\n"
-        Nothing  -> return $ "; Error: Variable " ++ name ++ " non definie\n"
+    info <- getVarInfo name
+    case info of
+        Just (idx, t) -> return $ "  " ++ prefix t ++ "load " ++ show idx ++ "\n"
+        Nothing -> return $ "; Error: " ++ name ++ " non definie\n"
 
-genInstr (IADeclare name _ expr) = do
+genInstr (IADeclare name mType expr) = do
     valCode <- genInstr expr
-    idx <- reserveVar name
-    return $ valCode ++ "  istore " ++ show idx ++ "\n"
+    let t = showType mType
+    idx <- reserveVar name t
+    return $ valCode ++ "  " ++ prefix t ++ "store " ++ show idx ++ "\n"
 
 genInstr (IAAssign name expr) = do
     valCode <- genInstr expr
-    maybeIdx <- getVarIndex name
-    case maybeIdx of
-        Just idx -> return $ valCode ++ "  istore " ++ show idx ++ "\n"
-        Nothing  -> return $ "; Error: Variable " ++ name ++ " inconnue\n"
+    info <- getVarInfo name
+    case info of
+        Just (idx, t) -> return $ valCode ++ "  " ++ prefix t ++ "store " ++ show idx ++ "\n"
+        Nothing -> return $ "; Error: " ++ name ++ " inconnue\n"
 
--- Affichage (Print)
 genInstr (IACall "afficher" [expr]) = do
     codeExpr <- genInstr expr
+    t <- getExprType expr
+    let desc = case t of
+                "entier"   -> "(I)V"
+                "flottant" -> "(F)V"
+                "phrase"   -> "(Ljava/lang/String;)V"
+                _          -> "(Ljava/lang/Object;)V"
     return $ "  getstatic java/lang/System/out Ljava/io/PrintStream;\n"
-          ++ codeExpr
-          ++ "  invokevirtual java/io/PrintStream/println(I)V\n"
+          ++ codeExpr ++ "  invokevirtual java/io/PrintStream/println" ++ desc ++ "\n"
 
--- Appel de fonction
-genInstr (IACall name args) = do
-    codeArgs <- mapM genInstr args
-    return $ concat codeArgs
-          ++ "  invokestatic CladProgram/" ++ name ++ "(" ++ replicate (length args) 'I' ++ ")I\n"
+genInstr (IAIf (IAInfix l op r) thenB elseB) = do
+    lElse <- uniqueLabel "Else"
+    lEnd  <- uniqueLabel "End"
+    compCode <- genComparison lElse l op r
+    cThen <- fmap concat (mapM genInstr thenB)
+    cElse <- maybe (return "") (fmap concat . mapM genInstr) elseB
+    return $ compCode ++ cThen ++ "  goto " ++ lEnd ++ "\n" ++ lElse ++ ":\n" ++ cElse ++ lEnd ++ ":\n"
+
+genInstr (IAWhile (IAInfix l op r) body) = do
+    lStart <- uniqueLabel "WhileStart"
+    lEnd   <- uniqueLabel "WhileEnd"
+    compCode <- genComparison lEnd l op r
+    bodyCode <- fmap concat (mapM genInstr body)
+    return $ lStart ++ ":\n" ++ compCode ++ bodyCode ++ "  goto " ++ lStart ++ "\n" ++ lEnd ++ ":\n"
+
+genInstr (IAInfix l op r)
+    | op `elem` ["+", "-", "*", "/"] = do
+        cL <- genInstr l
+        cR <- genInstr r
+        t <- getExprType (IAInfix l op r)
+        return $ cL ++ cR ++ "  " ++ mapOp t op ++ "\n"
+    | otherwise = return ""
 
 genInstr (IAReturn expr) = do
-    codeExpr <- genInstr expr
-    return $ codeExpr ++ "  ireturn\n"
-
--- Structure SI (IAIf) avec optimisation des branchements
-genInstr (IAIf (IAInfix l op r) thenBranch maybeElseBranch) = do
-    labelElse <- uniqueLabel "Else"
-    labelEnd <- uniqueLabel "End"
-    codeL <- genInstr l
-    codeR <- genInstr r
-    let jumpOp = case op of
-                   "==" -> "if_icmpne"
-                   "!=" -> "if_icmpeq"
-                   "<"  -> "if_icmpge"
-                   ">"  -> "if_icmple"
-                   "<=" -> "if_icmpgt"
-                   ">=" -> "if_icmplt"
-                   _    -> "ifeq"
-    codeThen <- fmap concat (mapM genInstr thenBranch)
-    codeElse <- case maybeElseBranch of
-        Just eb -> fmap concat (mapM genInstr eb)
-        Nothing -> return ""
-    return $ codeL ++ codeR
-          ++ "  " ++ jumpOp ++ " " ++ labelElse ++ "\n"
-          ++ codeThen
-          ++ "  goto " ++ labelEnd ++ "\n"
-          ++ labelElse ++ ":\n"
-          ++ codeElse
-          ++ labelEnd ++ ":\n"
-
--- Structure TANTQUE (IAWhile)
-genInstr (IAWhile cond body) = do
-    labelStart <- uniqueLabel "WhileStart"
-    labelEnd <- uniqueLabel "WhileEnd"
-    codeCond <- genInstr cond
-    codeBody <- fmap concat (mapM genInstr body)
-    return $ labelStart ++ ":\n"
-          ++ codeCond
-          ++ "  ifeq " ++ labelEnd ++ "\n"
-          ++ codeBody
-          ++ "  goto " ++ labelStart ++ "\n"
-          ++ labelEnd ++ ":\n"
-
--- Structure POUR (IAFor)
-genInstr (IAFor init cond step body) = do
-    labelStart <- uniqueLabel "ForStart"
-    labelEnd <- uniqueLabel "ForEnd"
-    codeInit <- genInstr init
-    codeCond <- genInstr cond
-    codeStep <- genInstr step
-    codeBody <- fmap concat (mapM genInstr body)
-    return $ codeInit
-          ++ labelStart ++ ":\n"
-          ++ codeCond
-          ++ "  ifeq " ++ labelEnd ++ "\n"
-          ++ codeBody
-          ++ codeStep
-          ++ "  goto " ++ labelStart ++ "\n"
-          ++ labelEnd ++ ":\n"
-
--- Opérations Infixes (Calculs ou Comparaisons autonomes)
-genInstr (IAInfix l op r)
-    -- Calculs arithmétiques
-    | op `elem` ["+", "-", "*", "/"] = do
-        codeL <- genInstr l
-        codeR <- genInstr r
-        return $ codeL ++ codeR ++ "  " ++ mapOp op ++ "\n"
-    -- Comparaisons laissant 0 ou 1 sur la pile (nécessaire pour For/While)
-    | op `elem` ["==", "!=", "<", ">", "<=", ">="] = do
-        labelTrue <- uniqueLabel "cmpTrue"
-        labelEnd  <- uniqueLabel "cmpEnd"
-        codeL <- genInstr l
-        codeR <- genInstr r
-        let jumpOp = case op of
-                       "==" -> "if_icmpeq"
-                       "!=" -> "if_icmpne"
-                       "<"  -> "if_icmplt"
-                       ">"  -> "if_icmpgt"
-                       "<=" -> "if_icmple"
-                       ">=" -> "if_icmpge"
-                       _    -> "ifne"
-        return $ codeL ++ codeR
-              ++ "  " ++ jumpOp ++ " " ++ labelTrue ++ "\n"
-              ++ "  ldc 0\n"
-              ++ "  goto " ++ labelEnd ++ "\n"
-              ++ labelTrue ++ ":\n"
-              ++ "  ldc 1\n"
-              ++ labelEnd ++ ":\n"
-    | otherwise = return $ "; Erreur: Operateur " ++ op ++ " non supporte\n"
+    code <- genInstr expr
+    return $ code ++ "  ireturn\n"
 
 genInstr _ = return ""
+
+genComparison :: String -> AST -> String -> AST -> JvmGen
+genComparison label l op r = do
+    tL <- getExprType l
+    tR <- getExprType r
+    codeL <- genInstr l
+    codeR <- genInstr r
+    let isF = tL == "flottant" || tR == "flottant"
+    if isF
+        then do
+            let loadL = codeL ++ (if tL == "entier" then "  i2f\n" else "")
+            let loadR = codeR ++ (if tR == "entier" then "  i2f\n" else "")
+            let jmp = case op of ">" -> "ifle"; "<" -> "ifge"; "==" -> "ifne"; "!=" -> "ifeq"; "<=" -> "ifgt"; ">=" -> "iflt"; _ -> "ifne"
+            return $ loadL ++ loadR ++ "  fcmpl\n  " ++ jmp ++ " " ++ label ++ "\n"
+        else do
+            let jmp = case op of ">" -> "if_icmple"; "<" -> "if_icmpge"; "==" -> "if_icmpne"; "!=" -> "if_icmpeq"; "<=" -> "if_icmpgt"; ">=" -> "if_icmplt"; _ -> "if_icmpne"
+            return $ codeL ++ codeR ++ "  " ++ jmp ++ " " ++ label ++ "\n"

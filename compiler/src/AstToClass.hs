@@ -13,5 +13,5 @@ parseClass ast outputName = do
             writeFile (outputName ++ ".j") code
             putStrLn $ "Jasmin source generated: " ++ outputName ++ ".j\n"
                 ++ "Please compile it with Jasmin to get the .class file.\n"
-                ++ "java -jar jasmin.jar a.out.class.j\n"
+                ++ "java -jar jasmin.jar " ++ outputName ++ ".j"
             return $ Right ()
