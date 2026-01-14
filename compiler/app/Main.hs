@@ -7,16 +7,18 @@
 
 module Main (main) where
 
-import System.Environment (getArgs)
-import System.Exit (exitWith, ExitCode(..))
 import ParseArguments (parseContent)
+import Interpreter (runREPL)
+import System.Environment (getArgs)
+import System.Exit (exitFailure)
 
 main :: IO ()
 main = do
     args <- getArgs
-    result <- parseContent args
-    case result of
-        Right () -> return ()
-        Left err -> do
-            putStrLn ("*** ERROR : " ++ err)
-            exitWith (ExitFailure 84)
+    case args of
+        [] -> runREPL
+        _  -> do
+            result <- parseContent args
+            case result of
+                Left err -> putStrLn err >> exitFailure
+                Right _  -> return ()

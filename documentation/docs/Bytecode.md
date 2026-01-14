@@ -47,7 +47,11 @@ Le bytecode utilise un système de typage unifié basé sur des tags d'un octet 
 | 06            | Symbol            | Symbole                        |
 | 07            | Nil               | Valeur nulle                   |
 | 08            | Function          | Référence vers Function Table  |
-| 09            | Object            | Objet (extension future)       |
+| 09            | Tuple             | Tuple (liste fixe)             |
+| 0A            | Array             | Tableau (vecteur)              |
+| 0B            | Struct            | Structure (champs nommés)      |
+| 0C            | Map               | Dictionnaire (Clé-Valeur)      |
+| 0D            | File              | Fichier                        |
 
 ### 2.2 Format des valeurs
 
@@ -75,14 +79,15 @@ Chaque valeur sur la pile respecte le format suivant :
 
 ### 3.1 Gestion des valeurs
 
-| Opcode | Instruction      | Description                                |
-| ------ | ---------------- | ------------------------------------------ |
-| 01     | PUSH_CONST index | Pousse une constante (String, List, etc.)  |
-| 02     | PUSH_INT value   | Pousse un entier immédiat (4 bytes)        |
-| 03     | PUSH_FLOAT value | Pousse un flottant immédiat (4 bytes)      |
-| 04     | PUSH_BOOL value  | Pousse un booléen immédiat (1 byte)        |
-| 05     | PUSH_NIL         | Pousse la valeur nulle sur la pile         |
-| 06     | POP              | Retire la valeur au sommet de la pile      |
+| Opcode | Instruction          | Description                                |
+| ------ | -------------------- | ------------------------------------------ |
+| 01     | PUSH_CONST index     | Pousse une constante (String, List, etc.)  |
+| 02     | PUSH_INT value       | Pousse un entier immédiat (4 bytes)        |
+| 03     | PUSH_FLOAT value     | Pousse un flottant immédiat (4 bytes)      |
+| 04     | PUSH_BOOL value      | Pousse un booléen immédiat (1 byte)        |
+| 05     | PUSH_STRING value    | Pousse une chaîne sur la pile              |
+| 06     | PUSH_NIL             | Pousse la valeur nulle sur la pile         |
+| 07     | POP                  | Retire la valeur au sommet de la pile      |
 
 **Note importante** : Les types complexes (Strings, Symboles, Listes) doivent être stockés dans le Constant Pool et chargés via `PUSH_CONST`. Les types immédiats (Int, Float, Bool) peuvent être encodés directement dans l'instruction.
 
@@ -113,6 +118,9 @@ Les opérations arithmétiques supportent automatiquement les types Int et Float
 | 23     | GT          | Supérieur strict         |
 | 24     | LTE         | Inférieur ou égal        |
 | 25     | GTE         | Supérieur ou égal        |
+| 26     | AND         | Conjonction              |
+| 27     | OR          | Disjonction              |
+| 28     | NOT         | Négation                 |
 
 ---
 
@@ -125,6 +133,13 @@ Les opérations arithmétiques supportent automatiquement les types Int et Float
 | 32     | TAIL (CDR)  | Extraction de la queue d'une liste             |
 | 33     | LIST size   | Crée une liste de n éléments depuis la pile    |
 | 34     | LEN         | Retourne la longueur d'une liste               |
+| 35     | IS_EMPTY    | Vérifie si une liste est vide (retourne Bool)  |
+| 36     | NTH         | Accès au nième élément d'une liste (0-indexed) |
+| 37     | INSERT      | Insère un élément à un index donné             |
+| 38     | REMOVE      | Retire l'élément à un index donné              |
+| 39     | CONTAINS    | Vérifie la présence d'un élément, retourne Bool|
+| 3A     | APPEND      | Concatène deux listes (list1 ++ list2)         |
+| 3B     | REVERSE     | Inverse l'ordre des éléments d'une liste       |
 
 **Exemple** : `LIST 3` consomme les 3 valeurs au sommet de la pile pour créer `[a, b, c]`.
 
@@ -189,7 +204,36 @@ Function 0 → adresse 200 Function 1 → adresse 350
 
 ---
 
-### 3.10 Terminaison
+### 3.10 Structures de données complexes
+
+| Opcode | Instruction       | Description                                      |
+| ------ | ----------------- | ------------------------------------------------ |
+| 90     | MAKE_TUPLE size   | Crée un tuple de n éléments depuis la pile       |
+| 91     | TUPLE_GET index   | Accède à l'élément à l'index immédiat            |
+| 92     | MAKE_ARRAY size   | Crée un tableau de n éléments depuis la pile     |
+| 93     | ARRAY_GET         | Accès indexé (Stack: array, index)               |
+| 94     | ARRAY_SET         | Modification (Stack: array, index, val)          |
+| 95     | MAKE_MAP count    | Crée une map (Stack: k1, v1, k2, v2...)          |
+| 96     | MAP_GET           | Accès par clé (Stack: map, key)                  |
+| 97     | MAP_SET           | Ajout/Modif (Stack: map, key, val)               |
+| 98     | MAKE_STRUCT count | Crée une struct de n champs (Stack: val1, ...)   |
+| 99     | STRUCT_GET nameId | Accès champ par nom (arg: index string pool)     |
+| 9A     | STRUCT_SET nameId | Modif champ par nom (arg: index string pool)     |
+
+---
+
+### 3.11 Gestion des fichiers
+
+| Opcode | Instruction | Description                      |
+| ------ | ----------- | -------------------------------- |
+| A0     | OPEN_FILE   | Ouvre un fichier                 |
+| A1     | READ_FILE   | Lit un fichier                   |
+| A2     | WRITE_FILE  | Écrit dans un fichier            |
+| A3     | CLOSE_FILE  | Ferme un fichier                 |
+
+---
+
+### 3.11 Terminaison
 
 | Opcode | Instruction | Description                |
 | ------ | ----------- | -------------------------- |
@@ -234,6 +278,7 @@ print(head(liste) + 10)
 
 5.2 Représentation en bytecode assembleur
 
+```assembly
 PUSH_INT 1
 PUSH_INT 2
 PUSH_INT 3
@@ -247,8 +292,9 @@ ADD
 PRINT
 HALT
 
-5.3 Encôdage binaire
+### 5.3 Encôdage binaire
 
+```binary
 02 00 00 00 01    ; PUSH_INT 1
 02 00 00 00 02    ; PUSH_INT 2
 02 00 00 00 03    ; PUSH_INT 3
@@ -260,12 +306,17 @@ HALT
 80                ; PRINT
 FF                ; HALT
 
-6. Format du fichier .cbc
-6.1 Vue d'ensemble de la structure
+## 6. Format du fichier .cbc
+
+graph TD
+    A[Fichier .cbc] --> B(HEADER);
+    A --> C(CONSTANT POOL);
+    A --> D(FUNCTION TABLE);
+    A --> E(INSTRUCTIONS);
 
 Pour visualiser clairement la structure du fichier .cbc, voici un diagramme Mermaid :
-Extrait de code
 
+```mermaid
 graph TD
     A[Fichier .cbc] --> B(HEADER);
     A --> C(CONSTANT POOL);
@@ -306,16 +357,28 @@ graph TD
         E3[Instruction 1] --> E3_1(Opcode : 1 byte);
         E3_1 --> E3_2(Operands : variable);
     end
+```
 
-6.2 Header (10 bytes)
-Offset   Taille   Champ Valeur / Description
-0x00  4  Magic Number   0x43 0x42 0x43 0x00 ("CBC\0")
-0x04  2  Version  0x01 0x00 (version 1.0)
-0x06  1  Flags 0x00 (réservé pour usage futur)
-0x07  3  Reserved 0x00 0x00 0x00 (padding)
+    subgraph CONSTANT_POOL
+        C1(Count : 4 bytes)
+        C2[Entry 0] --> C2_1(Type Tag : 1 byte);
+        C2_1 --> C2_2(Length : 4 bytes);
+        C2_2 --> C2_3(Data : n bytes);
+        C3[Entry 1] --> C3_1(Type Tag : 1 byte);
+        C3_1 --> C3_2(Length : 4 bytes);
+        C3_2 --> C3_3(Data : n bytes);
+    end
+
+| Offset | Taille | Champ | Valeur / Description |
+|---|---|---|---|
+| 0x00 | 4 | Magic Number | `0x43 0x42 0x43 0x00` ("CBC\0") |
+| 0x04 | 2 | Version | `0x01 0x00` (version 1.0) |
+| 0x06 | 1 | Flags | `0x00` (réservé pour usage futur) |
+| 0x07 | 3 | Reserved | `0x00 0x00 0x00` (padding) |
 
 Exemple en hexadécimal :
 
+```text
 43 42 43 00 | 01 00 | 00 | 00 00 00
    Magic    | Ver.  |Flg | Reserved
 
@@ -329,19 +392,33 @@ Type Tag 1 byte   Type de l'entrée (voir section 2.1)
 Length   4 bytes  Taille des données
 Data  Length bytes   Données brutes
 
-Exemples d'entrées :
+| Champ | Taille | Description |
+|---|---|---|
+| Count | 4 bytes | Nombre total d'entrées |
+| Entry N | variable | Entrée de la pool |
+| Type Tag | 1 byte | Type de l'entrée (voir section 2.1) |
+| Length | 4 bytes | Taille des données |
+| Data | Length bytes | Données brutes |
+
+**Exemples d'entrées :**
 
 String "Hello":
+```text
 04 | 00 00 00 05 | 48 65 6C 6C 6F
 Type | Length | Data
+```
 
 Symbol 'x':
+```text
 06 | 00 00 00 01 | 78
 Type | Length | Data (ASCII 'x')
+```
 
 Int 42:
+```text
 00 | 00 00 00 04 | 00 00 00 2A
 Type | Length | Data (32-bit int)
+```
 
 6.4 Function Table
 
@@ -353,15 +430,26 @@ Index 4 bytes  ID de la fonction
 Address  4 bytes  Adresse dans le bytecode
 ArgCount 1 byte   Nombre d'arguments
 
-Exemple :
+| Champ | Taille | Description |
+|---|---|---|
+| Count | 4 bytes | Nombre de fonctions |
+| Function Entry N | variable | Entrée de la table |
+| Index | 4 bytes | ID de la fonction |
+| Address | 4 bytes | Adresse dans le bytecode |
+| ArgCount | 1 byte | Nombre d'arguments |
+
+**Exemple :**
 
 Count: 2 fonctions
 
 Function 0: factorial (2 args, @ 0x00C8)
+```text
 00 00 00 00 | 00 00 00 C8 | 02
    Index       Address      Args
+```
 
 Function 1: main (0 args, @ 0x0150)
+```text
 00 00 00 01 | 00 00 01 50 | 00
    Index       Address      Args
 
@@ -374,24 +462,38 @@ Instruction N  variable Séquence d'Opcode et d'Opérandes
 Opcode   1 byte   Instruction
 Operands variable Arguments de l'instruction
 
-Exemple d'encodage :
+| Champ | Taille | Description |
+|---|---|---|
+| Code Length | 4 bytes | Taille totale du code |
+| Instruction N | variable | Séquence d'Opcode et d'Opérandes |
+| Opcode | 1 byte | Instruction |
+| Operands | variable | Arguments de l'instruction |
 
-Instruction: PUSH_INT 42
+**Exemple d'encodage :**
+
+Instruction: `PUSH_INT 42`
+```text
 02 | 00 00 00 2A
 Opcode | Operand (4 bytes)
+```
 
-Instruction: ADD
+Instruction: `ADD`
+```text
 10
 Opcode (pas d'opérande)
+```
 
-Instruction: CALL 0 with 2 args
+Instruction: `CALL` 0 with 2 args
+```text
 70 | 00 00 00 00 | 02
 Opcode | Function Index | ArgCount
+```
 
 6.6 Exemple complet de fichier .cbc
 
 Programme : print(42)
 
+```text
 43 42 43 00 01 00 00 00 00 00  ; HEADER (10 bytes)
 00 00 00 00                    ; CONSTANT POOL (Count: 0)
 00 00 00 00                    ; FUNCTION TABLE (Count: 0)
@@ -401,3 +503,4 @@ Programme : print(42)
 FF                             ; HALT
 
 Taille totale: 28 bytes
+```

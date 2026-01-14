@@ -1,0 +1,8 @@
+principal
+    variable entier x = 10
+    si (x > 5)
+        afficher("Sup")
+    sinon
+        afficher("Inf")
+    fin
+fin

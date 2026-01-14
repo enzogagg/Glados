@@ -20,7 +20,6 @@ const config = {
     trailingSlash: false,
 
     onBrokenLinks: 'throw',
-    onBrokenMarkdownLinks: 'warn',
 
     // --- CONFIGURATION I18N CORRIGÉE ---
     i18n: {
@@ -44,7 +43,7 @@ const config = {
                 docs: {
                     sidebarPath: require.resolve('./sidebars.js'),
                     // IMPORTANT : Ceci met la doc à la racine du site
-                    routeBasePath: '/', 
+                    routeBasePath: '/',
                     editUrl: 'https://github.com/enzogagg/Glados/tree/main/documentation/',
                 },
                 blog: false,

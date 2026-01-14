@@ -50,5 +50,5 @@ jobs:
       - name: Functional Tests
         run: |
           make
-          chmod +x scripts/functional_tests_compiler.sh
-          ./scripts/functional_tests_compiler.sh
+          chmod +x scripts/run_integration_tests.sh
+          ./scripts/run_integration_tests.sh

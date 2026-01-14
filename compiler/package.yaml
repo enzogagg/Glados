@@ -22,6 +22,10 @@ dependencies:
 - megaparsec
 - parser-combinators
 - directory
+- bytestring
+- binary
+- containers
+- mtl
 
 ghc-options:
 - -Wall
@@ -38,6 +42,8 @@ library:
   source-dirs:
   - src
   - src/parser
+  - src/visualizer
+  - src/optimisation
 
 executables:
 
@@ -53,7 +59,7 @@ executables:
 
 
 tests:
-  glados-test:
+  compiler-test:
     main:                Spec.hs
     source-dirs:         ../test/compiler/unitary
     ghc-options:
@@ -64,3 +70,5 @@ tests:
     - glados
     - hspec
     - megaparsec
+    - bytestring
+    - binary

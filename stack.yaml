@@ -1,0 +1,4 @@
+resolver: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/24/20.yaml
+packages:
+- compiler
+- vm

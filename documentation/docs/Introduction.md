@@ -25,7 +25,7 @@ CLaD inclut des **types fondamentaux** calibrés pour une précision maximale :
 - **Nombres** (Entiers et Flottants) : Pour calculer la trajectoire des portails.
 - **Chaînes de caractères** : Pour communiquer avec les tourelles (ou insulter l'IA).
 - **Listes** : Pour organiser vos résultats de test.
-- **Booléens** (#t et #f) : La vérité est binaire. Le gâteau est un mensonge.
+- **Booléens** (vrai et faux) : La vérité est binaire. Le gâteau est un mensonge.
 
 Ces types sont intégrés au cœur du système. CLaD définit leur *syntaxe*, leur *comportement* et leurs *opérations*.
 

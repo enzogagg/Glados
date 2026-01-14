@@ -18,9 +18,21 @@ glados-*
 
 # LISP files
 example/*
+*.clad
+*.cbc
 
-# *.scm
+# *.other file
 *.pdf
+*.dot
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.mp4
+*.mp3
+*.wav
+*.ico
 
 # Documentation
 documentation/node_modules
@@ -28,3 +40,6 @@ documentation/node_modules
 # OS generated files
 .DS_Store
 .vscode/
+
+# Python
+__pycache__

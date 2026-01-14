@@ -10,7 +10,29 @@ data Value
     | SymbolVal String        -- Tag 06
     | NilVal                  -- Tag 07
     | FunctionVal Int         -- Tag 08
-    deriving (Show, Eq)
+    | TupleVal [Value]        -- Tag 09
+    | ArrayVal [Value]        -- Tag 0A
+    | StructVal [(String, Value)] -- Tag 0B
+    | MapVal [(Value, Value)] -- Tag 0C
+    | FileVal String          -- Tag 0D
+    deriving (Eq)
+
+instance Show Value where
+    show (IntVal n) = show n
+    show (FloatVal n) = show n
+    show (BoolVal True) = "#t"
+    show (BoolVal False) = "#f"
+    show (CharVal c) = show c
+    show (StringVal s) = s
+    show (ListVal l) = "(" ++ unwords (map show l) ++ ")"
+    show (SymbolVal s) = s
+    show NilVal = "nil"
+    show (FunctionVal n) = "<function " ++ show n ++ ">"
+    show (TupleVal l) = "{" ++ unwords (map show l) ++ "}"
+    show (ArrayVal l) = "[" ++ unwords (map show l) ++ "]"
+    show (StructVal _) = "<struct>"
+    show (MapVal _) = "<map>"
+    show (FileVal s) = "<file " ++ s ++ ">"
 
 data Instruction
     = PushConst Int           -- 01
@@ -34,12 +56,22 @@ data Instruction
     | Gt                      -- 23
     | Le                      -- 24
     | Ge                      -- 25
+    | And                     -- 26
+    | Or                      -- 27
+    | Not                     -- 28
 
     | Cons                    -- 30
     | Head                    -- 31
     | Tail                    -- 32
     | ListMake Int            -- 33
     | Len                     -- 34
+    | IsEmpty                 -- 35
+    | Nth                     -- 36
+    | Insert                  -- 37
+    | Remove                  -- 38
+    | Contains                -- 39
+    | Append                  -- 3A
+    | Reverse                 -- 3B
 
     | MakeSymbol              -- 40
     | Quote                   -- 41
@@ -60,6 +92,26 @@ data Instruction
 
     | Print                   -- 80
     | Input                   -- 81
+
+    | MakeTuple Int           -- 90
+    | TupleGet Int            -- 91
+
+    | MakeArray Int           -- 92
+    | ArrayGet                -- 93
+    | ArraySet                -- 94
+
+    | MakeMap Int             -- 95
+    | MapGet                  -- 96
+    | MapSet                  -- 97
+
+    | MakeStruct Int          -- 98
+    | StructGet String        -- 99
+    | StructSet String        -- 9A
+    
+    | OpenFile                -- A0
+    | ReadFile                -- A1
+    | WriteFile               -- A2
+    | CloseFile               -- A3
 
     | Halt                    -- FF
     deriving (Show, Eq)

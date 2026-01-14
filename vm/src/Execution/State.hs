@@ -7,7 +7,7 @@
 
 module Execution.State (VMState(..), newVMState) where
 
-import Types (Value, Instruction, FunctionMeta)
+import Types (Value(..), Instruction, FunctionMeta)
 import qualified Data.Map as Map
 
 -- === VM State ===
@@ -25,12 +25,15 @@ data VMState = VMState {
     instructions :: [Instruction],      -- The instructions of the virtual machine. (Store instructions)
     constants :: [Value],               -- The constants of the virtual machine. (Store constants)
     functions :: [FunctionMeta]        -- The functions of the virtual machine. (Store functions)
-} deriving (Show)
+} deriving (Show, Eq)
 
-newVMState :: [Instruction] -> [Value] -> [FunctionMeta] -> VMState
-newVMState insts consts funcs = VMState {
+newVMState :: [Instruction] -> [Value] -> [FunctionMeta] -> [String] -> VMState
+newVMState insts consts funcs args = VMState {
     stack = [],
-    env = Map.empty,
+    env = Map.fromList [
+        ("n_args", IntVal (length args)),
+        ("args", ListVal (map StringVal args))
+    ],
     ip = 0,
     callStack = [],
     curArgs = [],

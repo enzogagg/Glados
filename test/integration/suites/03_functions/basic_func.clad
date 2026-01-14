@@ -1,0 +1,7 @@
+fonction add(entier a, entier b) : entier
+    retourner a + b
+fin
+
+principal
+    afficher(add(3, 4))
+fin

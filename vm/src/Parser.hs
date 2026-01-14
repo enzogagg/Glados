@@ -54,6 +54,18 @@ parseConstantEntry = do
             return $ SymbolVal (map (toEnum . fromEnum) (BL.unpack (BL.fromStrict str)))
         0x07 -> return NilVal
         0x08 -> FunctionVal . fromIntegral <$> getInt32be
+        0x09 -> do -- Tuple
+             _ <- getByteString (fromIntegral len)
+             return $ TupleVal []
+        0x0A -> do -- Array
+             _ <- getByteString (fromIntegral len)
+             return $ ArrayVal []
+        0x0B -> do -- Struct
+             _ <- getByteString (fromIntegral len)
+             return $ StructVal []
+        0x0C -> do -- Map
+             _ <- getByteString (fromIntegral len)
+             return $ MapVal []
         _ -> fail $ "Unknown constant type tag: " ++ show tag
 
 parseFunctionTable :: Get [FunctionMeta]
@@ -108,12 +120,26 @@ parseInstruction pool = do
         0x23 -> return Gt
         0x24 -> return Le
         0x25 -> return Ge
+        0x26 -> return And
+        0x27 -> return Or
+        0x28 -> return Not
 
         0x30 -> return Cons
         0x31 -> return Head
         0x32 -> return Tail
         0x33 -> ListMake . fromIntegral <$> getInt32be
         0x34 -> return Len
+        0x35 -> return IsEmpty
+        0x36 -> return Nth
+        0x37 -> return Insert
+        0x38 -> return Remove
+        0x39 -> return Contains
+        0x3A -> return Append
+        0x3B -> return Reverse
+
+        0x40 -> return MakeSymbol
+        0x41 -> return Quote
+        0x42 -> return Eval
 
         0x50 -> Load . getStringFromPool pool . fromIntegral <$> getInt32be
         0x51 -> Store . getStringFromPool pool . fromIntegral <$> getInt32be
@@ -133,6 +159,23 @@ parseInstruction pool = do
         0x80 -> return Print
         0x81 -> return Input
 
+        0x90 -> MakeTuple . fromIntegral <$> getInt32be
+        0x91 -> TupleGet . fromIntegral <$> getInt32be
+        0x92 -> MakeArray . fromIntegral <$> getInt32be
+        0x93 -> return ArrayGet
+        0x94 -> return ArraySet
+        0x95 -> MakeMap . fromIntegral <$> getInt32be
+        0x96 -> return MapGet
+        0x97 -> return MapSet
+        0x98 -> MakeStruct . fromIntegral <$> getInt32be
+        0x99 -> StructGet . getStringFromPool pool . fromIntegral <$> getInt32be
+        0x9A -> StructSet . getStringFromPool pool . fromIntegral <$> getInt32be
+
+        0xA0 -> return OpenFile
+        0xA1 -> return ReadFile
+        0xA2 -> return WriteFile
+        0xA3 -> return CloseFile
+
         0xFF -> return Halt
         _ -> fail $ "Unknown Opcode: " ++ show opcode
 
@@ -140,5 +183,6 @@ getStringFromPool :: [Value] -> Int -> String
 getStringFromPool pool idx
     | idx < length pool = case pool !! idx of
         StringVal s -> s
-        _ -> "INVALID_TYPE"
+        SymbolVal s -> s
+        v -> "INVALID_TYPE: " ++ show v
     | otherwise = "INVALID_INDEX"
