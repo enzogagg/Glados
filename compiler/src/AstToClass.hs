@@ -2,7 +2,7 @@ module AstToClass (parseClass) where
 
 import Types
 import qualified JvmBackend.EntryPoint as Jvm
-import System.IO
+import System.IO()
 
 parseClass :: AST -> String -> IO (Either String ())
 parseClass ast outputName = do

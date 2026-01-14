@@ -1,4 +1,11 @@
-module JvmBackend.Context where
+module JvmBackend.Context
+    ( JvmContext(..)
+    , JvmGen
+    , emptyContext
+    , reserveVar
+    , uniqueLabel
+    , getVarIndex
+    ) where
 
 import Control.Monad.State
 import qualified Data.Map.Strict as Map

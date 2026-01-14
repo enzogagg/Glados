@@ -66,7 +66,6 @@ useContent content cArgs =
                         Right () -> do
                             let optimizedAst = eliminateDeadCode
                                                 . foldConstants
-                                                . propagateConstants
                                                 $ finalAst
 
                             case runMode cArgs of

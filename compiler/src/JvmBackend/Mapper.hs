@@ -1,4 +1,4 @@
-module JvmBackend.Mapper where
+module JvmBackend.Mapper (mapOp) where
 
 mapOp :: String -> String
 mapOp "+"  = "iadd"
