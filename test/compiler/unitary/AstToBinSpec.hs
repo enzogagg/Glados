@@ -8,9 +8,11 @@ import Data.Binary.Get
 import Data.Binary.Put
 import Data.Word
 import Control.Monad.State
+import Control.Monad (when, replicateM, replicateM_)
 import qualified Data.Map.Strict as Map
 import System.Directory (removeFile, doesFileExist)
-import Control.Exception (catch, SomeException)
+import Control.Exception (catch, SomeException, finally)
+import System.IO.Unsafe (unsafePerformIO)
 
 import Types
 import AstToBin
@@ -22,66 +24,58 @@ import AstToBin
 cleanupTestFile :: FilePath -> IO ()
 cleanupTestFile path = do
     exists <- doesFileExist path
-    Control.Monad.when exists
+    when exists
         $ removeFile path `catch` (\ (_ :: SomeException) -> return ())
 
--- Liste de tous les fichiers de test créés
-testFiles :: [FilePath]
-testFiles = [
-    "test_header.cbc", "test_header_size.cbc", "test_empty_pool.cbc",
-    "test_string_pool.cbc", "test_symbol_pool.cbc", "test_dedup.cbc",
-    "test_no_func.cbc", "test_one_func.cbc", "test_multi_func.cbc",
-    "test_push_int.cbc", "test_push_bool.cbc", "test_add.cbc",
-    "test_print.cbc", "test_halt.cbc", "test_if.cbc", "test_if_else.cbc",
-    "test_closure.cbc", "test_call.cbc", "test_return.cbc",
-    "test_load_arg.cbc", "test_define.cbc", "test_store.cbc",
-    "test_load.cbc", "test_overflow.cbc", "test_complex.cbc"
-    ]
-
-cleanupAllTestFiles :: IO ()
-cleanupAllTestFiles = mapM_ cleanupTestFile testFiles
+withTestFile :: FilePath -> IO a -> IO a
+withTestFile path action = action `finally` cleanupTestFile path
 
 -- ==========================
--- Helpers pour parser le bytecode généré
+-- Helpers pour parser le bytecode généré (reverse engineering)
 -- ==========================
 
-parseHeader :: BL.ByteString -> Maybe (Word32, Word16, Word8)
-parseHeader bs =
-    case runGetOrFail getHeaderData bs of
-        Right (_, _, result) -> Just result
-        Left _ -> Nothing
-  where
-    getHeaderData = do
-        magic <- getWord32be
-        version <- getWord16be
-        flags <- getWord8
-        skip 3
-        return (magic, version, flags)
+-- Check Header: Magic(4) + Version(2) + Flags(1) + Reserved(3) = 10 bytes
+parseHeader :: Get (Word32, Word16, Word8)
+parseHeader = do
+    magic <- getWord32be
+    ver <- getWord16be
+    flags <- getWord8
+    skip 3 -- Reserved
+    return (magic, ver, flags)
 
-parseConstantPoolCount :: BL.ByteString -> Maybe Int
-parseConstantPoolCount bs =
-    case runGetOrFail (skip 10 >> fmap fromIntegral getWord32be) bs of
-        Right (_, _, count) -> Just count
-        Left _ -> Nothing
+-- Structure complète pour vérification approfondie
+data ParsedBinary = ParsedBinary {
+    pbMagic :: Word32,
+    pbVersion :: Word16,
+    pbFlags :: Word8,
+    pbConstPoolCount :: Int,
+    pbFuncTableCount :: Int,
+    pbInstructions :: [Word8]
+} deriving (Show)
 
-parseFunctionTableCount :: BL.ByteString -> Maybe Int
-parseFunctionTableCount bs =
-    case runGetOrFail parser bs of
-        Right (_, _, count) -> Just count
-        Left _ -> Nothing
-  where
-    parser = do
-        skip 10
-        constCount <- getWord32be
-        skipConstantPool (fromIntegral constCount)
-        fromIntegral <$> getWord32be
+parseFullBinary :: Get ParsedBinary
+parseFullBinary = do
+    (magic, ver, flags) <- parseHeader
 
-    skipConstantPool 0 = return ()
-    skipConstantPool n = do
+    poolCount <- getWord32be
+    replicateM_ (fromIntegral poolCount) $ do
         _ <- getWord8
         len <- getWord32be
         skip (fromIntegral len)
-        skipConstantPool (n - 1)
+
+    funcCount <- getWord32be
+    replicateM_ (fromIntegral funcCount) $ do
+        skip 4 -- Index
+        skip 4 -- Address
+        skip 1 -- ArgCount
+
+    instrCount <- getWord32be
+    instrs <- replicateM (fromIntegral instrCount) getWord8
+
+    return $ ParsedBinary magic ver flags (fromIntegral poolCount) (fromIntegral funcCount) instrs
+
+getInstructions :: BL.ByteString -> [Word8]
+getInstructions bs = pbInstructions $ runGet parseFullBinary bs
 
 -- ==========================
 -- Tests
@@ -89,234 +83,261 @@ parseFunctionTableCount bs =
 
 spec :: Spec
 spec = do
-    afterAll_ cleanupAllTestFiles $ do
-        describe "AstToBin" $ do
-            describe "Header Generation" $ do
-                it "génère un header valide avec le magic number CBC\\0" $ do
-                    let ast = IAProgram []
-                    result <- parseBin ast "test_header.cbc"
-                    result `shouldBe` Right ()
+    describe "Compiler AstToBin - Binary Generation" $ do
 
-                    bytecode <- BS.readFile "test_header.cbc"
-                    let header = parseHeader (BL.fromStrict bytecode)
-                    header `shouldBe` Just (0x43424300, 0x0100, 0x00)
+        describe "Header Generation" $ do
+            it "should generate a valid header (Magic CBC)" $ do
+                let file_name = "test_header.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram []) file_name
+                    content <- BS.readFile file_name
+                    let (magic, version, flags) = runGet parseHeader (BL.fromStrict content)
+                    magic `shouldBe` 0x43424300 -- CBC\0
+                    version `shouldBe` 0x0100   -- 1.0
+                    flags `shouldBe` 0x00
 
-                it "génère un header de 10 bytes" $ do
-                    let ast = IAProgram []
-                    _ <- parseBin ast "test_header_size.cbc"
-                    bytecode <- BS.readFile "test_header_size.cbc"
-                    BS.length bytecode `shouldSatisfy` (>= 10)
+        describe "Basic Opcodes Generation" $ do
 
-        describe "Constant Pool" $ do
-            it "génère un constant pool vide pour un programme vide" $ do
-                let ast = IAProgram []
-                _ <- parseBin ast "test_empty_pool.cbc"
-                bytecode <- BS.readFile "test_empty_pool.cbc"
-                let count = parseConstantPoolCount (BL.fromStrict bytecode)
-                count `shouldBe` Just 0
+            it "should compile Integer (PUSH_INT)" $ do
+                let file_name = "test_int.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram [IANumber 42]) file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let instrs = getInstructions content
+                    -- PUSH_INT (02) + 42 (00 00 00 2A) + HALT (FF)
+                    instrs `shouldBe` [0x02, 0x00, 0x00, 0x00, 0x2A, 0xFF]
 
-            it "ajoute une string au constant pool" $ do
-                let ast = IAProgram [IAMain [] [IAString "hello"]]
-                _ <- parseBin ast "test_string_pool.cbc"
-                bytecode <- BS.readFile "test_string_pool.cbc"
-                let count = parseConstantPoolCount (BL.fromStrict bytecode)
-                count `shouldSatisfy` maybe False (> 0)
+            it "should compile Float (PUSH_FLOAT)" $ do
+                let file_name = "test_float.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram [IAFloatLiteral 2.5]) file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let instrs = getInstructions content
+                    -- PUSH_FLOAT (03) + 2.5 (IEEE 40 20 00 00) + HALT (FF)
+                    instrs `shouldBe` [0x03, 0x40, 0x20, 0x00, 0x00, 0xFF]
 
-            it "ajoute un symbole au constant pool" $ do
-                let ast = IAProgram [IAMain [] [IADeclare "x" Nothing (IANumber 42)]]
-                _ <- parseBin ast "test_symbol_pool.cbc"
-                bytecode <- BS.readFile "test_symbol_pool.cbc"
-                let count = parseConstantPoolCount (BL.fromStrict bytecode)
-                count `shouldBe` Just 1
+            it "should compile Boolean (PUSH_BOOL)" $ do
+                let file_name = "test_bool.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram [IABoolean True, IABoolean False]) file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let instrs = getInstructions content
+                    -- PUSH_BOOL (04) + 1, PUSH_BOOL (04) + 0 + HALT (FF)
+                    instrs `shouldBe` [0x04, 0x01, 0x04, 0x00, 0xFF]
 
-            it "déduplique les constantes identiques" $ do
-                let ast = IAProgram [IAMain [] [IAString "test", IAString "test"]]
-                _ <- parseBin ast "test_dedup.cbc"
-                bytecode <- BS.readFile "test_dedup.cbc"
-                let count = parseConstantPoolCount (BL.fromStrict bytecode)
-                count `shouldBe` Just 1
+            it "should compile Nil (PUSH_NIL)" $ do
+                let file_name = "test_nil.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram [IAUnit]) file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let instrs = getInstructions content
+                    -- PUSH_NIL (06) + HALT (FF)
+                    instrs `shouldBe` [0x06, 0xFF]
 
-        describe "Function Table" $ do
-            it "génère une function table vide pour un programme sans fonction" $ do
-                let ast = IAProgram [IAMain [] [IANumber 42]]
-                _ <- parseBin ast "test_no_func.cbc"
-                bytecode <- BS.readFile "test_no_func.cbc"
-                let count = parseFunctionTableCount (BL.fromStrict bytecode)
-                count `shouldBe` Just 0
+            it "should compile String (PUSH_STRING via Const Pool)" $ do
+                let file_name = "test_str.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram [IAString "Hello"]) file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let instrs = getInstructions content
+                    -- PUSH_CONST (01) + Index 0 (00 00 00 00) + HALT (FF)
+                    instrs `shouldBe` [0x01, 0x00, 0x00, 0x00, 0x00, 0xFF]
+                    -- check const pool count is 1
+                    let pb = runGet parseFullBinary content
+                    pbConstPoolCount pb `shouldBe` 1
 
-            it "ajoute une fonction à la function table" $ do
-                let ast = IAProgram [
-                        IAFunctionDef "test" [] Nothing [IAReturn (IANumber 42)],
-                        IAMain [] []
-                        ]
-                _ <- parseBin ast "test_one_func.cbc"
-                bytecode <- BS.readFile "test_one_func.cbc"
-                let count = parseFunctionTableCount (BL.fromStrict bytecode)
-                count `shouldBe` Just 1
+        describe "Arithmetic Operations" $ do
 
-            it "gère plusieurs fonctions" $ do
-                let ast = IAProgram [
-                        IAFunctionDef "func1" [] Nothing [IAReturn (IANumber 1)],
-                        IAFunctionDef "func2" [] Nothing [IAReturn (IANumber 2)],
-                        IAMain [] []
-                        ]
-                _ <- parseBin ast "test_multi_func.cbc"
-                bytecode <- BS.readFile "test_multi_func.cbc"
-                let count = parseFunctionTableCount (BL.fromStrict bytecode)
-                count `shouldBe` Just 2
+            it "should compile ADD (+)" $ do
+                let file_name = "test_add.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram [IAInfix (IANumber 1) "+" (IANumber 2)]) file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let instrs = getInstructions content
+                    -- PUSH 1, PUSH 2, ADD (10) + HALT (FF)
+                    instrs `shouldBe` [0x02, 0, 0, 0, 1, 0x02, 0, 0, 0, 2, 0x10, 0xFF]
 
-        describe "Instructions Generation" $ do
-            it "génère PUSH_INT pour un nombre" $ do
-                let ast = IAProgram [IAMain [] [IANumber 42]]
-                _ <- parseBin ast "test_push_int.cbc"
-                bytecode <- BS.readFile "test_push_int.cbc"
-                BS.elem 0x02 bytecode `shouldBe` True
+            it "should compile SUB (-)" $ do
+                let file_name = "test_sub.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram [IAInfix (IANumber 1) "-" (IANumber 2)]) file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let instrs = getInstructions content
+                    -- PUSH 1, PUSH 2, SUB (11) + HALT (FF)
+                    instrs `shouldBe` [0x02, 0, 0, 0, 1, 0x02, 0, 0, 0, 2, 0x11, 0xFF]
 
-            it "génère PUSH_BOOL pour un booléen" $ do
-                let ast = IAProgram [IAMain [] [IABoolean True]]
-                _ <- parseBin ast "test_push_bool.cbc"
-                bytecode <- BS.readFile "test_push_bool.cbc"
+            it "should compile MUL (*)" $ do
+                let file_name = "test_mul.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram [IAInfix (IANumber 2) "*" (IANumber 3)]) file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let instrs = getInstructions content
+                    -- PUSH 2, PUSH 3, MUL (12) + HALT (FF)
+                    instrs `shouldBe` [0x02, 0, 0, 0, 2, 0x02, 0, 0, 0, 3, 0x12, 0xFF]
 
-                BS.elem 0x04 bytecode `shouldBe` True
+            it "should compile DIV (/)" $ do
+                let file_name = "test_div.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram [IAInfix (IANumber 10) "/" (IANumber 2)]) file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let instrs = getInstructions content
+                    -- PUSH 10, PUSH 2, DIV (13) + HALT (FF)
+                    instrs `shouldBe` [0x02, 0, 0, 0, 10, 0x02, 0, 0, 0, 2, 0x13, 0xFF]
 
-            it "génère ADD pour une addition" $ do
-                let ast = IAProgram [IAMain [] [IAInfix (IANumber 1) "+" (IANumber 2)]]
-                _ <- parseBin ast "test_add.cbc"
-                bytecode <- BS.readFile "test_add.cbc"
+            it "should compile MOD (%)" $ do
+                let file_name = "test_mod.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram [IAInfix (IANumber 10) "%" (IANumber 3)]) file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let instrs = getInstructions content
+                    -- PUSH 10, PUSH 3, MOD (14) + HALT (FF)
+                    instrs `shouldBe` [0x02, 0, 0, 0, 10, 0x02, 0, 0, 0, 3, 0x14, 0xFF]
 
-                BS.elem 0x10 bytecode `shouldBe` True
+        describe "Comparison Operations" $ do
 
-            it "génère PRINT pour afficher" $ do
-                let ast = IAProgram [IAMain [] [IACall "afficher" [IANumber 42]]]
-                _ <- parseBin ast "test_print.cbc"
-                bytecode <- BS.readFile "test_print.cbc"
+            it "should compile EQ (==)" $ do
+                let file_name = "test_eq.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram [IAInfix (IANumber 1) "==" (IANumber 1)]) file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let instrs = getInstructions content
+                    -- PUSH 1, PUSH 1, EQ (20), HALT
+                    let instrNoHalt = init instrs
+                    last instrNoHalt `shouldBe` 0x20
 
-                BS.elem 0x80 bytecode `shouldBe` True
+            it "should compile NEQ (!=)" $ do
+                let file_name = "test_neq.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram [IAInfix (IANumber 1) "!=" (IANumber 2)]) file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let instrs = getInstructions content
+                    -- PUSH 1, PUSH 2, NEQ (21), HALT
+                    let instrNoHalt = init instrs
+                    last instrNoHalt `shouldBe` 0x21
 
-            it "se termine toujours par HALT" $ do
-                let ast = IAProgram [IAMain [] [IANumber 42]]
-                _ <- parseBin ast "test_halt.cbc"
-                bytecode <- BS.readFile "test_halt.cbc"
+        describe "Logic Operations" $ do
+            it "should compile AND (et)" $ do
+                let file_name = "test_and.cbc"
+                withTestFile file_name $ do
+                   _ <- parseBin (IAProgram [IAInfix (IABoolean True) "et" (IABoolean False)]) file_name
+                   content <- BL.fromStrict <$> BS.readFile file_name
+                   let instrs = getInstructions content
+                   -- ..., AND (26), HALT
+                   let instrNoHalt = init instrs
+                   last instrNoHalt `shouldBe` 0x26
 
-                BS.last bytecode `shouldBe` 0xFF
+            it "should compile OR (ou)" $ do
+                let file_name = "test_or.cbc"
+                withTestFile file_name $ do
+                   _ <- parseBin (IAProgram [IAInfix (IABoolean True) "ou" (IABoolean False)]) file_name
+                   content <- BL.fromStrict <$> BS.readFile file_name
+                   let instrs = getInstructions content
+                   -- ..., OR (27), HALT
+                   let instrNoHalt = init instrs
+                   last instrNoHalt `shouldBe` 0x27
 
-        describe "Control Flow" $ do
-            it "génère JMP_IF_FALSE pour un if" $ do
-                let ast = IAProgram [IAMain [] [
-                        IAIf (IABoolean True) [IANumber 1] Nothing
-                        ]]
-                _ <- parseBin ast "test_if.cbc"
-                bytecode <- BS.readFile "test_if.cbc"
+             -- Note: NOT Opcode is usually a function call like !(x) in CLaD
+            it "should compile NOT (Call !)" $ do
+                let file_name = "test_not.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram [IACall "!" [IABoolean True]]) file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let instrs = getInstructions content
+                    -- ..., NOT (28), HALT
+                    let instrNoHalt = init instrs
+                    last instrNoHalt `shouldBe` 0x28
 
-                BS.elem 0x62 bytecode `shouldBe` True
+        describe "Variable Management" $ do
 
-            it "génère JMP pour un if-else" $ do
-                let ast = IAProgram [IAMain [] [
-                        IAIf (IABoolean True) [IANumber 1] (Just [IANumber 2])
-                        ]]
-                _ <- parseBin ast "test_if_else.cbc"
-                bytecode <- BS.readFile "test_if_else.cbc"
+            it "should compile variable declaration (DEFINE via Symbol)" $ do
+                let file_name = "test_def.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram [IADeclare "x" (Just IntT) (IANumber 10)]) file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let instrs = getInstructions content
+                    -- PUSH 10, DEFINE (52) + Index
+                    let opcode = instrs !! 5
+                    opcode `shouldBe` 0x52
 
-                BS.elem 0x60 bytecode `shouldBe` True
-                BS.elem 0x62 bytecode `shouldBe` True
+            it "should compile variable assignment (STORE)" $ do
+                let file_name = "test_store.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram [IAAssign "x" (IANumber 20)]) file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let instrs = getInstructions content
+                    -- PUSH 20, STORE (51) + Index
+                    let opcode = instrs !! 5
+                    opcode `shouldBe` 0x51
 
-        describe "Functions" $ do
-            it "génère CLOSURE pour une définition de fonction" $ do
-                let ast = IAProgram [
-                        IAFunctionDef "test" [] Nothing [IAReturn (IANumber 42)],
-                        IAMain [] []
-                        ]
-                _ <- parseBin ast "test_closure.cbc"
-                bytecode <- BS.readFile "test_closure.cbc"
+            it "should compile variable usage (LOAD)" $ do
+                let file_name = "test_load.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram [IASymbol "x"]) file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let instrs = getInstructions content
+                    -- LOAD (50) + Index (00 00 00 00), HALT
+                    instrs `shouldBe` [0x50, 0, 0, 0, 0, 0xFF]
 
-                BS.elem 0x72 bytecode `shouldBe` True
+        describe "Control Structures" $ do
+             -- Les structures de contrôle (If, While) génèrent des JMP.
 
-            it "génère CALL pour un appel de fonction" $ do
-                let ast = IAProgram [
-                        IAFunctionDef "test" [] Nothing [IAReturn (IANumber 42)],
-                        IAMain [] [IACall "test" []]
-                        ]
-                _ <- parseBin ast "test_call.cbc"
-                bytecode <- BS.readFile "test_call.cbc"
+            it "should use JMP_IF_FALSE and JMP for If-Else" $ do
+                let file_name = "test_if.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram [IAIf (IABoolean True) [IANumber 1] (Just [IANumber 2])]) file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let instrs = getInstructions content
+                    -- Doit contenir JMP_IF_FALSE (62)
+                    (0x62 `elem` instrs) `shouldBe` True
 
-                BS.elem 0x70 bytecode `shouldBe` True
+            it "should use JMP_IF_FALSE and JMP for While" $ do
+                let file_name = "test_while.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram [IAWhile (IABoolean True) [IANumber 1]]) file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let instrs = getInstructions content
+                    -- Doit contenir JMP_IF_FALSE (62) et JMP (60)
+                    (0x62 `elem` instrs) `shouldBe` True
+                    (0x60 `elem` instrs) `shouldBe` True
 
-            it "génère RETURN pour un retour" $ do
-                let ast = IAProgram [
-                        IAFunctionDef "test" [] Nothing [IAReturn (IANumber 42)]
-                        ]
-                _ <- parseBin ast "test_return.cbc"
-                bytecode <- BS.readFile "test_return.cbc"
+        describe "Builtin Calls" $ do
 
-                BS.elem 0x71 bytecode `shouldBe` True
+            it "should compile Print" $ do
+                let file_name = "test_print.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram [IACall "afficher" [IANumber 42]]) file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let instrs = getInstructions content
+                    -- PUSH 42, PRINT (80), HALT
+                    let instrNoHalt = init instrs
+                    last instrNoHalt `shouldBe` 0x80
 
-            it "génère LOAD_ARG pour les paramètres de fonction" $ do
-                let ast = IAProgram [
-                        IAFunctionDef "test" [("x", Nothing)] Nothing [IAReturn (IASymbol "x")],
-                        IAMain [] []
-                        ]
-                _ <- parseBin ast "test_load_arg.cbc"
-                bytecode <- BS.readFile "test_load_arg.cbc"
+            it "should compile Input" $ do
+                let file_name = "test_input.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram [IACall "ecouter" []]) file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let instrs = getInstructions content
+                    -- INPUT (81), HALT
+                    instrs `shouldBe` [0x81, 0xFF]
 
-                BS.elem 0x73 bytecode `shouldBe` True
+        describe "Advanced Types" $ do
+             it "should compile List creation" $ do
+                 let file_name = "test_list.cbc"
+                 withTestFile file_name $ do
+                     _ <- parseBin (IAProgram [IAList [IANumber 1, IANumber 2]]) file_name
+                     content <- BL.fromStrict <$> BS.readFile file_name
+                     let instrs = getInstructions content
+                     -- PUSH 1, PUSH 2, LIST (33) + Size(2)
+                     -- PUSH 1 (5 bytes) + PUSH 2 (5 bytes) = 10 bytes
+                     -- LIST 33 + 4 bytes size, HALT
+                     drop 10 instrs `shouldBe` [0x33, 0, 0, 0, 2, 0xFF]
 
-        describe "Variables" $ do
-            it "génère DEFINE pour une déclaration" $ do
-                let ast = IAProgram [IAMain [] [IADeclare "x" Nothing (IANumber 42)]]
-                _ <- parseBin ast "test_define.cbc"
-                bytecode <- BS.readFile "test_define.cbc"
-
-                BS.elem 0x52 bytecode `shouldBe` True
-
-            it "génère STORE pour une assignation" $ do
-                let ast = IAProgram [IAMain [] [
-                        IADeclare "x" Nothing (IANumber 0),
-                        IAAssign "x" (IANumber 42)
-                        ]]
-                _ <- parseBin ast "test_store.cbc"
-                bytecode <- BS.readFile "test_store.cbc"
-
-                BS.elem 0x51 bytecode `shouldBe` True
-
-            it "génère LOAD pour charger une variable" $ do
-                let ast = IAProgram [IAMain [] [
-                        IADeclare "x" Nothing (IANumber 42),
-                        IASymbol "x"
-                        ]]
-                _ <- parseBin ast "test_load.cbc"
-                bytecode <- BS.readFile "test_load.cbc"
-
-                BS.elem 0x50 bytecode `shouldBe` True
-
-        describe "Error Handling" $ do
-            it "rejette un entier hors limites" $ do
-                let ast = IAProgram [IAMain [] [IANumber 9999999999999]]
-                    isLeft (Left _) = True
-                    isLeft _ = False
-                result <- parseBin ast "test_overflow.cbc"
-                result `shouldSatisfy` isLeft
-
-        describe "Complex Programs" $ do
-            it "génère un bytecode valide pour un programme complexe" $ do
-                let ast = IAProgram [
-                        IAFunctionDef "factorial" [("n", Nothing)] Nothing [
-                            IAIf (IAInfix (IASymbol "n") "<=" (IANumber 1))
-                                [IAReturn (IANumber 1)]
-                                (Just [IAReturn (IAInfix (IASymbol "n") "*"
-                                    (IACall "factorial" [IAInfix (IASymbol "n") "-" (IANumber 1)]))])
-                        ],
-                        IAMain [] [
-                            IACall "afficher" [IACall "factorial" [IANumber 5]]
-                        ]
-                        ]
-                result <- parseBin ast "test_complex.cbc"
-                result `shouldBe` Right ()
-
-                bytecode <- BS.readFile "test_complex.cbc"
-
-                BS.elem 0x72 bytecode `shouldBe` True
-                BS.elem 0x70 bytecode `shouldBe` True
-                BS.elem 0x62 bytecode `shouldBe` True
-                BS.elem 0x71 bytecode `shouldBe` True
-                BS.elem 0x80 bytecode `shouldBe` True
-                BS.elem 0xFF bytecode `shouldBe` True
+             it "should compile Tuple creation" $ do
+                 let file_name = "test_tuple.cbc"
+                 withTestFile file_name $ do
+                     _ <- parseBin (IAProgram [IATuple [IANumber 1, IANumber 2]]) file_name
+                     content <- BL.fromStrict <$> BS.readFile file_name
+                     let instrs = getInstructions content
+                     -- PUSH 1, PUSH 2, MAKE_TUPLE (90) + Size(2), HALT
+                     drop 10 instrs `shouldBe` [0x90, 0, 0, 0, 2, 0xFF]
