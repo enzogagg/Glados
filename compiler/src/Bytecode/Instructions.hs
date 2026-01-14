@@ -166,9 +166,9 @@ genCallAfficher (IACall "afficher" args) = Just $ do
         Right codes -> return $ Right $ concat codes ++ [opcodeToByte OpPrint]
 genCallAfficher _ = Nothing
 
-genCallInput :: AST -> Maybe CodeGen
-genCallInput (IACall "lire" []) = Just $ return $ Right [opcodeToByte OpInput]
-genCallInput _ = Nothing
+genCallEcouter :: AST -> Maybe CodeGen
+genCallEcouter (IACall "ecouter" []) = Just $ return $ Right [opcodeToByte OpInput]
+genCallEcouter _ = Nothing
 
 genCallNot :: AST -> Maybe CodeGen
 genCallNot (IACall "!" [arg]) = Just $ do
@@ -463,7 +463,7 @@ generateInstruction ast =
         <|> genDeclare ast
         <|> genAssign ast
         <|> genCallAfficher ast
-        <|> genCallInput ast
+        <|> genCallEcouter ast
         <|> genCallNot ast
         <|> genCallListOps ast
         <|> genCall ast
