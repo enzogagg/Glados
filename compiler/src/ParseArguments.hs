@@ -78,6 +78,7 @@ useContent content cArgs =
                                     parseBin optimizedAst (outputFile cArgs)
                                 CompileJava ->
                                     parseClass optimizedAst (outputFile cArgs)
+
 parseArgs :: [String] -> IO (Either String CompilerArgs)
 parseArgs args = return $ parseArgsInternal args Nothing Compile
   where
@@ -95,13 +96,17 @@ parseArgs args = return $ parseArgsInternal args Nothing Compile
     parseArgsInternal _ _ _ = Left "USAGE\n    ./glados-compiler [-o <output>] [--visualize] [--java] <file.clad>"
 
     ensureExtension name mode =
-        let ext = case mode of
+        let base = if name == "a.out" then "a.out" else dropExtension name
+            ext = case mode of
                     CompileJava -> ".class"
                     Visualize   -> ".dot"
                     _           -> ".cbc"
-        in if ext `isSuffixOf` name then name else (dropExtension name) ++ ext
+        in if ext `isSuffixOf` name then name else base ++ ext
 
-    dropExtension name = reverse $ dropWhile (/= '.') (reverse name)
+    dropExtension name =
+        if '.' `elem` name
+        then reverse $ drop 1 $ dropWhile (/= '.') (reverse name)
+        else name
 
 getCladExtension :: String -> Bool
 getCladExtension file =
