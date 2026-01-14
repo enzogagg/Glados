@@ -18,6 +18,7 @@ import qualified Data.ByteString.Lazy as BL
 import Data.Binary.Put
 import Control.Monad.State
 import Control.Applicative ((<|>))
+import Data.Bifunctor (second)
 import qualified Data.Map.Strict as Map
 import Data.Maybe(fromMaybe)
 
@@ -579,7 +580,7 @@ genFunctionDef (IAFunctionDef name args _retType body) = Just $ do
     let paramNames = map fst args
     let paramsList = zip paramNames [0..]
 
-    let paramTypes = map (\(n, t) -> (n, fromMaybe AnyT t)) args
+    let paramTypes = map (second (fromMaybe AnyT)) args
     let newVarTypes = foldl (\m (n, t) -> Map.insert n t m) oldVarTypes paramTypes
 
     ctx' <- get
