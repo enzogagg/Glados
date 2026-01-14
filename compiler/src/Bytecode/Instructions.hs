@@ -277,36 +277,36 @@ genCallCommon (IACall name args) = case name of
                 _ -> return $ Left $ "Type " ++ show objType ++ " does not support 'set'"
         _ -> return $ Left "Function 'set' expects 3 arguments (object, index/key, value)"
 
-    "open" -> Just $ do
+    "ouvrir" -> Just $ do
         if length args /= 2
-            then return $ Left "Function 'open' expects 2 arguments (path, mode)"
+            then return $ Left "Function 'ouvrir' expects 2 arguments (path, mode)"
             else do
                 results <- mapM generateInstruction args
                 case sequence results of
                     Left err -> return $ Left err
                     Right codes -> return $ Right $ concat codes ++ [opcodeToByte OpOpenFile]
 
-    "read" -> Just $ do
+    "lire" -> Just $ do
         if length args /= 1
-            then return $ Left "Function 'read' expects 1 argument (file)"
+            then return $ Left "Function 'lire' expects 1 argument (file)"
             else do
                 results <- mapM generateInstruction args
                 case sequence results of
                     Left err -> return $ Left err
                     Right codes -> return $ Right $ concat codes ++ [opcodeToByte OpReadFile]
 
-    "write" -> Just $ do
+    "ecrire" -> Just $ do
         if length args /= 2
-            then return $ Left "Function 'write' expects 2 arguments (file, content)"
+            then return $ Left "Function 'ecrire' expects 2 arguments (file, content)"
             else do
                  results <- mapM generateInstruction args
                  case sequence results of
                     Left err -> return $ Left err
                     Right codes -> return $ Right $ concat codes ++ [opcodeToByte OpWriteFile]
 
-    "close" -> Just $ do
+    "fermer" -> Just $ do
         if length args /= 1
-            then return $ Left "Function 'close' expects 1 argument (file)"
+            then return $ Left "Function 'fermer' expects 1 argument (file)"
             else do
                 results <- mapM generateInstruction args
                 case sequence results of
@@ -566,12 +566,13 @@ genMain _ = Nothing
 genFunctionDef :: AST -> Maybe CodeGen
 genFunctionDef (IAFunctionDef name args _retType body) = Just $ do
     ctx <- get
+    let startInstr = instructionCount ctx
 
     let funcTableIdx = nextFuncIndex ctx
 
     put ctx { funcMap = Map.insert name funcTableIdx (funcMap ctx)
             , nextFuncIndex = nextFuncIndex ctx + 1
-            , instructionCount = 3
+            , instructionCount = startInstr + 3
             }
 
     let oldParams = currentFuncParams ctx
@@ -591,17 +592,17 @@ genFunctionDef (IAFunctionDef name args _retType body) = Just $ do
     case sequence results of
         Left err -> do
             ctx'' <- get
-            put ctx'' { currentFuncParams = oldParams, variableTypes = oldVarTypes }
+            put ctx'' { currentFuncParams = oldParams, variableTypes = oldVarTypes, instructionCount = startInstr }
             return $ Left err
         Right bodyCodes -> do
             ctx'' <- get
-            put ctx'' { currentFuncParams = oldParams, variableTypes = oldVarTypes }
+            put ctx'' { currentFuncParams = oldParams, variableTypes = oldVarTypes, instructionCount = startInstr }
 
             let bodyCode = concat bodyCodes
             let hasReturn = not (null bodyCode) && last bodyCode == opcodeToByte OpReturn
             let finalBody = if hasReturn then bodyCode else bodyCode ++ [opcodeToByte OpReturn]
 
-            let currentOffset = 3
+            let currentOffset = startInstr + 3
 
             let funcEntry = FunctionEntry
                     { funcIndex = funcTableIdx
@@ -614,7 +615,7 @@ genFunctionDef (IAFunctionDef name args _retType body) = Just $ do
             let defineBytes = BL.unpack $ runPut $ putWord32be (fromIntegral nameIdx)
 
             let bodyInstrCount = countInstructions finalBody
-            let jmpTarget = fromIntegral (3 + bodyInstrCount) :: Word32
+            let jmpTarget = fromIntegral (startInstr + 3 + bodyInstrCount) :: Word32
             let jmpBytes = BL.unpack $ runPut $ putWord32be jmpTarget
 
             ctx''' <- get
