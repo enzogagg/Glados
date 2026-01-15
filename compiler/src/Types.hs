@@ -234,6 +234,13 @@ data Opcode
     | OpTail            -- 0x32
     | OpList            -- 0x33
     | OpLen             -- 0x34
+    | OpIsEmpty         -- 0x35
+    | OpNth             -- 0x36
+    | OpInsert          -- 0x37
+    | OpRemove          -- 0x38
+    | OpContains        -- 0x39
+    | OpAppend          -- 0x3A
+    | OpReverse         -- 0x3B
     | OpMakeSymbol      -- 0x40
     | OpQuote           -- 0x41
     | OpEval            -- 0x42
@@ -291,6 +298,13 @@ opcodeToByte OpHead = 0x31
 opcodeToByte OpTail = 0x32
 opcodeToByte OpList = 0x33
 opcodeToByte OpLen = 0x34
+opcodeToByte OpIsEmpty = 0x35
+opcodeToByte OpNth = 0x36
+opcodeToByte OpInsert = 0x37
+opcodeToByte OpRemove = 0x38
+opcodeToByte OpContains = 0x39
+opcodeToByte OpAppend = 0x3A
+opcodeToByte OpReverse = 0x3B
 opcodeToByte OpMakeSymbol = 0x40
 opcodeToByte OpQuote = 0x41
 opcodeToByte OpEval = 0x42
@@ -371,6 +385,13 @@ getOpcodeSize op
     | op == 0x32 = 0  -- TAIL
     | op == 0x33 = 4  -- LIST (Size as Int32)
     | op == 0x34 = 0  -- LEN
+    | op == 0x35 = 0  -- IS_EMPTY
+    | op == 0x36 = 0  -- NTH
+    | op == 0x37 = 0  -- INSERT
+    | op == 0x38 = 0  -- REMOVE
+    | op == 0x39 = 0  -- CONTAINS
+    | op == 0x3A = 0  -- APPEND
+    | op == 0x3B = 0  -- REVERSE
     | op == 0x50 = 4  -- LOAD
     | op == 0x51 = 4  -- STORE
     | op == 0x52 = 4  -- DEFINE

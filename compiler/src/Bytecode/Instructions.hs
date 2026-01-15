@@ -188,6 +188,10 @@ genCallListOps (IACall name args) =
         "head" -> checkArgs 1 OpHead
         "tail" -> checkArgs 1 OpTail
         "len" -> checkArgs 1 OpLen
+        "tete" -> checkArgs 1 OpHead
+        "reste" -> checkArgs 1 OpTail
+        "taille" -> checkArgs 1 OpLen
+        "ajouter" -> genAjouter args
         _ -> Nothing
     where
         checkArgs count op =
@@ -198,6 +202,16 @@ genCallListOps (IACall name args) =
                     Left err -> return $ Left err
                     Right codes -> return $ Right $ concat codes ++ [opcodeToByte op]
             else Just $ return $ Left $ "Function '" ++ name ++ "' expects " ++ show count ++ " arguments"
+
+        genAjouter [listArg, elemArg] = Just $ do
+            listRes <- generateInstruction listArg
+            elemRes <- generateInstruction elemArg
+            case (listRes, elemRes) of
+                (Right listCode, Right elemCode) -> do
+                     return $ Right $ listCode ++ elemCode ++ [opcodeToByte OpList] ++ BL.unpack (runPut $ putWord32be 1) ++ [opcodeToByte OpAppend]
+                (Left err, _) -> return $ Left err
+                (_, Left err) -> return $ Left err
+        genAjouter _ = Just $ return $ Left "Function 'ajouter' expects 2 arguments"
 genCallListOps _ = Nothing
 
 genCall :: AST -> Maybe CodeGen
@@ -219,7 +233,6 @@ genCall (IACall fname args) = Just $ do
                     return $ Right $ concat codes ++ (opcodeToByte OpCall : funcBytes ++ [argCountByte])
 genCall _ = Nothing
 
-genReturn :: AST -> Maybe CodeGen
 genReturn (IAReturn expr) = Just $ do
     exprResult <- generateInstruction expr
     case exprResult of
@@ -233,7 +246,7 @@ genIf (IAIf condExpr thenStmts maybeElseStmts) = Just $ do
     let startInstr = instructionCount ctx
 
     condResult <- generateInstruction condExpr
-    thenResults <- mapM generateInstruction thenStmts
+    thenResults <- mapM generateInstructionWithCount thenStmts
 
     case (condResult, sequence thenResults) of
         (Left err, _) -> return $ Left err
@@ -251,7 +264,7 @@ genIf (IAIf condExpr thenStmts maybeElseStmts) = Just $ do
                     return $ Right $ condCode ++ (opcodeToByte OpJmpIfFalse : jmpBytes) ++ thenBody
 
                 Just elseStmts -> do
-                    elseResults <- mapM generateInstruction elseStmts
+                    elseResults <- mapM generateInstructionWithCount elseStmts
                     case sequence elseResults of
                         Left err -> return $ Left err
                         Right elseCodes -> do
@@ -272,7 +285,7 @@ genIf _ = Nothing
 genWhile :: AST -> Maybe CodeGen
 genWhile (IAWhile condExpr bodyStmts) = Just $ do
     condResult <- generateInstruction condExpr
-    bodyResults <- mapM generateInstruction bodyStmts
+    bodyResults <- mapM generateInstructionWithCount bodyStmts
 
     case (condResult, sequence bodyResults) of
         (Left err, _) -> return $ Left err
@@ -292,43 +305,62 @@ genWhile (IAWhile condExpr bodyStmts) = Just $ do
 genWhile _ = Nothing
 
 genFor :: AST -> Maybe CodeGen
-genFor (IAFor iterVar startExpr endExpr bodyStmts) = Just $ do
-    let symbolName = getSymbolName iterVar
-    initResult <- generateInstruction (IAAssign symbolName startExpr)
-    _ <- generateInstruction endExpr
-    condResult <- generateInstruction (IAInfix iterVar "<=" endExpr)
-    bodyResults <- mapM generateInstruction bodyStmts
-    let incrExpr = IAAssign symbolName (IAInfix iterVar "+" (IANumber 1))
-    incrResult <- generateInstruction incrExpr
+genFor (IAFor initExpr condExpr incrExpr bodyStmts) = Just $ do
+    ctx <- get
+    let startInstr = instructionCount ctx
 
-    case (initResult, condResult, sequence bodyResults, incrResult) of
-        (Left err, _, _, _) -> return $ Left err
-        (_, Left err, _, _) -> return $ Left err
-        (_, _, Left err, _) -> return $ Left err
-        (_, _, _, Left err) -> return $ Left err
-        (Right initCode, Right condCode, Right bodyCodes, Right incrCode) -> do
+    -- 1. Init
+    initRes <- generateInstructionWithCount initExpr
+
+    -- Loop Start is HERE (after init)
+    ctx2 <- get
+    let loopStartAddr = instructionCount ctx2
+
+    -- 2. Cond
+    condRes <- generateInstructionWithCount condExpr
+
+    -- 3. JmpIfFalse Placeholder
+    modify $ \c -> c { instructionCount = instructionCount c + 1 }
+
+    -- 4. Body
+    bodyRes <- mapM generateInstructionWithCount bodyStmts
+    
+    -- 5. Incr
+    incrRes <- generateInstructionWithCount incrExpr
+
+    -- 6. Jmp Placeholder
+    modify $ \c -> c { instructionCount = instructionCount c + 1 }
+
+    -- End Address (Exit Target)
+    ctxEnd <- get
+    let exitAddr = instructionCount ctxEnd
+
+    -- Calculate Jumps
+    let jmpIfFalseBytes = BL.unpack $ runPut $ putWord32be (fromIntegral exitAddr)
+    let jmpBackBytes = BL.unpack $ runPut $ putWord32be (fromIntegral loopStartAddr)
+    
+    -- Restore instructionCount to START so caller (WithCount) adds total length properly
+    put ctxEnd { instructionCount = startInstr }
+
+    case (initRes, condRes, incrRes, sequence bodyRes) of
+        (Right initCode, Right condCode, Right incrCode, Right bodyCodes) -> do
             let body = concat bodyCodes
-            let condLength = length condCode
-            let bodyLength = length body
-            let incrLength = length incrCode
-            let jmpIfFalseOffset = fromIntegral (bodyLength + incrLength + 5)
-            let jmpBackOffset = fromIntegral (condLength + bodyLength + incrLength + 5)
-            let jmpIfFalseBytes = BL.unpack $ runPut $ putWord32be jmpIfFalseOffset
-            let jmpBackBytes = BL.unpack $ runPut $ putWord32be jmpBackOffset
-            return $ Right $ initCode
-                ++ condCode
-                ++ (opcodeToByte OpJmpIfFalse : jmpIfFalseBytes)
-                ++ body
-                ++ incrCode
-                ++ (opcodeToByte OpJmp : jmpBackBytes)
-    where
-        getSymbolName (IASymbol name) = name
-        getSymbolName _ = "i"
+            return $ Right $ initCode 
+                          ++ condCode 
+                          ++ (opcodeToByte OpJmpIfFalse : jmpIfFalseBytes) 
+                          ++ body 
+                          ++ incrCode 
+                          ++ (opcodeToByte OpJmp : jmpBackBytes)
+        
+        (Left e, _, _, _) -> return $ Left e
+        (_, Left e, _, _) -> return $ Left e
+        (_, _, Left e, _) -> return $ Left e
+        (_, _, _, Left e) -> return $ Left e
 genFor _ = Nothing
 
 genBlock :: AST -> Maybe CodeGen
 genBlock (IABlock stmts) = Just $ do
-    results <- mapM generateInstruction stmts
+    results <- mapM generateInstructionWithCount stmts
     case sequence results of
         Left err -> return $ Left err
         Right codes -> return $ Right $ concat codes
@@ -340,7 +372,7 @@ genMain (IAMain args stmts) = Just $ do
     
     preamble <- mapM bindArg mappings
     
-    results <- mapM generateInstruction stmts
+    results <- mapM generateInstructionWithCount stmts
     case sequence results of
         Left err -> return $ Left err
         Right codes -> return $ Right $ concat (concat preamble) ++ concat codes
@@ -419,7 +451,7 @@ genFunctionDef _ = Nothing
 
 genProgram :: AST -> Maybe CodeGen
 genProgram (IAProgram stmts) = Just $ do
-    results <- mapM generateInstruction stmts
+    results <- mapM generateInstructionWithCount stmts
     case sequence results of
         Left err -> return $ Left err
         Right codes -> return $ Right $ concat codes ++ [opcodeToByte OpHalt]

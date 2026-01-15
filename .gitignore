@@ -18,7 +18,6 @@ glados-*
 
 # LISP files
 example/*
-*.clad
 *.cbc
 
 # *.other file

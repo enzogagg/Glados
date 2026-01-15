@@ -21,12 +21,18 @@ import Execution.Ops.Input (opInput)
 import Execution.Ops.ComplexDataStructures (opMakeTuple, opTupleGet, opMakeArray, opArrayGet, opArraySet, opMakeMap, opMapGet, opMapSet, opMakeStruct, opStructGet, opStructSet)
 import Execution.Ops.FileManagement (opOpenFile, opReadFile, opWriteFile, opCloseFile)
 
-execLoop :: VMState -> IO ()
+execLoop :: VMState -> IO (Maybe Int)
 execLoop state =
-    if ip state >= length (instructions state) || ip state < 0
-    then putStrLn "Error: Instruction pointer out of bounds"
+    if ip state == length (instructions state)
+    then case stack state of
+        (IntVal n : _) -> return (Just n)
+        _ -> return Nothing
+    else if ip state > length (instructions state) || ip state < 0
+    then putStrLn "Error: Instruction pointer out of bounds" >> return Nothing
     else case instructions state !! ip state of
-        Halt -> return ()
+        Halt -> case stack state of
+            (IntVal n : _) -> return (Just n)
+            _ -> return Nothing
         PushConst idx ->
             if idx < 0 || idx >= length (constants state)
             then nextStep (Left ("Error: Constant index out of bounds: " ++ show idx))
@@ -85,7 +91,7 @@ execLoop state =
         LoadArg idx -> nextStep (opLoadArg idx state)
 
         Print -> case stack state of
-                    [] -> putStrLn "Error: Print requires a value on the stack"
+                    [] -> putStrLn "Error: Print requires a value on the stack" >> return Nothing
                     (val : _) -> do
                         print val
                         nextStep (Right (state {ip = ip state}))
@@ -111,11 +117,11 @@ execLoop state =
 
         _ -> nextStep (Left "Error: Unknown instruction")
     where
-        nextStep :: Either String VMState -> IO ()
-        nextStep (Left err) = putStrLn ("Runtime Error: " ++ err)
+        nextStep :: Either String VMState -> IO (Maybe Int)
+        nextStep (Left err) = putStrLn ("Runtime Error: " ++ err) >> return Nothing
         nextStep (Right newState) = execLoop (newState {ip = ip newState + 1})
 
-        nextStepIO :: IO (Either String VMState) -> IO ()
+        nextStepIO :: IO (Either String VMState) -> IO (Maybe Int)
         nextStepIO action = do
             result <- action
             nextStep result
