@@ -1,0 +1,8 @@
+principal
+    variable entier sum = 0
+    variable entier i = 0
+    pour (i = 0; i < 5; i = i + 1)
+        sum = sum + i
+    fin
+    afficher(sum)
+fin

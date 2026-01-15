@@ -1,0 +1,7 @@
+principal
+    variable liste<entier> l = [1, 2, 3]
+    afficher(tete(l))
+    afficher(taille(l))
+    l = ajouter(l, 4)
+    afficher(taille(l))
+fin
