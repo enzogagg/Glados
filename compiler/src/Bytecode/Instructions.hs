@@ -20,7 +20,7 @@ import Control.Monad.State
 import Control.Applicative ((<|>))
 import Data.Bifunctor (second)
 import qualified Data.Map.Strict as Map
-import Data.Maybe(fromMaybe)
+import Data.Maybe(fromMaybe, catMaybes)
 
 -- ==========================
 -- Helper Functions
@@ -474,12 +474,12 @@ genCall (IACall fname args) = Just $ do
                              then return $ Just $ "Argument type mismatch in call to '" ++ fname ++ "': expected " ++ show expected ++ ", got " ++ show actual
                              else return Nothing
                         ) (zip args argTypes)
-                    case [ err | Just err <- typeChecks ] of
+                    case catMaybes typeChecks of
                         (e:_) -> return $ Left e
-                        [] -> generateCallCode fname args
-        Nothing -> generateCallCode fname args
+                        [] -> generateCallCode
+        Nothing -> generateCallCode
   where
-    generateCallCode fname args = do
+    generateCallCode = do
         results <- mapM generateInstruction args
         case sequence results of
             Left err -> return $ Left err
