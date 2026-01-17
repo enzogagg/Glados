@@ -40,6 +40,10 @@ countInstructions [] = 0
 countInstructions (opcode:rest) = 1 + countInstructions (drop (getOpcodeSize opcode) rest)
 
 inferType :: AST -> State BytecodeContext CladType
+inferType (IANumber _) = return IntT
+inferType (IAFloatLiteral _) = return FloatT
+inferType (IABoolean _) = return BoolT
+inferType (IAString _) = return StringT
 inferType (IASymbol s) = do
     ctx <- get
     case Map.lookup s (variableTypes ctx) of
@@ -49,6 +53,19 @@ inferType (IACall "vector" _) = return (ArrayT AnyT)
 inferType (IACall "dico" _) = return (MapT AnyT AnyT)
 inferType (IACall "struct" _) = return StructT
 inferType (IATuple _) = return (TupleT [])
+inferType (IACall fname _) = do
+    ctx <- get
+    case Map.lookup fname (funcSignatures ctx) of
+        Just (_, ret) -> return ret
+        Nothing -> return AnyT
+inferType (IAInfix l op r) = do
+  lt <- inferType l
+  rt <- inferType r
+  case op of
+    _ | op `elem` ["==", "!=", "<", ">", "<=", ">="] -> return BoolT
+    _ | op `elem` ["et", "ou"] -> return BoolT
+    _ | lt == FloatT || rt == FloatT -> return FloatT
+    _ -> return IntT
 inferType _ = return AnyT
 
 
@@ -445,25 +462,49 @@ genCallListOps _ = Nothing
 
 genCall :: AST -> Maybe CodeGen
 genCall (IACall fname args) = Just $ do
-    results <- mapM generateInstruction args
-    case sequence results of
-        Left err -> return $ Left err
-        Right codes -> do
-            ctx <- get
-            case Map.lookup fname (funcMap ctx) of
-                Just funcTableIdx -> do
-                    let funcBytes = BL.unpack $ runPut $ putWord32be (fromIntegral funcTableIdx)
-                    let argCountByte = fromIntegral $ length args
-                    return $ Right $ concat codes ++ (opcodeToByte OpCall : funcBytes ++ [argCountByte])
-                Nothing -> return $ Left $ "Function not found: " ++ fname
+    ctx <- get
+    case Map.lookup fname (funcSignatures ctx) of
+        Just (argTypes, _) -> do
+             if length args /= length argTypes
+                then return $ Left $ "Function '" ++ fname ++ "' expects " ++ show (length argTypes) ++ " arguments but got " ++ show (length args)
+                else do
+                    typeChecks <- mapM (\(arg, expected) -> do
+                        actual <- inferType arg
+                        if expected /= AnyT && actual /= AnyT && actual /= expected
+                             then return $ Just $ "Argument type mismatch in call to '" ++ fname ++ "': expected " ++ show expected ++ ", got " ++ show actual
+                             else return Nothing
+                        ) (zip args argTypes)
+                    case [ err | Just err <- typeChecks ] of
+                        (e:_) -> return $ Left e
+                        [] -> generateCallCode fname args
+        Nothing -> generateCallCode fname args
+  where
+    generateCallCode fname args = do
+        results <- mapM generateInstruction args
+        case sequence results of
+            Left err -> return $ Left err
+            Right codes -> do
+                ctx <- get
+                case Map.lookup fname (funcMap ctx) of
+                    Just funcTableIdx -> do
+                        let funcBytes = BL.unpack $ runPut $ putWord32be (fromIntegral funcTableIdx)
+                        let argCountByte = fromIntegral $ length args
+                        return $ Right $ concat codes ++ (opcodeToByte OpCall : funcBytes ++ [argCountByte])
+                    Nothing -> return $ Left $ "Function not found: " ++ fname
 genCall _ = Nothing
 
 genReturn :: AST -> Maybe CodeGen
 genReturn (IAReturn expr) = Just $ do
-    exprResult <- generateInstruction expr
-    case exprResult of
-        Left err -> return $ Left err
-        Right exprCode -> return $ Right $ exprCode ++ [opcodeToByte OpReturn]
+    ctx <- get
+    let expected = currentReturnType ctx
+    actual <- inferType expr
+    if expected /= AnyT && expected /= VoidT && actual /= AnyT && actual /= expected
+        then return $ Left $ "Return type mismatch: expected " ++ show expected ++ ", got " ++ show actual
+        else do
+            exprResult <- generateInstruction expr
+            case exprResult of
+                Left err -> return $ Left err
+                Right exprCode -> return $ Right $ exprCode ++ [opcodeToByte OpReturn]
 genReturn _ = Nothing
 
 
@@ -623,67 +664,77 @@ genMain (IAMain _ stmts) = Just $ do
 genMain _ = Nothing
 
 genFunctionDef :: AST -> Maybe CodeGen
-genFunctionDef (IAFunctionDef name args _retType body) = Just $ do
+genFunctionDef (IAFunctionDef name args retType body) = Just $ do
     ctx <- get
     let startInstr = instructionCount ctx
 
     let funcTableIdx = nextFuncIndex ctx
 
-    put ctx { funcMap = Map.insert name funcTableIdx (funcMap ctx)
-            , nextFuncIndex = nextFuncIndex ctx + 1
-            , instructionCount = startInstr + 3
-            }
-
     let oldParams = currentFuncParams ctx
     let oldVarTypes = variableTypes ctx
+    let oldRetType = currentReturnType ctx
 
     let paramNames = map fst args
     let paramsList = zip paramNames [0..]
 
     let paramTypes = map (second (fromMaybe AnyT)) args
     let newVarTypes = foldl (\m (n, t) -> Map.insert n t m) oldVarTypes paramTypes
+    let actualRetType = fromMaybe AnyT retType
 
-    ctx' <- get
-    put ctx' { currentFuncParams = paramsList, variableTypes = newVarTypes }
+    let argTypes = map snd paramTypes
+    let newSignatures = Map.insert name (argTypes, actualRetType) (funcSignatures ctx)
+
+    put ctx { funcMap = Map.insert name funcTableIdx (funcMap ctx)
+            , nextFuncIndex = nextFuncIndex ctx + 1
+            , instructionCount = startInstr + 3
+            , currentFuncParams = paramsList
+            , variableTypes = newVarTypes
+            , currentReturnType = actualRetType
+            , funcSignatures = newSignatures
+            }
 
     results <- mapM generateInstructionWithCount body
 
     case sequence results of
         Left err -> do
-            ctx'' <- get
-            put ctx'' { currentFuncParams = oldParams, variableTypes = oldVarTypes, instructionCount = startInstr }
+            ctxError <- get
+            put ctxError { currentFuncParams = oldParams, variableTypes = oldVarTypes, currentReturnType = oldRetType, instructionCount = startInstr }
             return $ Left err
         Right bodyCodes -> do
-            ctx'' <- get
-            put ctx'' { currentFuncParams = oldParams, variableTypes = oldVarTypes, instructionCount = startInstr }
+            ctxEnd <- get
+            put ctxEnd { currentFuncParams = oldParams, variableTypes = oldVarTypes, currentReturnType = oldRetType, instructionCount = startInstr }
 
             let bodyCode = concat bodyCodes
             let hasReturn = not (null bodyCode) && last bodyCode == opcodeToByte OpReturn
-            let finalBody = if hasReturn then bodyCode else bodyCode ++ [opcodeToByte OpReturn]
 
-            let currentOffset = startInstr + 3
+            if not hasReturn && actualRetType /= AnyT && actualRetType /= VoidT
+                then return $ Left $ "Function '" ++ name ++ "' declared to return " ++ show actualRetType ++ " but path ends without return statement"
+                else do
+                    let finalBody = if hasReturn then bodyCode else bodyCode ++ [opcodeToByte OpReturn]
 
-            let funcEntry = FunctionEntry
-                    { funcIndex = funcTableIdx
-                    , funcAddress = currentOffset
-                    , funcArgCount = length args
-                    }
+                    let currentOffset = startInstr + 3
 
-            nameIdx <- addConstant (ConstSymbol name)
-            let funcIndexBytes = BL.unpack $ runPut $ putWord32be (fromIntegral funcTableIdx)
-            let defineBytes = BL.unpack $ runPut $ putWord32be (fromIntegral nameIdx)
+                    let funcEntry = FunctionEntry
+                            { funcIndex = funcTableIdx
+                            , funcAddress = currentOffset
+                            , funcArgCount = length args
+                            }
 
-            let bodyInstrCount = countInstructions finalBody
-            let jmpTarget = fromIntegral (startInstr + 3 + bodyInstrCount) :: Word32
-            let jmpBytes = BL.unpack $ runPut $ putWord32be jmpTarget
+                    nameIdx <- addConstant (ConstSymbol name)
+                    let funcIndexBytes = BL.unpack $ runPut $ putWord32be (fromIntegral funcTableIdx)
+                    let defineBytes = BL.unpack $ runPut $ putWord32be (fromIntegral nameIdx)
 
-            ctx''' <- get
-            put ctx''' { funcTable = funcTable ctx''' ++ [funcEntry] }
+                    let bodyInstrCount = countInstructions finalBody
+                    let jmpTarget = fromIntegral (startInstr + 3 + bodyInstrCount) :: Word32
+                    let jmpBytes = BL.unpack $ runPut $ putWord32be jmpTarget
 
-            return $ Right $ opcodeToByte OpClosure : funcIndexBytes
-                          ++ (opcodeToByte OpDefine : defineBytes)
-                          ++ (opcodeToByte OpJmp : jmpBytes)
-                          ++ finalBody
+                    ctxFinal <- get
+                    put ctxFinal { funcTable = funcTable ctxFinal ++ [funcEntry] }
+
+                    return $ Right $ opcodeToByte OpClosure : funcIndexBytes
+                                  ++ (opcodeToByte OpDefine : defineBytes)
+                                  ++ (opcodeToByte OpJmp : jmpBytes)
+                                  ++ finalBody
 genFunctionDef _ = Nothing
 
 genProgram :: AST -> Maybe CodeGen
