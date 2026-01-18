@@ -15,6 +15,7 @@ module CladLexer (
     parseNumber,
     parseFloat,
     parseBoolean,
+    parseChar,
     parseString,
     parseOperator
 ) where
@@ -88,6 +89,13 @@ parseBoolean :: Parser AST
 parseBoolean =
         IABoolean True <$ symbol "vrai"
     <|> IABoolean False <$ symbol "faux"
+
+parseChar :: Parser AST
+parseChar = lexeme $ do
+    _ <- char '\''
+    c <- L.charLiteral
+    _ <- char '\''
+    return (IAChar c)
 
 parseString :: Parser AST
 parseString = lexeme $ do

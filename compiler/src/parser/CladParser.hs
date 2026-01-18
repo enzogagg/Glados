@@ -29,7 +29,9 @@ parseBaseType =
   <|> (keyword "flottant" >> return FloatT)
   <|> (keyword "pileouface" >> return BoolT)
   <|> (keyword "phrase" >> return StringT)
+  <|> (keyword "caractere" >> return CharT)
   <|> (keyword "neant" >> return VoidT)
+  <|> (keyword "fichier" >> return FileT)
   <|> (keyword "tableau" >> return (ArrayT AnyT))
   <|> (keyword "dictionnaire" >> return (MapT AnyT AnyT))
   <|> (keyword "structure" >> return StructT)
@@ -77,6 +79,7 @@ parseTerm =
         parseFloat
     <|> parseNumber
     <|> parseBoolean
+    <|> parseChar
     <|> parseString
     <|> try parseUnaryNot
     <|> try parseCall

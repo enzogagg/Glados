@@ -33,7 +33,7 @@ genInt _ = Nothing
 genFloat :: ConstantEntry -> PutGen
 genFloat (ConstFloat f) = Just $ do
     putWord8 (typeTagToByte TagFloat)
-    putWord32be 4  -- Float32 = 4 bytes (pas 8)
+    putWord32be 4
     putFloatbe (realToFrac f)
 genFloat _ = Nothing
 
@@ -62,7 +62,9 @@ genString _ = Nothing
 genList :: ConstantEntry -> PutGen
 genList (ConstList entries) = Just $ do
     putWord8 (typeTagToByte TagList)
-    let entriesBytes = BL.toStrict $ runPut $ mapM_ putConstantEntry entries
+    let entriesBytes = BL.toStrict $ runPut $ do
+            putWord32be (fromIntegral $ length entries)
+            mapM_ putConstantEntry entries
     putWord32be (fromIntegral $ BS.length entriesBytes)
     putByteString entriesBytes
 genList _ = Nothing
