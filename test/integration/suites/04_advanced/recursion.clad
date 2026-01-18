@@ -1,0 +1,11 @@
+fonction fib(entier n) : entier
+    si (n <= 1)
+        retourner n
+    sinon
+        retourner fib(n - 1) + fib(n - 2)
+    fin
+fin
+
+principal
+    afficher(fib(10))
+fin

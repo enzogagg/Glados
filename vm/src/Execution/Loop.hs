@@ -21,30 +21,39 @@ import Execution.Ops.Input (opInput)
 import Execution.Ops.ComplexDataStructures (opMakeTuple, opTupleGet, opMakeArray, opArrayGet, opArraySet, opMakeMap, opMapGet, opMapSet, opMakeStruct, opStructGet, opStructSet)
 import Execution.Ops.FileManagement (opOpenFile, opReadFile, opWriteFile, opCloseFile)
 
-execLoop :: VMState -> IO ()
-execLoop state =
-    if ip state >= length (instructions state) || ip state < 0
-    then putStrLn "Error: Instruction pointer out of bounds"
-    else case instructions state !! ip state of
-        Halt -> return ()
-        PushConst idx ->
-            if idx < 0 || idx >= length (constants state)
-            then nextStep (Left ("Error: Constant index out of bounds: " ++ show idx))
-            else nextStep (opPushConst (constants state !! idx) state)
+execLoop :: VMState -> IO (Maybe Int)
+execLoop state
+    | ip state == length (instructions state)
+    = case stack state of
+        (IntVal n : _) -> return (Just n)
+        _ -> return Nothing
+    | ip state > length (instructions state) || ip state < 0
+    = putStrLn "Error: Instruction pointer out of bounds"
+        >> return Nothing
+    | otherwise
+    = case instructions state !! ip state of
+        Halt
+          -> case stack state of
+               (IntVal n : _) -> return (Just n)
+               _ -> return Nothing
+        PushConst idx
+          -> if idx < 0 || idx >= length (constants state) then
+                 nextStep
+                   (Left ("Error: Constant index out of bounds: " ++ show idx))
+             else
+                 nextStep (opPushConst (constants state !! idx) state)
         PushInt i -> nextStep (opPushInt i state)
         PushFloat f -> nextStep (opPushFloat f state)
         PushBool b -> nextStep (opPushBool b state)
         PushString s -> nextStep (opPushString s state)
         PushNil -> nextStep (opPushNil state)
         Pop -> nextStep (opPop state)
-
         Add -> nextStep (opAdd state)
         Sub -> nextStep (opSub state)
         Mul -> nextStep (opMul state)
         Div -> nextStep (opDiv state)
         Mod -> nextStep (opMod state)
         Neg -> nextStep (opNeg state)
-
         Eq -> nextStep (opEq state)
         Neq -> nextStep (opNeq state)
         Lt -> nextStep (opLt state)
@@ -66,32 +75,30 @@ execLoop state =
         Contains -> nextStep (opContains state)
         Append -> nextStep (opAppend state)
         Reverse -> nextStep (opReverse state)
-
         MakeSymbol -> nextStep (opMakeSymbol state)
         Quote -> nextStep (opQuote state)
         Eval -> nextStep (opEval state)
-
         Load s -> nextStep (opLoad s state)
         Store s -> nextStep (opStore s state)
         Define s -> nextStep (opDefine s state)
-
         Jump addr -> nextStep (opJump addr state)
         JumpIfTrue addr -> nextStep (opJumpIfTrue addr state)
         JumpIfFalse addr -> nextStep (opJumpIfFalse addr state)
-
         Call funcId argCount -> nextStep (opCall funcId argCount state)
         Return -> nextStep (opReturn state)
         Closure funcId -> nextStep (opClosure funcId state)
         LoadArg idx -> nextStep (opLoadArg idx state)
-
-        Print -> case stack state of
-                    [] -> putStrLn "Error: Print requires a value on the stack"
-                    (val : _) -> do
-                        print val
-                        nextStep (Right (state {ip = ip state}))
-        Input -> do
-            line <- getLine
-            nextStep (opInput line state)
+        Print
+          -> case stack state of
+               []
+                 -> putStrLn "Error: Print requires a value on the stack"
+                      >> return Nothing
+               (val : _)
+                 -> do print val
+                       nextStep (Right (state {ip = ip state}))
+        Input
+          -> do line <- getLine
+                nextStep (opInput line state)
         MakeTuple n -> nextStep (opMakeTuple n state)
         TupleGet idx -> nextStep (opTupleGet idx state)
         MakeArray n -> nextStep (opMakeArray n state)
@@ -103,19 +110,18 @@ execLoop state =
         MakeStruct n -> nextStep (opMakeStruct n state)
         StructGet idx -> nextStep (opStructGet idx state)
         StructSet idx -> nextStep (opStructSet idx state)
-
         OpenFile -> nextStepIO (opOpenFile state)
         ReadFile -> nextStepIO (opReadFile state)
         WriteFile -> nextStepIO (opWriteFile state)
         CloseFile -> nextStepIO (opCloseFile state)
-
         _ -> nextStep (Left "Error: Unknown instruction")
     where
-        nextStep :: Either String VMState -> IO ()
-        nextStep (Left err) = putStrLn ("Runtime Error: " ++ err)
-        nextStep (Right newState) = execLoop (newState {ip = ip newState + 1})
-
-        nextStepIO :: IO (Either String VMState) -> IO ()
-        nextStepIO action = do
-            result <- action
-            nextStep result
+        nextStep :: Either String VMState -> IO (Maybe Int)
+        nextStep (Left err)
+          = putStrLn ("Runtime Error: " ++ err) >> return Nothing
+        nextStep (Right newState)
+          = execLoop (newState {ip = ip newState + 1})
+        nextStepIO :: IO (Either String VMState) -> IO (Maybe Int)
+        nextStepIO action
+          = do result <- action
+               nextStep result

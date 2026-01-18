@@ -29,6 +29,13 @@ spec = describe "ExecutionLoop" $ do
     it "reports error on invalid instruction pointer" $ do
         let instrs = []
         let state = newVMState instrs [] [] []
-        -- IP 0, Length 0. 0 >= 0 is True. Out of bounds.
-        output <- capture_ (execLoop state)
+        let badState = state { ip = 100 } -- Force out of bounds
+        output <- capture_ (execLoop badState)
         output `shouldContain` "Instruction pointer out of bounds"
+
+    it "exits cleanly when IP reaches end of instructions" $ do
+        let instrs = []
+        let state = newVMState instrs [] [] []
+        -- IP 0, Length 0. Should exit cleanly.
+        output <- capture_ (execLoop state)
+        output `shouldBe` ""

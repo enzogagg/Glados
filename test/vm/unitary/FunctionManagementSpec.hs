@@ -41,9 +41,9 @@ spec = describe "Function Management Operations" $ do
             }
             opReturn stateInFunc `shouldBe` Right (stateInFunc { ip = 10, curArgs = [IntVal 1000], callStack = [] })
 
-        it "fails if call stack empty (return outside function)" $ do
+        it "sets IP to end of instructions if call stack empty (return from main)" $ do
              let state = (newVMState [] [] [] []) { callStack = [] }
-             opReturn state `shouldSatisfy` isLeft
+             opReturn state `shouldBe` Right (state { ip = -1 })
 
     describe "opLoadArg" $ do
         it "loads argument from curArgs onto stack" $ do

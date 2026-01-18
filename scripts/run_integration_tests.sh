@@ -45,9 +45,6 @@ for src_file in $TEST_FILES; do
 
     # Compile
     $COMPILER "$src_file" > /dev/null 2>&1
-    # Note: Assuming compiler outputs to 'out.cbc' by default or we need to flag it. 
-    # If compiler doesn't support -o, we rename the output.
-    # Let's assume default is 'out.cbc' based on previous context.
     
     if [ ! -f "a.out.cbc" ]; then
          echo -e "${RED}[FAIL] Compilation failed${NC}"

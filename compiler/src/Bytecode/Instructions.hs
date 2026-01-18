@@ -453,6 +453,16 @@ genCallListOps (IACall name args) =
                     Left err -> return $ Left err
                     Right codes -> return $ Right $ concat codes ++ [opcodeToByte op]
             else Just $ return $ Left $ "Function '" ++ name ++ "' expects " ++ show count ++ " arguments"
+
+        genAjouter [listArg, elemArg] = Just $ do
+            listRes <- generateInstruction listArg
+            elemRes <- generateInstruction elemArg
+            case (listRes, elemRes) of
+                (Right listCode, Right elemCode) -> do
+                     return $ Right $ listCode ++ elemCode ++ [opcodeToByte OpList] ++ BL.unpack (runPut $ putWord32be 1) ++ [opcodeToByte OpAppend]
+                (Left err, _) -> return $ Left err
+                (_, Left err) -> return $ Left err
+        genAjouter _ = Just $ return $ Left "Function 'ajouter' expects 2 arguments"
 genCallListOps _ = Nothing
 
 
@@ -493,7 +503,6 @@ genCall (IACall fname args) = Just $ do
                     Nothing -> return $ Left $ "Function not found: " ++ fname
 genCall _ = Nothing
 
-genReturn :: AST -> Maybe CodeGen
 genReturn (IAReturn expr) = Just $ do
     ctx <- get
     let expected = currentReturnType ctx

@@ -41,8 +41,10 @@ main = do
                 Right (_, _, bytecode@(BytecodeFile _ consts funcs instrs)) -> do
                     when debug $ disassemble bytecode
                     let state = newVMState instrs consts funcs regularArgs
-                    execLoop state
-                    exitSuccess
+                    res <- execLoop state
+                    case res of
+                        Just code -> if code == 0 then exitSuccess else exitWith (ExitFailure code)
+                        Nothing -> exitSuccess
 
 printHelp :: IO ()
 printHelp = do

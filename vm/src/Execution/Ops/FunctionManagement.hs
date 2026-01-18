@@ -31,7 +31,7 @@ opCall funcIndex argCount state =
 opReturn :: VMState -> Either String VMState
 opReturn state =
     case callStack state of
-        [] -> Left "Return outside of function call"
+        [] -> Right $ state { ip = length (instructions state) - 1 }
         ((retIp, oldArgs) : rest) ->
             Right $ state {
                 ip = retIp,
