@@ -1,0 +1,5 @@
+principal
+    afficher('a')
+    afficher('Z')
+    afficher('9')
+fin

@@ -152,6 +152,14 @@ spec = do
                         content <- BL.fromStrict <$> BS.readFile file_name
                         getInstructions content `shouldBe` [0x04, 1, 0xFF]
 
+                it "Push Char (0x01 via ConstPool)" $ do
+                    let file_name = "op_char.cbc"
+                    withTestFile file_name $ do
+                        _ <- parseBin (IAProgram [IAChar 'c']) file_name
+                        content <- BL.fromStrict <$> BS.readFile file_name
+                        let instrs = getInstructions content
+                        take 1 instrs `shouldBe` [0x01]
+
                 it "Push String (0x01 via ConstPool)" $ do
                     let file_name = "op_str.cbc"
                     withTestFile file_name $ do
@@ -233,6 +241,10 @@ spec = do
                         file_name `shouldHaveOpcode` 0x62
                         file_name `shouldHaveOpcode` 0x60
 
+                        _ <- parseBin (IAProgram [IAFor (IANumber 0) (IABoolean False) (IANumber 1) [IANumber 42]]) file_name
+                        file_name `shouldHaveOpcode` 0x62
+                        file_name `shouldHaveOpcode` 0x60
+
             describe "IO Operations" $ do
                 it "Print(0x80), Input(0x81)" $ do
                     let file_name = "op_io.cbc"
@@ -240,7 +252,7 @@ spec = do
                         _ <- parseBin (IAProgram [IACall "afficher" [IANumber 1]]) file_name
                         file_name `shouldHaveOpcode` 0x80
 
-                        _ <- parseBin (IAProgram [IACall "ecouter" []]) file_name
+                        _ <- parseBin (IAProgram [IACall "entree" []]) file_name
                         file_name `shouldHaveOpcode` 0x81
 
             describe "Function Operations" $ do
@@ -265,7 +277,7 @@ spec = do
                         _ <- parseBin (IAProgram [IATuple [IANumber 1]]) file_name
                         file_name `shouldHaveOpcode` 0x90
 
-                        _ <- parseBin (IAProgram [IACall "get" [IATuple [], IANumber 0]]) file_name
+                        _ <- parseBin (IAProgram [IACall "recuperer" [IATuple [], IANumber 0]]) file_name
                         file_name `shouldHaveOpcode` 0x91
 
                 it "List Ops: List(0x33), Cons(0x30), Head(0x31)..." $ do
@@ -274,46 +286,46 @@ spec = do
                         _ <- parseBin (IAProgram [IAList []]) file_name
                         file_name `shouldHaveOpcode` 0x33
 
-                        _ <- parseBin (IAProgram [IACall "cons" [IANumber 1, IAList []]]) file_name
+                        _ <- parseBin (IAProgram [IACall "fusion" [IANumber 1, IAList []]]) file_name
                         file_name `shouldHaveOpcode` 0x30
 
-                        _ <- parseBin (IAProgram [IACall "head" [IAList []]]) file_name
+                        _ <- parseBin (IAProgram [IACall "tete" [IAList []]]) file_name
                         file_name `shouldHaveOpcode` 0x31
 
                 it "Array(0x92), ArrayGet(0x93), ArraySet(0x94)" $ do
                     let file_name = "op_array.cbc"
                     withTestFile file_name $ do
-                        _ <- parseBin (IAProgram [IACall "vector" [IANumber 1]]) file_name
+                        _ <- parseBin (IAProgram [IACall "tableau" [IANumber 1]]) file_name
                         file_name `shouldHaveOpcode` 0x92
 
-                        _ <- parseBin (IAProgram [IACall "get" [IACall "vector" [], IANumber 0]]) file_name
+                        _ <- parseBin (IAProgram [IACall "recuperer" [IACall "tableau" [], IANumber 0]]) file_name
                         file_name `shouldHaveOpcode` 0x93
 
-                        _ <- parseBin (IAProgram [IACall "set" [IACall "vector" [], IANumber 0, IANumber 1]]) file_name
+                        _ <- parseBin (IAProgram [IACall "modifier" [IACall "tableau" [], IANumber 0, IANumber 1]]) file_name
                         file_name `shouldHaveOpcode` 0x94
 
                 it "Map(0x95), MapGet(0x96), MapSet(0x97)" $ do
                     let file_name = "op_map.cbc"
                     withTestFile file_name $ do
-                        _ <- parseBin (IAProgram [IACall "dico" [IAString "k", IANumber 1]]) file_name
+                        _ <- parseBin (IAProgram [IACall "dictionnaire" [IAString "k", IANumber 1]]) file_name
                         file_name `shouldHaveOpcode` 0x95
 
-                        _ <- parseBin (IAProgram [IACall "get" [IACall "dico" [], IAString "k"]]) file_name
+                        _ <- parseBin (IAProgram [IACall "recuperer" [IACall "dictionnaire" [], IAString "k"]]) file_name
                         file_name `shouldHaveOpcode` 0x96
 
-                        _ <- parseBin (IAProgram [IACall "set" [IACall "dico" [], IAString "k", IANumber 2]]) file_name
+                        _ <- parseBin (IAProgram [IACall "modifier" [IACall "dictionnaire" [], IAString "k", IANumber 2]]) file_name
                         file_name `shouldHaveOpcode` 0x97
 
                 it "Struct(0x98), StructGet(0x99), StructSet(0x9A)" $ do
                      let file_name = "op_struct.cbc"
                      withTestFile file_name $ do
-                         _ <- parseBin (IAProgram [IACall "struct" [IAString "field", IANumber 1]]) file_name
+                         _ <- parseBin (IAProgram [IACall "structure" [IAString "field", IANumber 1]]) file_name
                          file_name `shouldHaveOpcode` 0x98
 
-                         _ <- parseBin (IAProgram [IACall "get" [IACall "struct" [], IAString "field"]]) file_name
+                         _ <- parseBin (IAProgram [IACall "recuperer" [IACall "structure" [], IAString "field"]]) file_name
                          file_name `shouldHaveOpcode` 0x99
 
-                         _ <- parseBin (IAProgram [IACall "set" [IACall "struct" [], IAString "field", IANumber 2]]) file_name
+                         _ <- parseBin (IAProgram [IACall "modifier" [IACall "structure" [], IAString "field", IANumber 2]]) file_name
                          file_name `shouldHaveOpcode` 0x9A
 
             describe "File Operations" $ do
@@ -345,7 +357,7 @@ spec = do
             it "should compile Input" $ do
                 let file_name = "test_input.cbc"
                 withTestFile file_name $ do
-                    _ <- parseBin (IAProgram [IACall "ecouter" []]) file_name
+                    _ <- parseBin (IAProgram [IACall "entree" []]) file_name
                     content <- BL.fromStrict <$> BS.readFile file_name
                     let instrs = getInstructions content
                     instrs `shouldBe` [0x81, 0xFF]

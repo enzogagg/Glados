@@ -33,7 +33,9 @@ data CladType
     = IntT
     | FloatT
     | BoolT
+    | CharT
     | StringT
+    | FileT
     | ListT CladType                -- Liste d'un type spécifique
     | FuncT [CladType] CladType     -- (Args types) -> Return type
     | TupleT [CladType]
@@ -74,6 +76,7 @@ data AST
     | IAFloatLiteral Double
     | IABoolean Bool
     | IAString String
+    | IAChar Char
     | IASymbol String                           -- Identifiant de variable ou de fonction
     | IAList [AST]                              -- Construction d'une liste (ex: [1, 2, 3] si implémenté)
     | IAUnit                                    -- Représente le Neant (:unit ou void)
@@ -118,7 +121,12 @@ data Value
     | ListVal [Value]
     | SymbolVal String
     | StringVal String
+    | CharVal Char
     | TupleVal [Value]
+    | ArrayVal [Value]
+    | MapVal [(Value, Value)]
+    | StructVal [(String, Value)]
+    | FileVal String            -- File path or handle identifier
     | Void                      -- Représente le type Neant
     | ErrorVal String           -- Ajout d'un type pour les erreurs (plus propre que Left String)
 
@@ -134,6 +142,11 @@ instance Show Value where
     show (TupleVal t) = "(" ++ intercalate ", " (map show t) ++ ")"
     show (SymbolVal s) = s
     show (StringVal s) = s
+    show (CharVal c) = show c
+    show (ArrayVal list) = "[" ++ intercalate ", " (map show list) ++ "]"
+    show (MapVal pairs) = "dico{" ++ intercalate ", " (map (\(k, v) -> show k ++ ": " ++ show v) pairs) ++ "}"
+    show (StructVal fields) = "struct{" ++ intercalate ", " (map (\(k, v) -> k ++ ": " ++ show v) fields) ++ "}"
+    show (FileVal path) = "<file:" ++ path ++ ">"
     show Void = "neant"
     show (ErrorVal s) = "*** ERROR: " ++ s -- Affichage d'erreur
 
@@ -147,6 +160,11 @@ instance Eq Value where
     ListVal a == ListVal b = a == b
     SymbolVal a == SymbolVal b = a == b
     StringVal a == StringVal b = a == b
+    CharVal a == CharVal b = a == b
+    ArrayVal a == ArrayVal b = a == b
+    MapVal a == MapVal b = a == b  -- Attention : l'ordre des cles compte ici
+    StructVal a == StructVal b = a == b -- Attention : l'ordre des champs compte ici
+    FileVal a == FileVal b = a == b
     Void == Void = True
     ErrorVal a == ErrorVal b = a == b -- Les erreurs sont égales si leurs messages sont égaux (ou si on considère que toutes les erreurs sont égales)
     _ == _ = False
@@ -192,6 +210,7 @@ data TypeTag
     | TagArray      -- 0x0A
     | TagStruct     -- 0x0B
     | TagMap        -- 0x0C
+    | TagFile       -- 0x0D
     deriving (Show, Eq)
 
 typeTagToByte :: TypeTag -> Word8
@@ -208,6 +227,7 @@ typeTagToByte TagTuple = 0x09
 typeTagToByte TagArray = 0x0A
 typeTagToByte TagStruct = 0x0B
 typeTagToByte TagMap = 0x0C
+typeTagToByte TagFile = 0x0D
 
 data Opcode
     = OpPushConst       -- 0x01
@@ -362,6 +382,7 @@ getTypeTagSize TagTuple = -1     -- Taille variable
 getTypeTagSize TagArray = -1     -- Taille variable
 getTypeTagSize TagStruct = -1    -- Taille variable
 getTypeTagSize TagMap = -1       -- Taille variable
+getTypeTagSize TagFile = -1      -- Taille variable (Path string)
 
 -- ==========================
 -- Taille des opérandes pour chaque opcode
