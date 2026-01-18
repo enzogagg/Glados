@@ -41,9 +41,9 @@ walk (IAWhile cond body) env =
     let safeEnv = cleanEnv (cond : body) env
     in IAWhile (walk cond safeEnv) (walkList body safeEnv)
 
-walk (IAFor init cond incr body) env =
-    let safeEnv = cleanEnv (init : cond : incr : body) env
-    in IAFor (walk init safeEnv) (walk cond safeEnv) (walk incr safeEnv) (walkList body safeEnv)
+walk (IAFor initExpr cond incr body) env =
+    let safeEnv = cleanEnv (initExpr : cond : incr : body) env
+    in IAFor (walk initExpr safeEnv) (walk cond safeEnv) (walk incr safeEnv) (walkList body safeEnv)
 
 walk node _ = node
 
@@ -65,9 +65,9 @@ updateEnv (IACall _ _) _ = Map.empty
 
 -- Recursive updates for blocks/loops to ensure environments remain consistent
 updateEnv (IAWhile cond body) env = cleanEnv (cond : body) env
-updateEnv (IAFor init cond incr body) env = cleanEnv (init : cond : incr : body) env
+updateEnv (IAFor initExpr cond incr body) env = cleanEnv (initExpr : cond : incr : body) env
 updateEnv (IABlock stmts) env = cleanEnv stmts env
-updateEnv (IAIf cond t e) env = 
+updateEnv (IAIf _ t e) env = 
     let env' = cleanEnv t env
     in case e of
         Just elseBlock -> cleanEnv elseBlock env'
