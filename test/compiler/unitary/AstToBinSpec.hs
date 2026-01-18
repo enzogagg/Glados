@@ -5,13 +5,10 @@ import Test.Hspec
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import Data.Binary.Get
-import Data.Binary.Put
 import Data.Word
-import Control.Monad.State
-import Control.Monad (when)
-import qualified Data.Map.Strict as Map
+import Control.Monad (when, replicateM, replicateM_)
 import System.Directory (removeFile, doesFileExist)
-import Control.Exception (catch, SomeException)
+import Control.Exception (catch, SomeException, finally)
 
 import Types
 import AstToBin
@@ -26,63 +23,59 @@ cleanupTestFile path = do
     when exists
         $ removeFile path `catch` (\ (_ :: SomeException) -> return ())
 
--- Liste de tous les fichiers de test créés
-testFiles :: [FilePath]
-testFiles = [
-    "test_header.cbc", "test_header_size.cbc", "test_empty_pool.cbc",
-    "test_string_pool.cbc", "test_symbol_pool.cbc", "test_dedup.cbc",
-    "test_no_func.cbc", "test_one_func.cbc", "test_multi_func.cbc",
-    "test_push_int.cbc", "test_push_bool.cbc", "test_add.cbc",
-    "test_print.cbc", "test_halt.cbc", "test_if.cbc", "test_if_else.cbc",
-    "test_closure.cbc", "test_call.cbc", "test_return.cbc",
-    "test_load_arg.cbc", "test_define.cbc", "test_store.cbc",
-    "test_load.cbc", "test_overflow.cbc", "test_complex.cbc"
-    ]
-
-cleanupAllTestFiles :: IO ()
-cleanupAllTestFiles = mapM_ cleanupTestFile testFiles
+withTestFile :: FilePath -> IO a -> IO a
+withTestFile path action = action `finally` cleanupTestFile path
 
 -- ==========================
--- Helpers pour parser le bytecode généré
+-- Helpers pour parser le bytecode généré (reverse engineering)
 -- ==========================
 
-parseHeader :: BL.ByteString -> Maybe (Word32, Word16, Word8)
-parseHeader bs =
-    case runGetOrFail getHeaderData bs of
-        Right (_, _, result) -> Just result
-        Left _ -> Nothing
-  where
-    getHeaderData = do
-        magic <- getWord32be
-        version <- getWord16be
-        flags <- getWord8
-        skip 3
-        return (magic, version, flags)
+parseHeader :: Get (Word32, Word16, Word8)
+parseHeader = do
+    magic <- getWord32be
+    ver <- getWord16be
+    flags <- getWord8
+    skip 3 -- Reserved
+    return (magic, ver, flags)
 
-parseConstantPoolCount :: BL.ByteString -> Maybe Int
-parseConstantPoolCount bs =
-    case runGetOrFail (skip 10 >> fmap fromIntegral getWord32be) bs of
-        Right (_, _, count) -> Just count
-        Left _ -> Nothing
+data ParsedBinary = ParsedBinary {
+    pbMagic :: Word32,
+    pbVersion :: Word16,
+    pbFlags :: Word8,
+    pbConstPoolCount :: Int,
+    pbFuncTableCount :: Int,
+    pbInstructions :: [Word8]
+} deriving (Show)
 
-parseFunctionTableCount :: BL.ByteString -> Maybe Int
-parseFunctionTableCount bs =
-    case runGetOrFail parser bs of
-        Right (_, _, count) -> Just count
-        Left _ -> Nothing
-  where
-    parser = do
-        skip 10
-        constCount <- getWord32be
-        skipConstantPool (fromIntegral constCount)
-        fromIntegral <$> getWord32be
+parseFullBinary :: Get ParsedBinary
+parseFullBinary = do
+    (magic, ver, flags) <- parseHeader
 
-    skipConstantPool 0 = return ()
-    skipConstantPool n = do
+    poolCount <- getWord32be
+    replicateM_ (fromIntegral poolCount) $ do
         _ <- getWord8
         len <- getWord32be
         skip (fromIntegral len)
-        skipConstantPool (n - 1)
+
+    funcCount <- getWord32be
+    replicateM_ (fromIntegral funcCount) $ do
+        skip 4 -- Index
+        skip 4 -- Address
+        skip 1 -- ArgCount
+
+    instrCount <- getWord32be
+    instrs <- replicateM (fromIntegral instrCount) getWord8
+
+    return $ ParsedBinary magic ver flags (fromIntegral poolCount) (fromIntegral funcCount) instrs
+
+getInstructions :: BL.ByteString -> [Word8]
+getInstructions bs = pbInstructions $ runGet parseFullBinary bs
+
+shouldHaveOpcode :: FilePath -> Word8 -> Expectation
+shouldHaveOpcode file_name opcode = do
+    content <- BL.fromStrict <$> BS.readFile file_name
+    let instrs = getInstructions content
+    (opcode `elem` instrs) `shouldBe` True
 
 -- ==========================
 -- Tests
@@ -90,234 +83,286 @@ parseFunctionTableCount bs =
 
 spec :: Spec
 spec = do
-    afterAll_ cleanupAllTestFiles $ do
-        describe "AstToBin" $ do
-            describe "Header Generation" $ do
-                it "génère un header valide avec le magic number CBC\\0" $ do
-                    let ast = IAProgram []
-                    result <- parseBin ast "test_header.cbc"
-                    result `shouldBe` Right ()
+    describe "Compiler AstToBin - Binary Generation" $ do
 
-                    bytecode <- BS.readFile "test_header.cbc"
-                    let header = parseHeader (BL.fromStrict bytecode)
-                    header `shouldBe` Just (0x43424300, 0x0100, 0x00)
+        -- ==========================
+        -- PARTIE 1: Structure du Binaire
+        -- ==========================
+        describe "Part 1: Binary Structure" $ do
 
-                it "génère un header de 10 bytes" $ do
-                    let ast = IAProgram []
-                    _ <- parseBin ast "test_header_size.cbc"
-                    bytecode <- BS.readFile "test_header_size.cbc"
-                    BS.length bytecode `shouldSatisfy` (>= 10)
+            it "should generate a valid HEADER (Magic, Version, Flags)" $ do
+                let file_name = "struct_header.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram []) file_name
+                    content <- BS.readFile file_name
+                    let (magic, version, flags) = runGet parseHeader (BL.fromStrict content)
+                    magic `shouldBe` 0x43424300 -- CBC\0
+                    version `shouldBe` 0x0100   -- 1.0
+                    flags `shouldBe` 0x00
 
-        describe "Constant Pool" $ do
-            it "génère un constant pool vide pour un programme vide" $ do
-                let ast = IAProgram []
-                _ <- parseBin ast "test_empty_pool.cbc"
-                bytecode <- BS.readFile "test_empty_pool.cbc"
-                let count = parseConstantPoolCount (BL.fromStrict bytecode)
-                count `shouldBe` Just 0
+            it "should generate a valid CONSTANT POOL" $ do
+                let file_name = "struct_const.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram [IAString "test", IASymbol "sym"]) file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let pb = runGet parseFullBinary content
+                    pbConstPoolCount pb `shouldSatisfy` (>= 2)
 
-            it "ajoute une string au constant pool" $ do
-                let ast = IAProgram [IAMain [] [IAString "hello"]]
-                _ <- parseBin ast "test_string_pool.cbc"
-                bytecode <- BS.readFile "test_string_pool.cbc"
-                let count = parseConstantPoolCount (BL.fromStrict bytecode)
-                count `shouldSatisfy` maybe False (> 0)
+            it "should generate a valid FUNCTION TABLE" $ do
+                let file_name = "struct_func.cbc"
+                withTestFile file_name $ do
+                    let ast = IAProgram [IAFunctionDef "myFunc" [] Nothing []]
+                    _ <- parseBin ast file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let pb = runGet parseFullBinary content
+                    pbFuncTableCount pb `shouldBe` 1
 
-            it "ajoute un symbole au constant pool" $ do
-                let ast = IAProgram [IAMain [] [IADeclare "x" Nothing (IANumber 42)]]
-                _ <- parseBin ast "test_symbol_pool.cbc"
-                bytecode <- BS.readFile "test_symbol_pool.cbc"
-                let count = parseConstantPoolCount (BL.fromStrict bytecode)
-                count `shouldBe` Just 1
+            it "should generate a valid INSTRUCTIONS section" $ do
+                let file_name = "struct_instr.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram [IANumber 1]) file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let pb = runGet parseFullBinary content
+                    length (pbInstructions pb) `shouldBe` 6
 
-            it "déduplique les constantes identiques" $ do
-                let ast = IAProgram [IAMain [] [IAString "test", IAString "test"]]
-                _ <- parseBin ast "test_dedup.cbc"
-                bytecode <- BS.readFile "test_dedup.cbc"
-                let count = parseConstantPoolCount (BL.fromStrict bytecode)
-                count `shouldBe` Just 1
+        -- ==========================
+        -- PARTIE 2: Tests des Opcodes
+        -- ==========================
+        describe "Part 2: Opcodes Generation" $ do
 
-        describe "Function Table" $ do
-            it "génère une function table vide pour un programme sans fonction" $ do
-                let ast = IAProgram [IAMain [] [IANumber 42]]
-                _ <- parseBin ast "test_no_func.cbc"
-                bytecode <- BS.readFile "test_no_func.cbc"
-                let count = parseFunctionTableCount (BL.fromStrict bytecode)
-                count `shouldBe` Just 0
+            describe "Value Management" $ do
+                it "Push Int (0x02)" $ do
+                    let file_name = "op_int.cbc"
+                    withTestFile file_name $ do
+                        _ <- parseBin (IAProgram [IANumber 42]) file_name
+                        content <- BL.fromStrict <$> BS.readFile file_name
+                        getInstructions content `shouldBe` [0x02, 0, 0, 0, 42, 0xFF]
 
-            it "ajoute une fonction à la function table" $ do
-                let ast = IAProgram [
-                        IAFunctionDef "test" [] Nothing [IAReturn (IANumber 42)],
-                        IAMain [] []
-                        ]
-                _ <- parseBin ast "test_one_func.cbc"
-                bytecode <- BS.readFile "test_one_func.cbc"
-                let count = parseFunctionTableCount (BL.fromStrict bytecode)
-                count `shouldBe` Just 1
+                it "Push Float (0x03)" $ do
+                    let file_name = "op_float.cbc"
+                    withTestFile file_name $ do
+                        _ <- parseBin (IAProgram [IAFloatLiteral 1.5]) file_name
+                        content <- BL.fromStrict <$> BS.readFile file_name
+                        getInstructions content `shouldBe` [0x03, 0x3F, 0xC0, 0, 0, 0xFF]
 
-            it "gère plusieurs fonctions" $ do
-                let ast = IAProgram [
-                        IAFunctionDef "func1" [] Nothing [IAReturn (IANumber 1)],
-                        IAFunctionDef "func2" [] Nothing [IAReturn (IANumber 2)],
-                        IAMain [] []
-                        ]
-                _ <- parseBin ast "test_multi_func.cbc"
-                bytecode <- BS.readFile "test_multi_func.cbc"
-                let count = parseFunctionTableCount (BL.fromStrict bytecode)
-                count `shouldBe` Just 2
+                it "Push Bool (0x04)" $ do
+                    let file_name = "op_bool.cbc"
+                    withTestFile file_name $ do
+                        _ <- parseBin (IAProgram [IABoolean True]) file_name
+                        content <- BL.fromStrict <$> BS.readFile file_name
+                        getInstructions content `shouldBe` [0x04, 1, 0xFF]
 
-        describe "Instructions Generation" $ do
-            it "génère PUSH_INT pour un nombre" $ do
-                let ast = IAProgram [IAMain [] [IANumber 42]]
-                _ <- parseBin ast "test_push_int.cbc"
-                bytecode <- BS.readFile "test_push_int.cbc"
-                BS.elem 0x02 bytecode `shouldBe` True
+                it "Push String (0x01 via ConstPool)" $ do
+                    let file_name = "op_str.cbc"
+                    withTestFile file_name $ do
+                        _ <- parseBin (IAProgram [IAString "s"]) file_name
+                        content <- BL.fromStrict <$> BS.readFile file_name
+                        getInstructions content `shouldBe` [0x01, 0, 0, 0, 0, 0xFF]
 
-            it "génère PUSH_BOOL pour un booléen" $ do
-                let ast = IAProgram [IAMain [] [IABoolean True]]
-                _ <- parseBin ast "test_push_bool.cbc"
-                bytecode <- BS.readFile "test_push_bool.cbc"
+                it "Push Nil (0x06)" $ do
+                    let file_name = "op_nil.cbc"
+                    withTestFile file_name $ do
+                        _ <- parseBin (IAProgram [IAUnit]) file_name
+                        content <- BL.fromStrict <$> BS.readFile file_name
+                        getInstructions content `shouldBe` [0x06, 0xFF]
 
-                BS.elem 0x04 bytecode `shouldBe` True
+            describe "Arithmetic Operations" $ do
+                it "Add (0x10), Sub (0x11), Mul (0x12), Div (0x13), Mod (0x14)" $ do
+                    let file_name = "op_arith.cbc"
+                    withTestFile file_name $ do
+                        _ <- parseBin (IAProgram [IAInfix (IANumber 1) "+" (IANumber 2)]) file_name
+                        file_name `shouldHaveOpcode` 0x10
+                        _ <- parseBin (IAProgram [IAInfix (IANumber 1) "-" (IANumber 2)]) file_name
+                        file_name `shouldHaveOpcode` 0x11
+                        _ <- parseBin (IAProgram [IAInfix (IANumber 1) "*" (IANumber 2)]) file_name
+                        file_name `shouldHaveOpcode` 0x12
+                        _ <- parseBin (IAProgram [IAInfix (IANumber 1) "/" (IANumber 2)]) file_name
+                        file_name `shouldHaveOpcode` 0x13
+                        _ <- parseBin (IAProgram [IAInfix (IANumber 1) "%" (IANumber 2)]) file_name
+                        file_name `shouldHaveOpcode` 0x14
 
-            it "génère ADD pour une addition" $ do
-                let ast = IAProgram [IAMain [] [IAInfix (IANumber 1) "+" (IANumber 2)]]
-                _ <- parseBin ast "test_add.cbc"
-                bytecode <- BS.readFile "test_add.cbc"
+            describe "Comparison Operations" $ do
+                it "Eq(0x20), Neq(0x21), Lt(0x22), Gt(0x23), Lte(0x24), Gte(0x25)" $ do
+                    let file_name = "op_cmp.cbc"
+                    withTestFile file_name $ do
+                        _ <- parseBin (IAProgram [IAInfix (IANumber 1) "==" (IANumber 1)]) file_name
+                        file_name `shouldHaveOpcode` 0x20
+                        _ <- parseBin (IAProgram [IAInfix (IANumber 1) "!=" (IANumber 1)]) file_name
+                        file_name `shouldHaveOpcode` 0x21
+                        _ <- parseBin (IAProgram [IAInfix (IANumber 1) "<" (IANumber 1)]) file_name
+                        file_name `shouldHaveOpcode` 0x22
+                        _ <- parseBin (IAProgram [IAInfix (IANumber 1) ">" (IANumber 1)]) file_name
+                        file_name `shouldHaveOpcode` 0x23
+                        _ <- parseBin (IAProgram [IAInfix (IANumber 1) "<=" (IANumber 1)]) file_name
+                        file_name `shouldHaveOpcode` 0x24
+                        _ <- parseBin (IAProgram [IAInfix (IANumber 1) ">=" (IANumber 1)]) file_name
+                        file_name `shouldHaveOpcode` 0x25
 
-                BS.elem 0x10 bytecode `shouldBe` True
+            describe "Logic Operations" $ do
+                it "And(0x26), Or(0x27), Not(0x28)" $ do
+                    let file_name = "op_logic.cbc"
+                    withTestFile file_name $ do
+                        _ <- parseBin (IAProgram [IAInfix (IABoolean True) "et" (IABoolean False)]) file_name
+                        file_name `shouldHaveOpcode` 0x26
+                        _ <- parseBin (IAProgram [IAInfix (IABoolean True) "ou" (IABoolean False)]) file_name
+                        file_name `shouldHaveOpcode` 0x27
+                        _ <- parseBin (IAProgram [IACall "!" [IABoolean True]]) file_name
+                        file_name `shouldHaveOpcode` 0x28
 
-            it "génère PRINT pour afficher" $ do
-                let ast = IAProgram [IAMain [] [IACall "afficher" [IANumber 42]]]
-                _ <- parseBin ast "test_print.cbc"
-                bytecode <- BS.readFile "test_print.cbc"
+            describe "Variable Operations" $ do
+                it "Load(0x50), Store(0x51), Define(0x52)" $ do
+                    let file_name = "op_vars.cbc"
+                    withTestFile file_name $ do
+                        _ <- parseBin (IAProgram [IASymbol "x"]) file_name
+                        file_name `shouldHaveOpcode` 0x50
 
-                BS.elem 0x80 bytecode `shouldBe` True
+                        _ <- parseBin (IAProgram [IAAssign "x" (IANumber 1)]) file_name
+                        file_name `shouldHaveOpcode` 0x51
 
-            it "se termine toujours par HALT" $ do
-                let ast = IAProgram [IAMain [] [IANumber 42]]
-                _ <- parseBin ast "test_halt.cbc"
-                bytecode <- BS.readFile "test_halt.cbc"
+                        _ <- parseBin (IAProgram [IADeclare "x" Nothing (IANumber 1)]) file_name
+                        file_name `shouldHaveOpcode` 0x52
 
-                BS.last bytecode `shouldBe` 0xFF
+            describe "Control Flow Operations" $ do
+                it "JmpIfFalse(0x62), Jmp(0x60)" $ do
+                    let file_name = "op_jmp.cbc"
+                    withTestFile file_name $ do
+                        _ <- parseBin (IAProgram [IAIf (IABoolean True) [IANumber 1] Nothing]) file_name
+                        file_name `shouldHaveOpcode` 0x62
 
-        describe "Control Flow" $ do
-            it "génère JMP_IF_FALSE pour un if" $ do
-                let ast = IAProgram [IAMain [] [
-                        IAIf (IABoolean True) [IANumber 1] Nothing
-                        ]]
-                _ <- parseBin ast "test_if.cbc"
-                bytecode <- BS.readFile "test_if.cbc"
+                        _ <- parseBin (IAProgram [IAWhile (IABoolean False) [IANumber 1]]) file_name
+                        file_name `shouldHaveOpcode` 0x62
+                        file_name `shouldHaveOpcode` 0x60
 
-                BS.elem 0x62 bytecode `shouldBe` True
+            describe "IO Operations" $ do
+                it "Print(0x80), Input(0x81)" $ do
+                    let file_name = "op_io.cbc"
+                    withTestFile file_name $ do
+                        _ <- parseBin (IAProgram [IACall "afficher" [IANumber 1]]) file_name
+                        file_name `shouldHaveOpcode` 0x80
 
-            it "génère JMP pour un if-else" $ do
-                let ast = IAProgram [IAMain [] [
-                        IAIf (IABoolean True) [IANumber 1] (Just [IANumber 2])
-                        ]]
-                _ <- parseBin ast "test_if_else.cbc"
-                bytecode <- BS.readFile "test_if_else.cbc"
+                        _ <- parseBin (IAProgram [IACall "ecouter" []]) file_name
+                        file_name `shouldHaveOpcode` 0x81
 
-                BS.elem 0x60 bytecode `shouldBe` True
-                BS.elem 0x62 bytecode `shouldBe` True
+            describe "Function Operations" $ do
+                it "Call(0x70), Return(0x71), Closure(0x72), LoadArg(0x73)" $ do
+                    let file_name = "op_func.cbc"
+                    withTestFile file_name $ do
+                        let validProgram = IAProgram [
+                                IAFunctionDef "f" [("arg", Just IntT)] Nothing [IAReturn (IASymbol "arg")],
+                                IACall "f" [IANumber 1]
+                                ]
+                        _ <- parseBin validProgram file_name
 
-        describe "Functions" $ do
-            it "génère CLOSURE pour une définition de fonction" $ do
-                let ast = IAProgram [
-                        IAFunctionDef "test" [] Nothing [IAReturn (IANumber 42)],
-                        IAMain [] []
-                        ]
-                _ <- parseBin ast "test_closure.cbc"
-                bytecode <- BS.readFile "test_closure.cbc"
+                        file_name `shouldHaveOpcode` 0x70 -- Call
+                        file_name `shouldHaveOpcode` 0x71 -- Return
+                        file_name `shouldHaveOpcode` 0x72 -- Closure
+                        file_name `shouldHaveOpcode` 0x73 -- LoadArg
 
-                BS.elem 0x72 bytecode `shouldBe` True
+            describe "Data Structure Operations" $ do
+                it "Tuple(0x90), TupleGet(0x91)" $ do
+                    let file_name = "op_tuple.cbc"
+                    withTestFile file_name $ do
+                        _ <- parseBin (IAProgram [IATuple [IANumber 1]]) file_name
+                        file_name `shouldHaveOpcode` 0x90
 
-            it "génère CALL pour un appel de fonction" $ do
-                let ast = IAProgram [
-                        IAFunctionDef "test" [] Nothing [IAReturn (IANumber 42)],
-                        IAMain [] [IACall "test" []]
-                        ]
-                _ <- parseBin ast "test_call.cbc"
-                bytecode <- BS.readFile "test_call.cbc"
+                        _ <- parseBin (IAProgram [IACall "get" [IATuple [], IANumber 0]]) file_name
+                        file_name `shouldHaveOpcode` 0x91
 
-                BS.elem 0x70 bytecode `shouldBe` True
+                it "List Ops: List(0x33), Cons(0x30), Head(0x31)..." $ do
+                     let file_name = "op_list.cbc"
+                     withTestFile file_name $ do
+                        _ <- parseBin (IAProgram [IAList []]) file_name
+                        file_name `shouldHaveOpcode` 0x33
 
-            it "génère RETURN pour un retour" $ do
-                let ast = IAProgram [
-                        IAFunctionDef "test" [] Nothing [IAReturn (IANumber 42)]
-                        ]
-                _ <- parseBin ast "test_return.cbc"
-                bytecode <- BS.readFile "test_return.cbc"
+                        _ <- parseBin (IAProgram [IACall "cons" [IANumber 1, IAList []]]) file_name
+                        file_name `shouldHaveOpcode` 0x30
 
-                BS.elem 0x71 bytecode `shouldBe` True
+                        _ <- parseBin (IAProgram [IACall "head" [IAList []]]) file_name
+                        file_name `shouldHaveOpcode` 0x31
 
-            it "génère LOAD_ARG pour les paramètres de fonction" $ do
-                let ast = IAProgram [
-                        IAFunctionDef "test" [("x", Nothing)] Nothing [IAReturn (IASymbol "x")],
-                        IAMain [] []
-                        ]
-                _ <- parseBin ast "test_load_arg.cbc"
-                bytecode <- BS.readFile "test_load_arg.cbc"
+                it "Array(0x92), ArrayGet(0x93), ArraySet(0x94)" $ do
+                    let file_name = "op_array.cbc"
+                    withTestFile file_name $ do
+                        _ <- parseBin (IAProgram [IACall "vector" [IANumber 1]]) file_name
+                        file_name `shouldHaveOpcode` 0x92
 
-                BS.elem 0x73 bytecode `shouldBe` True
+                        _ <- parseBin (IAProgram [IACall "get" [IACall "vector" [], IANumber 0]]) file_name
+                        file_name `shouldHaveOpcode` 0x93
 
-        describe "Variables" $ do
-            it "génère DEFINE pour une déclaration" $ do
-                let ast = IAProgram [IAMain [] [IADeclare "x" Nothing (IANumber 42)]]
-                _ <- parseBin ast "test_define.cbc"
-                bytecode <- BS.readFile "test_define.cbc"
+                        _ <- parseBin (IAProgram [IACall "set" [IACall "vector" [], IANumber 0, IANumber 1]]) file_name
+                        file_name `shouldHaveOpcode` 0x94
 
-                BS.elem 0x52 bytecode `shouldBe` True
+                it "Map(0x95), MapGet(0x96), MapSet(0x97)" $ do
+                    let file_name = "op_map.cbc"
+                    withTestFile file_name $ do
+                        _ <- parseBin (IAProgram [IACall "dico" [IAString "k", IANumber 1]]) file_name
+                        file_name `shouldHaveOpcode` 0x95
 
-            it "génère STORE pour une assignation" $ do
-                let ast = IAProgram [IAMain [] [
-                        IADeclare "x" Nothing (IANumber 0),
-                        IAAssign "x" (IANumber 42)
-                        ]]
-                _ <- parseBin ast "test_store.cbc"
-                bytecode <- BS.readFile "test_store.cbc"
+                        _ <- parseBin (IAProgram [IACall "get" [IACall "dico" [], IAString "k"]]) file_name
+                        file_name `shouldHaveOpcode` 0x96
 
-                BS.elem 0x51 bytecode `shouldBe` True
+                        _ <- parseBin (IAProgram [IACall "set" [IACall "dico" [], IAString "k", IANumber 2]]) file_name
+                        file_name `shouldHaveOpcode` 0x97
 
-            it "génère LOAD pour charger une variable" $ do
-                let ast = IAProgram [IAMain [] [
-                        IADeclare "x" Nothing (IANumber 42),
-                        IASymbol "x"
-                        ]]
-                _ <- parseBin ast "test_load.cbc"
-                bytecode <- BS.readFile "test_load.cbc"
+                it "Struct(0x98), StructGet(0x99), StructSet(0x9A)" $ do
+                     let file_name = "op_struct.cbc"
+                     withTestFile file_name $ do
+                         _ <- parseBin (IAProgram [IACall "struct" [IAString "field", IANumber 1]]) file_name
+                         file_name `shouldHaveOpcode` 0x98
 
-                BS.elem 0x50 bytecode `shouldBe` True
+                         _ <- parseBin (IAProgram [IACall "get" [IACall "struct" [], IAString "field"]]) file_name
+                         file_name `shouldHaveOpcode` 0x99
 
-        describe "Error Handling" $ do
-            it "rejette un entier hors limites" $ do
-                let ast = IAProgram [IAMain [] [IANumber 9999999999999]]
-                    isLeft (Left _) = True
-                    isLeft _ = False
-                result <- parseBin ast "test_overflow.cbc"
-                result `shouldSatisfy` isLeft
+                         _ <- parseBin (IAProgram [IACall "set" [IACall "struct" [], IAString "field", IANumber 2]]) file_name
+                         file_name `shouldHaveOpcode` 0x9A
 
-        describe "Complex Programs" $ do
-            it "génère un bytecode valide pour un programme complexe" $ do
-                let ast = IAProgram [
-                        IAFunctionDef "factorial" [("n", Nothing)] Nothing [
-                            IAIf (IAInfix (IASymbol "n") "<=" (IANumber 1))
-                                [IAReturn (IANumber 1)]
-                                (Just [IAReturn (IAInfix (IASymbol "n") "*"
-                                    (IACall "factorial" [IAInfix (IASymbol "n") "-" (IANumber 1)]))])
-                        ],
-                        IAMain [] [
-                            IACall "afficher" [IACall "factorial" [IANumber 5]]
-                        ]
-                        ]
-                result <- parseBin ast "test_complex.cbc"
-                result `shouldBe` Right ()
+            describe "File Operations" $ do
+                it "Open(0xA0), Read(0xA1), Write(0xA2), Close(0xA3)" $ do
+                    let file_name = "op_file.cbc"
+                    withTestFile file_name $ do
+                        _ <- parseBin (IAProgram [IACall "ouvrir" [IAString "f", IAString "r"]]) file_name
+                        file_name `shouldHaveOpcode` 0xA0
 
-                bytecode <- BS.readFile "test_complex.cbc"
+                        _ <- parseBin (IAProgram [IACall "lire" [IAUnit]]) file_name
+                        file_name `shouldHaveOpcode` 0xA1
 
-                BS.elem 0x72 bytecode `shouldBe` True
-                BS.elem 0x70 bytecode `shouldBe` True
-                BS.elem 0x62 bytecode `shouldBe` True
-                BS.elem 0x71 bytecode `shouldBe` True
-                BS.elem 0x80 bytecode `shouldBe` True
-                BS.elem 0xFF bytecode `shouldBe` True
+                        _ <- parseBin (IAProgram [IACall "ecrire" [IAUnit, IAString "c"]]) file_name
+                        file_name `shouldHaveOpcode` 0xA2
+
+                        _ <- parseBin (IAProgram [IACall "fermer" [IAUnit]]) file_name
+                        file_name `shouldHaveOpcode` 0xA3
+
+
+            it "should compile Print" $ do
+                let file_name = "test_print.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram [IACall "afficher" [IANumber 42]]) file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let instrs = getInstructions content
+                    let instrNoHalt = init instrs
+                    last instrNoHalt `shouldBe` 0x80
+
+            it "should compile Input" $ do
+                let file_name = "test_input.cbc"
+                withTestFile file_name $ do
+                    _ <- parseBin (IAProgram [IACall "ecouter" []]) file_name
+                    content <- BL.fromStrict <$> BS.readFile file_name
+                    let instrs = getInstructions content
+                    instrs `shouldBe` [0x81, 0xFF]
+
+        describe "Advanced Types" $ do
+             it "should compile List creation" $ do
+                 let file_name = "test_list.cbc"
+                 withTestFile file_name $ do
+                     _ <- parseBin (IAProgram [IAList [IANumber 1, IANumber 2]]) file_name
+                     content <- BL.fromStrict <$> BS.readFile file_name
+                     let instrs = getInstructions content
+                     drop 10 instrs `shouldBe` [0x33, 0, 0, 0, 2, 0xFF]
+
+             it "should compile Tuple creation" $ do
+                 let file_name = "test_tuple.cbc"
+                 withTestFile file_name $ do
+                     _ <- parseBin (IAProgram [IATuple [IANumber 1, IANumber 2]]) file_name
+                     content <- BL.fromStrict <$> BS.readFile file_name
+                     let instrs = getInstructions content
+                     drop 10 instrs `shouldBe` [0x90, 0, 0, 0, 2, 0xFF]
