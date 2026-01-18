@@ -15,13 +15,13 @@ spec :: Spec
 spec = do
     describe "OpOpenFile" $ do
         it "returns error if stack is failing arguments" $ do
-            let state = (newVMState [] [] []) { stack = [] }
+            let state = (newVMState [] [] [] []) { stack = [] }
             result <- opOpenFile state
             result `shouldSatisfy` isLeft
 
     describe "OpCloseFile" $ do
         it "removes FileVal from stack" $ do
-            let state = (newVMState [] [] []) { stack = [FileVal "test.txt"] }
+            let state = (newVMState [] [] [] []) { stack = [FileVal "test.txt"] }
             result <- opCloseFile state
             case result of
                 Right newState -> stack newState `shouldBe` []

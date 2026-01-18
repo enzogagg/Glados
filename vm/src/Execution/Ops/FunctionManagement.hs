@@ -16,7 +16,7 @@ opCall funcIndex argCount state =
             if length (stack state) < argCount
             then Left "Insufficient arguments on stack"
             else
-                let args = take argCount (stack state)
+                let args = reverse (take argCount (stack state))
                     remainingStack = drop argCount (stack state)
                     savedIp = ip state
                     savedArgs = curArgs state
@@ -31,7 +31,7 @@ opCall funcIndex argCount state =
 opReturn :: VMState -> Either String VMState
 opReturn state =
     case callStack state of
-        [] -> Left "Return outside of function call"
+        [] -> Right $ state { ip = length (instructions state) - 1 }
         ((retIp, oldArgs) : rest) ->
             Right $ state {
                 ip = retIp,

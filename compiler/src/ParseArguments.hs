@@ -26,7 +26,7 @@ import Resolver (resolveIncludes)
 import Visualizer (astToDot)
 import ConstantFolding (foldConstants)
 import Validator (validateAST)
-import TailCallOptimization (optimizeTailCalls)
+import TailCallOptimization()
 import DeadCodeElimination (eliminateDeadCode)
 import ConstantPropagator (propagateConstants)
 

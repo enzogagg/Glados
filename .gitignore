@@ -18,7 +18,6 @@ glados-*
 
 # Bin files
 example/*
-*.clad
 *.cbc
 *.class
 *.class.j
@@ -43,3 +42,6 @@ documentation/node_modules
 # OS generated files
 .DS_Store
 .vscode/
+
+# Python
+__pycache__

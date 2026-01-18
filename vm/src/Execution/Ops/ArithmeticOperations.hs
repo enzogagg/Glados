@@ -17,7 +17,8 @@ opAdd state =
         (FloatVal a : FloatVal b : rest) -> Right $ state { stack = FloatVal (a + b) : rest }
         (IntVal a : FloatVal b : rest) -> Right $ state { stack = FloatVal (fromIntegral a + b) : rest }
         (FloatVal a : IntVal b : rest) -> Right $ state { stack = FloatVal (a + fromIntegral b) : rest }
-        _ -> Left "Error: Add requires two numeric values on the stack"
+        (StringVal a : StringVal b : rest) -> Right $ state { stack = StringVal (b ++ a) : rest }
+        _ -> Left "Error: Add requires two numeric values or strings on the stack"
 
 opSub :: VMState -> Either String VMState
 opSub state =

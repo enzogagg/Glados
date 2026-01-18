@@ -33,10 +33,15 @@ data CladType
     = IntT
     | FloatT
     | BoolT
+    | CharT
     | StringT
+    | FileT
     | ListT CladType                -- Liste d'un type spécifique
     | FuncT [CladType] CladType     -- (Args types) -> Return type
     | TupleT [CladType]
+    | ArrayT CladType               -- Array of Type
+    | MapT CladType CladType        -- Map KeyType ValueType
+    | StructT                       -- Structure
     | AnyT
     | VoidT
     | ErrorT
@@ -71,6 +76,7 @@ data AST
     | IAFloatLiteral Double
     | IABoolean Bool
     | IAString String
+    | IAChar Char
     | IASymbol String                           -- Identifiant de variable ou de fonction
     | IAList [AST]                              -- Construction d'une liste (ex: [1, 2, 3] si implémenté)
     | IAUnit                                    -- Représente le Neant (:unit ou void)
@@ -115,7 +121,12 @@ data Value
     | ListVal [Value]
     | SymbolVal String
     | StringVal String
+    | CharVal Char
     | TupleVal [Value]
+    | ArrayVal [Value]
+    | MapVal [(Value, Value)]
+    | StructVal [(String, Value)]
+    | FileVal String            -- File path or handle identifier
     | Void                      -- Représente le type Neant
     | ErrorVal String           -- Ajout d'un type pour les erreurs (plus propre que Left String)
 
@@ -131,6 +142,11 @@ instance Show Value where
     show (TupleVal t) = "(" ++ intercalate ", " (map show t) ++ ")"
     show (SymbolVal s) = s
     show (StringVal s) = s
+    show (CharVal c) = show c
+    show (ArrayVal list) = "[" ++ intercalate ", " (map show list) ++ "]"
+    show (MapVal pairs) = "dico{" ++ intercalate ", " (map (\(k, v) -> show k ++ ": " ++ show v) pairs) ++ "}"
+    show (StructVal fields) = "struct{" ++ intercalate ", " (map (\(k, v) -> k ++ ": " ++ show v) fields) ++ "}"
+    show (FileVal path) = "<file:" ++ path ++ ">"
     show Void = "neant"
     show (ErrorVal s) = "*** ERROR: " ++ s -- Affichage d'erreur
 
@@ -144,6 +160,11 @@ instance Eq Value where
     ListVal a == ListVal b = a == b
     SymbolVal a == SymbolVal b = a == b
     StringVal a == StringVal b = a == b
+    CharVal a == CharVal b = a == b
+    ArrayVal a == ArrayVal b = a == b
+    MapVal a == MapVal b = a == b  -- Attention : l'ordre des cles compte ici
+    StructVal a == StructVal b = a == b -- Attention : l'ordre des champs compte ici
+    FileVal a == FileVal b = a == b
     Void == Void = True
     ErrorVal a == ErrorVal b = a == b -- Les erreurs sont égales si leurs messages sont égaux (ou si on considère que toutes les erreurs sont égales)
     _ == _ = False
@@ -189,6 +210,7 @@ data TypeTag
     | TagArray      -- 0x0A
     | TagStruct     -- 0x0B
     | TagMap        -- 0x0C
+    | TagFile       -- 0x0D
     deriving (Show, Eq)
 
 typeTagToByte :: TypeTag -> Word8
@@ -205,6 +227,7 @@ typeTagToByte TagTuple = 0x09
 typeTagToByte TagArray = 0x0A
 typeTagToByte TagStruct = 0x0B
 typeTagToByte TagMap = 0x0C
+typeTagToByte TagFile = 0x0D
 
 data Opcode
     = OpPushConst       -- 0x01
@@ -234,6 +257,13 @@ data Opcode
     | OpTail            -- 0x32
     | OpList            -- 0x33
     | OpLen             -- 0x34
+    | OpIsEmpty         -- 0x35
+    | OpNth             -- 0x36
+    | OpInsert          -- 0x37
+    | OpRemove          -- 0x38
+    | OpContains        -- 0x39
+    | OpAppend          -- 0x3A
+    | OpReverse         -- 0x3B
     | OpMakeSymbol      -- 0x40
     | OpQuote           -- 0x41
     | OpEval            -- 0x42
@@ -260,6 +290,10 @@ data Opcode
     | OpMakeStruct      -- 0x98
     | OpStructGet       -- 0x99
     | OpStructSet       -- 0x9A
+    | OpOpenFile        -- 0xA0
+    | OpReadFile        -- 0xA1
+    | OpWriteFile       -- 0xA2
+    | OpCloseFile       -- 0xA3
     | OpHalt            -- 0xFF
     deriving (Show, Eq)
 
@@ -291,6 +325,13 @@ opcodeToByte OpHead = 0x31
 opcodeToByte OpTail = 0x32
 opcodeToByte OpList = 0x33
 opcodeToByte OpLen = 0x34
+opcodeToByte OpIsEmpty = 0x35
+opcodeToByte OpNth = 0x36
+opcodeToByte OpInsert = 0x37
+opcodeToByte OpRemove = 0x38
+opcodeToByte OpContains = 0x39
+opcodeToByte OpAppend = 0x3A
+opcodeToByte OpReverse = 0x3B
 opcodeToByte OpMakeSymbol = 0x40
 opcodeToByte OpQuote = 0x41
 opcodeToByte OpEval = 0x42
@@ -317,6 +358,10 @@ opcodeToByte OpMapSet = 0x97
 opcodeToByte OpMakeStruct = 0x98
 opcodeToByte OpStructGet = 0x99
 opcodeToByte OpStructSet = 0x9A
+opcodeToByte OpOpenFile = 0xA0
+opcodeToByte OpReadFile = 0xA1
+opcodeToByte OpWriteFile = 0xA2
+opcodeToByte OpCloseFile = 0xA3
 opcodeToByte OpHalt = 0xFF
 
 -- ==========================
@@ -337,6 +382,7 @@ getTypeTagSize TagTuple = -1     -- Taille variable
 getTypeTagSize TagArray = -1     -- Taille variable
 getTypeTagSize TagStruct = -1    -- Taille variable
 getTypeTagSize TagMap = -1       -- Taille variable
+getTypeTagSize TagFile = -1      -- Taille variable (Path string)
 
 -- ==========================
 -- Taille des opérandes pour chaque opcode
@@ -371,6 +417,13 @@ getOpcodeSize op
     | op == 0x32 = 0  -- TAIL
     | op == 0x33 = 4  -- LIST (Size as Int32)
     | op == 0x34 = 0  -- LEN
+    | op == 0x35 = 0  -- IS_EMPTY
+    | op == 0x36 = 0  -- NTH
+    | op == 0x37 = 0  -- INSERT
+    | op == 0x38 = 0  -- REMOVE
+    | op == 0x39 = 0  -- CONTAINS
+    | op == 0x3A = 0  -- APPEND
+    | op == 0x3B = 0  -- REVERSE
     | op == 0x50 = 4  -- LOAD
     | op == 0x51 = 4  -- STORE
     | op == 0x52 = 4  -- DEFINE
@@ -382,5 +435,21 @@ getOpcodeSize op
     | op == 0x72 = 4  -- CLOSURE
     | op == 0x73 = 4  -- LOAD_ARG
     | op == 0x80 = 0  -- PRINT
+    | op == 0x81 = 0  -- INPUT
+    | op == 0x90 = 4  -- MAKE_TUPLE (Size)
+    | op == 0x91 = 4  -- TUPLE_GET (Index)
+    | op == 0x92 = 4  -- MAKE_ARRAY (Size)
+    | op == 0x93 = 0  -- ARRAY_GET
+    | op == 0x94 = 0  -- ARRAY_SET
+    | op == 0x95 = 4  -- MAKE_MAP (Count)
+    | op == 0x96 = 0  -- MAP_GET
+    | op == 0x97 = 0  -- MAP_SET
+    | op == 0x98 = 4  -- MAKE_STRUCT (Count)
+    | op == 0x99 = 4  -- STRUCT_GET (Name Index)
+    | op == 0x9A = 4  -- STRUCT_SET (Name Index)
+    | op == 0xA0 = 0  -- OPEN_FILE
+    | op == 0xA1 = 0  -- READ_FILE
+    | op == 0xA2 = 0  -- WRITE_FILE
+    | op == 0xA3 = 0  -- CLOSE_FILE
     | op == 0xFF = 0  -- HALT
     | otherwise = 0

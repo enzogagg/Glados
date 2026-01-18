@@ -107,7 +107,7 @@ spec = describe "Parser" $ do
             case runGetOrFail (parseInstructions []) bs of
                 Right (_, _, instrs) -> do
                     length instrs `shouldBe` 31
-                    head instrs `shouldBe` PushInt 1
+                    take 1 instrs `shouldBe` [PushInt 1]
                     last instrs `shouldBe` LoadArg 0
                 Left (_, _, err) -> expectationFailure $ "Failed parse all: " ++ err
 

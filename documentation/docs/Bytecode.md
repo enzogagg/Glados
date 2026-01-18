@@ -275,9 +275,8 @@ La VM CLaD est conçue pour supporter :
 ```clad
 liste = [1, 2, 3]
 print(head(liste) + 10)
-```
 
-### 5.2 Représentation en bytecode assembleur
+5.2 Représentation en bytecode assembleur
 
 ```assembly
 PUSH_INT 1
@@ -292,7 +291,6 @@ PUSH_INT 10
 ADD
 PRINT
 HALT
-```
 
 ### 5.3 Encôdage binaire
 
@@ -307,11 +305,14 @@ HALT
 10                ; ADD
 80                ; PRINT
 FF                ; HALT
-```
 
 ## 6. Format du fichier .cbc
 
-### 6.1 Vue d'ensemble de la structure
+graph TD
+    A[Fichier .cbc] --> B(HEADER);
+    A --> C(CONSTANT POOL);
+    A --> D(FUNCTION TABLE);
+    A --> E(INSTRUCTIONS);
 
 Pour visualiser clairement la structure du fichier .cbc, voici un diagramme Mermaid :
 
@@ -358,7 +359,15 @@ graph TD
     end
 ```
 
-### 6.2 Header (10 bytes)
+    subgraph CONSTANT_POOL
+        C1(Count : 4 bytes)
+        C2[Entry 0] --> C2_1(Type Tag : 1 byte);
+        C2_1 --> C2_2(Length : 4 bytes);
+        C2_2 --> C2_3(Data : n bytes);
+        C3[Entry 1] --> C3_1(Type Tag : 1 byte);
+        C3_1 --> C3_2(Length : 4 bytes);
+        C3_2 --> C3_3(Data : n bytes);
+    end
 
 | Offset | Taille | Champ | Valeur / Description |
 |---|---|---|---|
@@ -372,11 +381,16 @@ Exemple en hexadécimal :
 ```text
 43 42 43 00 | 01 00 | 00 | 00 00 00
    Magic    | Ver.  |Flg | Reserved
-```
 
-### 6.3 Constant Pool
+6.3 Constant Pool
 
-**Structure :**
+Structure :
+Champ Taille   Description
+Count 4 bytes  Nombre total d'entrées
+Entry N  variable Entrée de la pool
+Type Tag 1 byte   Type de l'entrée (voir section 2.1)
+Length   4 bytes  Taille des données
+Data  Length bytes   Données brutes
 
 | Champ | Taille | Description |
 |---|---|---|
@@ -406,9 +420,15 @@ Int 42:
 Type | Length | Data (32-bit int)
 ```
 
-### 6.4 Function Table
+6.4 Function Table
 
-**Structure :**
+Structure :
+Champ Taille   Description
+Count 4 bytes  Nombre de fonctions
+Function Entry N  variable Entrée de la table
+Index 4 bytes  ID de la fonction
+Address  4 bytes  Adresse dans le bytecode
+ArgCount 1 byte   Nombre d'arguments
 
 | Champ | Taille | Description |
 |---|---|---|
@@ -432,11 +452,15 @@ Function 1: main (0 args, @ 0x0150)
 ```text
 00 00 00 01 | 00 00 01 50 | 00
    Index       Address      Args
-```
 
-### 6.5 Instructions
+6.5 Instructions
 
-**Structure :**
+Structure :
+Champ Taille   Description
+Code Length 4 bytes  Taille totale du code
+Instruction N  variable Séquence d'Opcode et d'Opérandes
+Opcode   1 byte   Instruction
+Operands variable Arguments de l'instruction
 
 | Champ | Taille | Description |
 |---|---|---|
@@ -465,9 +489,9 @@ Instruction: `CALL` 0 with 2 args
 Opcode | Function Index | ArgCount
 ```
 
-### 6.6 Exemple complet de fichier .cbc
+6.6 Exemple complet de fichier .cbc
 
-Programme : `print(42)`
+Programme : print(42)
 
 ```text
 43 42 43 00 01 00 00 00 00 00  ; HEADER (10 bytes)

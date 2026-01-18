@@ -1,8 +1,8 @@
 principal
     variable entier x = 10
     si (x > 5)
-        print("Sup")
+        afficher("Sup")
     sinon
-        print("Inf")
+        afficher("Inf")
     fin
 fin

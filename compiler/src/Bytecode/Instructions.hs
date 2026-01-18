@@ -18,14 +18,14 @@ import qualified Data.ByteString.Lazy as BL
 import Data.Binary.Put
 import Control.Monad.State
 import Control.Applicative ((<|>))
+import Data.Bifunctor (second)
 import qualified Data.Map.Strict as Map
-import Data.Maybe(fromMaybe)
+import Data.Maybe(fromMaybe, catMaybes)
 
 -- ==========================
 -- Helper Functions
 -- ==========================
 
--- Fonction helper pour générer des instructions et mettre à jour instructionCount
 generateInstructionWithCount :: AST -> CodeGen
 generateInstructionWithCount ast = do
     result <- generateInstruction ast
@@ -39,16 +39,43 @@ countInstructions :: [Word8] -> Int
 countInstructions [] = 0
 countInstructions (opcode:rest) = 1 + countInstructions (drop (getOpcodeSize opcode) rest)
 
+inferType :: AST -> State BytecodeContext CladType
+inferType (IANumber _) = return IntT
+inferType (IAFloatLiteral _) = return FloatT
+inferType (IABoolean _) = return BoolT
+inferType (IAChar _) = return CharT
+inferType (IAString _) = return StringT
+inferType (IASymbol s) = do
+    ctx <- get
+    case Map.lookup s (variableTypes ctx) of
+        Just t -> return t
+        Nothing -> return AnyT
+inferType (IACall "tableau" _) = return (ArrayT AnyT)
+inferType (IACall "dictionnaire" _) = return (MapT AnyT AnyT)
+inferType (IACall "structure" _) = return StructT
+inferType (IACall "ouvrir" _) = return FileT
+inferType (IACall "entree" _) = return StringT
+inferType (IACall "afficher" _) = return VoidT
+inferType (IATuple _) = return (TupleT [])
+inferType (IACall fname _) = do
+    ctx <- get
+    case Map.lookup fname (funcSignatures ctx) of
+        Just (_, ret) -> return ret
+        Nothing -> return AnyT
+inferType (IAInfix l op r) = do
+  lt <- inferType l
+  rt <- inferType r
+  case op of
+    _ | op `elem` ["==", "!=", "<", ">", "<=", ">="] -> return BoolT
+    _ | op `elem` ["et", "ou"] -> return BoolT
+    _ | lt == FloatT || rt == FloatT -> return FloatT
+    _ -> return IntT
+inferType _ = return AnyT
+
+
 -- ==========================
 -- Générateurs par type d'AST
 -- ==========================
-
-genTailCall :: AST -> Maybe CodeGen
-genTailCall (IATailCall name args) = Just $ do
-    -- Pour l'instant, on génère le même bytecode qu'un appel normal.
-    -- Cela permet de compiler sans erreur.
-    generateInstruction (IACall name args)
-genTailCall _ = Nothing
 
 genNumber :: AST -> Maybe CodeGen
 genNumber (IANumber n) = Just $ do
@@ -68,6 +95,13 @@ genFloat _ = Nothing
 genBoolean :: AST -> Maybe CodeGen
 genBoolean (IABoolean b) = Just $ return $ Right [opcodeToByte OpPushBool, if b then 0x01 else 0x00]
 genBoolean _ = Nothing
+
+genChar :: AST -> Maybe CodeGen
+genChar (IAChar c) = Just $ do
+    idx <- addConstant (ConstChar c)
+    let idxBytes = BL.unpack $ runPut $ putWord32be (fromIntegral idx)
+    return $ Right $ opcodeToByte OpPushConst : idxBytes
+genChar _ = Nothing
 
 genString :: AST -> Maybe CodeGen
 genString (IAString s) = Just $ do
@@ -113,6 +147,11 @@ genTuple (IATuple exprs) = Just $ do
             return $ Right $ concat codes ++ tupleCode
 genTuple _ = Nothing
 
+
+-- ==========================
+-- Opérateurs
+-- ==========================
+
 genInfix :: AST -> Maybe CodeGen
 genInfix (IAInfix left op right) = Just $ do
     leftResult <- generateInstruction left
@@ -143,12 +182,29 @@ genInfix (IAInfix left op right) = Just $ do
                 Right code -> return $ Right $ leftCode ++ rightCode ++ code
 genInfix _ = Nothing
 
+genCallNot :: AST -> Maybe CodeGen
+genCallNot (IACall "!" [arg]) = Just $ do
+    argResult <- generateInstruction arg
+    case argResult of
+        Left err -> return $ Left err
+        Right argCode -> return $ Right $ argCode ++ [opcodeToByte OpNot]
+genCallNot _ = Nothing
+
+
+-- ==========================
+-- Variables
+-- ==========================
+
 genDeclare :: AST -> Maybe CodeGen
-genDeclare (IADeclare name _ expr) = Just $ do
+genDeclare (IADeclare name typeAnnot expr) = Just $ do
     exprResult <- generateInstruction expr
     case exprResult of
         Left err -> return $ Left err
         Right exprCode -> do
+            ctx <- get
+            let varType = fromMaybe AnyT typeAnnot
+            put ctx { variableTypes = Map.insert name varType (variableTypes ctx) }
+
             idx <- addConstant (ConstSymbol name)
             let storeBytes = BL.unpack $ runPut $ putWord32be (fromIntegral idx)
             return $ Right $ exprCode ++ (opcodeToByte OpDefine : storeBytes)
@@ -165,6 +221,10 @@ genAssign (IAAssign name expr) = Just $ do
             return $ Right $ exprCode ++ (opcodeToByte OpStore : storeBytes)
 genAssign _ = Nothing
 
+-- ==========================
+-- Entrées / Sorties (Builtins)
+-- ==========================
+
 genCallAfficher :: AST -> Maybe CodeGen
 genCallAfficher (IACall "afficher" args) = Just $ do
     results <- mapM generateInstruction args
@@ -173,21 +233,222 @@ genCallAfficher (IACall "afficher" args) = Just $ do
         Right codes -> return $ Right $ concat codes ++ [opcodeToByte OpPrint]
 genCallAfficher _ = Nothing
 
-genCallNot :: AST -> Maybe CodeGen
-genCallNot (IACall "!" [arg]) = Just $ do
-    argResult <- generateInstruction arg
-    case argResult of
+genCallEntree :: AST -> Maybe CodeGen
+genCallEntree (IACall "entree" []) = Just $ return $ Right [opcodeToByte OpInput]
+genCallEntree _ = Nothing
+
+
+-- ==========================
+-- Operations sur les structures de données
+-- ==========================
+
+genCallTableau :: AST -> Maybe CodeGen
+genCallTableau (IACall "tableau" args) = Just $ do
+    results <- mapM generateInstruction args
+    case sequence results of
         Left err -> return $ Left err
-        Right argCode -> return $ Right $ argCode ++ [opcodeToByte OpNot]
-genCallNot _ = Nothing
+        Right codes -> do
+            let vectorCode = opcodeToByte OpMakeArray : BL.unpack (runPut $ putWord32be (fromIntegral $ length args))
+            return $ Right $ concat codes ++ vectorCode
+genCallTableau _ = Nothing
+
+genCallDictionnaire :: AST -> Maybe CodeGen
+genCallDictionnaire (IACall "dictionnaire" args) = Just $ do
+    if odd (length args)
+        then return $ Left "Function 'dictionnaire' expects an even number of arguments (pairs key-value)"
+        else do
+            results <- mapM generateInstruction (reverse args)
+            case sequence results of
+                Left err -> return $ Left err
+                Right codes -> do
+                    let numPairs = length args `div` 2
+                    let mapCode = opcodeToByte OpMakeMap : BL.unpack (runPut $ putWord32be (fromIntegral numPairs))
+                    return $ Right $ concat codes ++ mapCode
+genCallDictionnaire _ = Nothing
+
+genCallStructure :: AST -> Maybe CodeGen
+genCallStructure (IACall "structure" args) = Just $ do
+     if odd (length args)
+        then return $ Left "Function 'structure' expects an even number of arguments (pairs key-value)"
+        else do
+            results <- mapM generateInstruction (reverse args)
+            case sequence results of
+                Left err -> return $ Left err
+                Right codes -> do
+                    let count = length args `div` 2
+                    let structCode = opcodeToByte OpMakeStruct : BL.unpack (runPut $ putWord32be (fromIntegral count))
+                    return $ Right $ concat codes ++ structCode
+genCallStructure _ = Nothing
+
+
+-- ==========================
+-- Operations d'accès (Get/Set)
+-- ==========================
+
+genCallRecuperer :: AST -> Maybe CodeGen
+genCallRecuperer (IACall "recuperer" args) = Just $ case args of
+    [obj, idx] -> do
+        objType <- inferType obj
+        case objType of
+            ArrayT _ -> genStackGet OpArrayGet obj idx
+            ListT _ -> genStackGet OpArrayGet obj idx
+            MapT _ _ -> genStackGet OpMapGet obj idx
+
+            TupleT _ -> case idx of
+                IANumber n -> genImmediateGet OpTupleGet (fromIntegral n) obj
+                _ -> return $ Left "Tuple recuperer requires integer constant index"
+
+            StructT -> case idx of
+                IAString s -> genSymbolGet OpStructGet s obj
+                _ -> return $ Left "Struct recuperer requires string constant key"
+
+            AnyT -> case idx of
+                IANumber _ -> genStackGet OpArrayGet obj idx
+                IAString _ -> genStackGet OpMapGet obj idx
+                _ -> genStackGet OpArrayGet obj idx
+
+            _ -> return $ Left $ "Type " ++ show objType ++ " does not support 'recuperer'"
+    _ -> return $ Left "Function 'recuperer' expects 2 arguments (object, index/key)"
+genCallRecuperer _ = Nothing
+
+genCallModifier :: AST -> Maybe CodeGen
+genCallModifier (IACall "modifier" args) = Just $ case args of
+    [obj, idx, val] -> do
+        objType <- inferType obj
+        case objType of
+            ArrayT _ -> genStackSet OpArraySet obj idx val
+            MapT _ _ -> genStackSet OpMapSet obj idx val
+
+            StructT -> case idx of
+                IAString s -> genSymbolSet OpStructSet s obj val
+                _ -> return $ Left "Struct modifier requires string constant key"
+
+            AnyT -> case idx of
+                IANumber _ -> genStackSet OpArraySet obj idx val
+                IAString _ -> genStackSet OpMapSet obj idx val
+                _ -> genStackSet OpArraySet obj idx val
+
+            _ -> return $ Left $ "Type " ++ show objType ++ " does not support 'modifier'"
+    _ -> return $ Left "Function 'modifier' expects 3 arguments (object, index/key, value)"
+genCallModifier _ = Nothing
+
+genStackGet :: Opcode -> AST -> AST -> State BytecodeContext (Either String [Word8])
+genStackGet op obj idx = do
+    r1 <- generateInstruction obj
+    r2 <- generateInstruction idx
+    case (r1, r2) of
+        (Right c1, Right c2) -> return $ Right $ c1 ++ c2 ++ [opcodeToByte op]
+        _ -> return $ Left "Error generating get arguments"
+
+genImmediateGet :: Opcode -> Int -> AST -> State BytecodeContext (Either String [Word8])
+genImmediateGet op idx obj = do
+    r1 <- generateInstruction obj
+    case r1 of
+        Right c1 -> do
+            let bytes = BL.unpack $ runPut $ putWord32be (fromIntegral idx)
+            return $ Right $ c1 ++ (opcodeToByte op : bytes)
+        Left e -> return $ Left e
+
+genSymbolGet :: Opcode -> String -> AST -> State BytecodeContext (Either String [Word8])
+genSymbolGet op sym obj = do
+    r1 <- generateInstruction obj
+    case r1 of
+        Right c1 -> do
+            idx <- addConstant (ConstString sym)
+            let bytes = BL.unpack $ runPut $ putWord32be (fromIntegral idx)
+            return $ Right $ c1 ++ (opcodeToByte op : bytes)
+        Left e -> return $ Left e
+
+genStackSet :: Opcode -> AST -> AST -> AST -> State BytecodeContext (Either String [Word8])
+genStackSet op obj idx val = do
+    r1 <- generateInstruction obj
+    r2 <- generateInstruction idx
+    r3 <- generateInstruction val
+    case (r1, r2, r3) of
+        (Right c1, Right c2, Right c3) -> return $ Right $ c1 ++ c2 ++ c3 ++ [opcodeToByte op]
+        _ -> return $ Left "Error generating set arguments"
+
+genSymbolSet :: Opcode -> String -> AST -> AST -> State BytecodeContext (Either String [Word8])
+genSymbolSet op sym obj val = do
+    r1 <- generateInstruction obj
+    r3 <- generateInstruction val
+    case (r1, r3) of
+            (Right c1, Right c3) -> do
+                idx <- addConstant (ConstString sym)
+                let bytes = BL.unpack $ runPut $ putWord32be (fromIntegral idx)
+                return $ Right $ c1 ++ c3 ++ (opcodeToByte op : bytes)
+            _ -> return $ Left "Error generating set"
+
+
+-- ==========================
+-- Operations Fichiers
+-- ==========================
+
+genCallOuvrir :: AST -> Maybe CodeGen
+genCallOuvrir (IACall "ouvrir" args) = Just $ do
+    if length args /= 2
+        then return $ Left "Function 'ouvrir' expects 2 arguments (path, mode)"
+        else do
+            results <- mapM generateInstruction args
+            case sequence results of
+                Left err -> return $ Left err
+                Right codes -> return $ Right $ concat codes ++ [opcodeToByte OpOpenFile]
+genCallOuvrir _ = Nothing
+
+genCallLire :: AST -> Maybe CodeGen
+genCallLire (IACall "lire" args) = Just $ do
+    if length args /= 1
+        then return $ Left "Function 'lire' expects 1 argument (file)"
+        else do
+            results <- mapM generateInstruction args
+            case sequence results of
+                Left err -> return $ Left err
+                Right codes -> return $ Right $ concat codes ++ [opcodeToByte OpReadFile]
+genCallLire _ = Nothing
+
+genCallEcrire :: AST -> Maybe CodeGen
+genCallEcrire (IACall "ecrire" args) = Just $ do
+    if length args /= 2
+        then return $ Left "Function 'ecrire' expects 2 arguments (file, content)"
+        else do
+             results <- mapM generateInstruction args
+             case sequence results of
+                Left err -> return $ Left err
+                Right codes -> return $ Right $ concat codes ++ [opcodeToByte OpWriteFile]
+genCallEcrire _ = Nothing
+
+genCallFermer :: AST -> Maybe CodeGen
+genCallFermer (IACall "fermer" args) = Just $ do
+    if length args /= 1
+        then return $ Left "Function 'fermer' expects 1 argument (file)"
+        else do
+            results <- mapM generateInstruction args
+            case sequence results of
+                Left err -> return $ Left err
+                Right codes -> return $ Right $ concat codes ++ [opcodeToByte OpCloseFile]
+genCallFermer _ = Nothing
+
+
+-- ==========================
+-- Opérations sur les listes
+-- ==========================
 
 genCallListOps :: AST -> Maybe CodeGen
 genCallListOps (IACall name args) =
     case name of
-        "cons" -> checkArgs 2 OpCons
-        "head" -> checkArgs 1 OpHead
-        "tail" -> checkArgs 1 OpTail
-        "len" -> checkArgs 1 OpLen
+        "fusion" -> checkArgs 2 OpCons
+        "tete" -> checkArgs 1 OpHead
+        "reste" -> checkArgs 1 OpTail
+        "taille" -> checkArgs 1 OpLen
+        "est_vide" -> checkArgs 1 OpIsEmpty
+        "nieme" -> checkArgs 2 OpNth
+        "concatener" -> checkArgs 2 OpAppend
+        "insere" -> checkArgs 3 OpInsert
+        "supprimer" -> checkArgs 2 OpRemove
+        "contient" -> checkArgs 2 OpContains
+        "inverser" -> checkArgs 1 OpReverse
+        "ajouter" -> Just genAjouter
+        "vider" -> Just genVider
         _ -> Nothing
     where
         checkArgs count op =
@@ -198,215 +459,325 @@ genCallListOps (IACall name args) =
                     Left err -> return $ Left err
                     Right codes -> return $ Right $ concat codes ++ [opcodeToByte op]
             else Just $ return $ Left $ "Function '" ++ name ++ "' expects " ++ show count ++ " arguments"
+
+        genAjouter = case args of
+            [lArg, eArg] -> do
+                lRes <- generateInstruction lArg
+                eRes <- generateInstruction eArg
+                case (lRes, eRes) of
+                    (Right lc, Right ec) -> do
+                        let list1Code = opcodeToByte OpList : BL.unpack (runPut $ putWord32be 1)
+                        return $ Right $ lc ++ ec ++ list1Code ++ [opcodeToByte OpAppend]
+                    (Left e, _) -> return $ Left e
+                    (_, Left e) -> return $ Left e
+            _ -> return $ Left "Function 'ajouter' expects 2 arguments (list, element)"
+
+        genVider = case args of
+            [lArg] -> do
+                lRes <- generateInstruction lArg
+                case lRes of
+                    Right lc -> do
+                        let list0Code = opcodeToByte OpList : BL.unpack (runPut $ putWord32be 0)
+                        return $ Right $ lc ++ [opcodeToByte OpPop] ++ list0Code
+                    Left e -> return $ Left e
+            _ -> return $ Left "Function 'vider' expects 1 argument (list)"
+
 genCallListOps _ = Nothing
+
+
+-- ==========================
+-- Appels de fonctions
+-- ==========================
 
 genCall :: AST -> Maybe CodeGen
 genCall (IACall fname args) = Just $ do
-    results <- mapM generateInstruction args
-    case sequence results of
-        Left err -> return $ Left err
-        Right codes -> do
-            ctx <- get
-            case Map.lookup fname (funcMap ctx) of
-                Just funcTableIdx -> do
-                    let funcBytes = BL.unpack $ runPut $ putWord32be (fromIntegral funcTableIdx)
-                    let argCountByte = fromIntegral $ length args
-                    return $ Right $ concat codes ++ (opcodeToByte OpCall : funcBytes ++ [argCountByte])
-                Nothing -> do
-                    idx <- addConstant (ConstSymbol fname)
-                    let funcBytes = BL.unpack $ runPut $ putWord32be (fromIntegral idx)
-                    let argCountByte = fromIntegral $ length args
-                    return $ Right $ concat codes ++ (opcodeToByte OpCall : funcBytes ++ [argCountByte])
+    ctx <- get
+    case Map.lookup fname (funcSignatures ctx) of
+        Just (argTypes, _) -> do
+             if length args /= length argTypes
+                then return $ Left $ "Function '" ++ fname ++ "' expects " ++ show (length argTypes) ++ " arguments but got " ++ show (length args)
+                else do
+                    typeChecks <- mapM (\(arg, expected) -> do
+                        actual <- inferType arg
+                        if expected /= AnyT && actual /= AnyT && actual /= expected
+                             then return $ Just $ "Argument type mismatch in call to '" ++ fname ++ "': expected " ++ show expected ++ ", got " ++ show actual
+                             else return Nothing
+                        ) (zip args argTypes)
+                    case catMaybes typeChecks of
+                        (e:_) -> return $ Left e
+                        [] -> generateCallCode
+        Nothing -> generateCallCode
+  where
+    generateCallCode = do
+        results <- mapM generateInstruction args
+        case sequence results of
+            Left err -> return $ Left err
+            Right codes -> do
+                ctx <- get
+                case Map.lookup fname (funcMap ctx) of
+                    Just funcTableIdx -> do
+                        let funcBytes = BL.unpack $ runPut $ putWord32be (fromIntegral funcTableIdx)
+                        let argCountByte = fromIntegral $ length args
+                        return $ Right $ concat codes ++ (opcodeToByte OpCall : funcBytes ++ [argCountByte])
+                    Nothing -> return $ Left $ "Function not found: " ++ fname
 genCall _ = Nothing
+
+genTailCall :: AST -> Maybe CodeGen
+genTailCall (IATailCall fname args) = genCall (IACall fname args)
+genTailCall _ = Nothing
 
 genReturn :: AST -> Maybe CodeGen
 genReturn (IAReturn expr) = Just $ do
-    exprResult <- generateInstruction expr
-    case exprResult of
-        Left err -> return $ Left err
-        Right exprCode -> return $ Right $ exprCode ++ [opcodeToByte OpReturn]
+    ctx <- get
+    let expected = currentReturnType ctx
+    actual <- inferType expr
+    if expected /= AnyT && expected /= VoidT && actual /= AnyT && actual /= expected
+        then return $ Left $ "Return type mismatch: expected " ++ show expected ++ ", got " ++ show actual
+        else do
+            exprResult <- generateInstruction expr
+            case exprResult of
+                Left err -> return $ Left err
+                Right exprCode -> return $ Right $ exprCode ++ [opcodeToByte OpReturn]
 genReturn _ = Nothing
+
+
+-- ==========================
+-- Flux de contrôle
+-- ==========================
 
 genIf :: AST -> Maybe CodeGen
 genIf (IAIf condExpr thenStmts maybeElseStmts) = Just $ do
-    ctx <- get
-    let startInstr = instructionCount ctx
+    startInstr <- gets instructionCount
 
-    condResult <- generateInstruction condExpr
-    thenResults <- mapM generateInstruction thenStmts
+    code <- do
+        condResult <- generateInstructionWithCount condExpr
+        modify $ \c -> c { instructionCount = instructionCount c + 1 }
 
-    case (condResult, sequence thenResults) of
-        (Left err, _) -> return $ Left err
-        (_, Left err) -> return $ Left err
-        (Right condCode, Right thenCodes) -> do
-            let thenBody = concat thenCodes
-            let condInstrCount = countInstructions condCode
-            let thenInstrCount = countInstructions thenBody
+        thenResults <- mapM generateInstructionWithCount thenStmts
 
-            case maybeElseStmts of
-                Nothing -> do
-                    let jmpTarget = fromIntegral (startInstr + condInstrCount + 1 + thenInstrCount)
-                    let jmpBytes = BL.unpack $ runPut $ putWord32be jmpTarget
-                    modify $ \c -> c { instructionCount = startInstr + condInstrCount + 1 + thenInstrCount }
-                    return $ Right $ condCode ++ (opcodeToByte OpJmpIfFalse : jmpBytes) ++ thenBody
+        case maybeElseStmts of
+            Nothing -> do
+                endInstr <- gets instructionCount
 
-                Just elseStmts -> do
-                    elseResults <- mapM generateInstruction elseStmts
-                    case sequence elseResults of
-                        Left err -> return $ Left err
-                        Right elseCodes -> do
-                            let elseBody = concat elseCodes
-                            let elseInstrCount = countInstructions elseBody
-                            let jmpIfFalseTarget = fromIntegral (startInstr + condInstrCount + 1 + thenInstrCount + 1)
-                            let jmpTarget = fromIntegral (startInstr + condInstrCount + 1 + thenInstrCount + 1 + elseInstrCount)
-                            let jmpIfFalseBytes = BL.unpack $ runPut $ putWord32be jmpIfFalseTarget
-                            let jmpBytes = BL.unpack $ runPut $ putWord32be jmpTarget
-                            modify $ \c -> c { instructionCount = startInstr + condInstrCount + 1 + thenInstrCount + 1 + elseInstrCount }
-                            return $ Right $ condCode
-                                ++ (opcodeToByte OpJmpIfFalse : jmpIfFalseBytes)
-                                ++ thenBody
-                                ++ (opcodeToByte OpJmp : jmpBytes)
-                                ++ elseBody
+                case (condResult, sequence thenResults) of
+                    (Right condCode, Right thenCodes) -> do
+                        let jmpBytes = BL.unpack $ runPut $ putWord32be (fromIntegral endInstr)
+                        return $ Right $ condCode ++ (opcodeToByte OpJmpIfFalse : jmpBytes) ++ concat thenCodes
+                    (Left err, _) -> return $ Left err
+                    (_, Left err) -> return $ Left err
+
+            Just elseStmts -> do
+                modify $ \c -> c { instructionCount = instructionCount c + 1 }
+                elseResults <- mapM generateInstructionWithCount elseStmts
+                endInstr <- gets instructionCount
+
+                case (condResult, sequence thenResults, sequence elseResults) of
+                    (Right condCode, Right thenCodes, Right elseCodes) -> do
+                        let condLen = countInstructions condCode
+                        let thenLen = countInstructions (concat thenCodes)
+
+                        let elseStart = startInstr + condLen + 1 + thenLen + 1
+                        let jmpIfFalseBytes = BL.unpack $ runPut $ putWord32be (fromIntegral elseStart)
+
+                        let jmpBytes = BL.unpack $ runPut $ putWord32be (fromIntegral endInstr)
+
+                        return $ Right $ condCode
+                            ++ (opcodeToByte OpJmpIfFalse : jmpIfFalseBytes)
+                            ++ concat thenCodes
+                            ++ (opcodeToByte OpJmp : jmpBytes)
+                            ++ concat elseCodes
+                    (Left err, _, _) -> return $ Left err
+                    (_, Left err, _) -> return $ Left err
+                    (_, _, Left err) -> return $ Left err
+
+    modify $ \c -> c { instructionCount = startInstr }
+    return code
 genIf _ = Nothing
 
 genWhile :: AST -> Maybe CodeGen
 genWhile (IAWhile condExpr bodyStmts) = Just $ do
-    condResult <- generateInstruction condExpr
-    bodyResults <- mapM generateInstruction bodyStmts
+    startInstr <- gets instructionCount
 
-    case (condResult, sequence bodyResults) of
-        (Left err, _) -> return $ Left err
-        (_, Left err) -> return $ Left err
-        (Right condCode, Right bodyCodes) -> do
-            let body = concat bodyCodes
-            let condLength = length condCode
-            let bodyLength = length body
-            let jmpIfFalseOffset = fromIntegral (bodyLength + 5)
-            let jmpBackOffset = fromIntegral (condLength + bodyLength + 5)
-            let jmpIfFalseBytes = BL.unpack $ runPut $ putWord32be jmpIfFalseOffset
-            let jmpBackBytes = BL.unpack $ runPut $ putWord32be jmpBackOffset
-            return $ Right $ condCode
-                ++ (opcodeToByte OpJmpIfFalse : jmpIfFalseBytes)
-                ++ body
-                ++ (opcodeToByte OpJmp : jmpBackBytes)
+    code <- do
+        condResult <- generateInstructionWithCount condExpr
+        modify $ \c -> c { instructionCount = instructionCount c + 1 }
+
+        bodyResults <- mapM generateInstructionWithCount bodyStmts
+        modify $ \c -> c { instructionCount = instructionCount c + 1 }
+
+        case (condResult, sequence bodyResults) of
+            (Left err, _) -> return $ Left err
+            (_, Left err) -> return $ Left err
+            (Right condCode, Right bodyCodes) -> do
+                let body = concat bodyCodes
+                let condInstrCount = countInstructions condCode
+                let bodyInstrCount = countInstructions body
+
+                let jmpIfFalseTarget = fromIntegral (startInstr + condInstrCount + 1 + bodyInstrCount + 1)
+                let jmpBackTarget = fromIntegral startInstr
+
+                let jmpIfFalseBytes = BL.unpack $ runPut $ putWord32be jmpIfFalseTarget
+                let jmpBackBytes = BL.unpack $ runPut $ putWord32be jmpBackTarget
+
+                return $ Right $ condCode
+                    ++ (opcodeToByte OpJmpIfFalse : jmpIfFalseBytes)
+                    ++ body
+                    ++ (opcodeToByte OpJmp : jmpBackBytes)
+
+    modify $ \c -> c { instructionCount = startInstr }
+    return code
 genWhile _ = Nothing
 
 genFor :: AST -> Maybe CodeGen
-genFor (IAFor iterVar startExpr endExpr bodyStmts) = Just $ do
-    let symbolName = getSymbolName iterVar
-    initResult <- generateInstruction (IAAssign symbolName startExpr)
-    _ <- generateInstruction endExpr
-    condResult <- generateInstruction (IAInfix iterVar "<=" endExpr)
-    bodyResults <- mapM generateInstruction bodyStmts
-    let incrExpr = IAAssign symbolName (IAInfix iterVar "+" (IANumber 1))
-    incrResult <- generateInstruction incrExpr
+genFor (IAFor initExpr condExpr incrExpr bodyStmts) = Just $ do
+    startInstr <- gets instructionCount
 
-    case (initResult, condResult, sequence bodyResults, incrResult) of
-        (Left err, _, _, _) -> return $ Left err
-        (_, Left err, _, _) -> return $ Left err
-        (_, _, Left err, _) -> return $ Left err
-        (_, _, _, Left err) -> return $ Left err
-        (Right initCode, Right condCode, Right bodyCodes, Right incrCode) -> do
-            let body = concat bodyCodes
-            let condLength = length condCode
-            let bodyLength = length body
-            let incrLength = length incrCode
-            let jmpIfFalseOffset = fromIntegral (bodyLength + incrLength + 5)
-            let jmpBackOffset = fromIntegral (condLength + bodyLength + incrLength + 5)
-            let jmpIfFalseBytes = BL.unpack $ runPut $ putWord32be jmpIfFalseOffset
-            let jmpBackBytes = BL.unpack $ runPut $ putWord32be jmpBackOffset
-            return $ Right $ initCode
-                ++ condCode
-                ++ (opcodeToByte OpJmpIfFalse : jmpIfFalseBytes)
-                ++ body
-                ++ incrCode
-                ++ (opcodeToByte OpJmp : jmpBackBytes)
-    where
-        getSymbolName (IASymbol name) = name
-        getSymbolName _ = "i"
+    code <- do
+        initResult <- generateInstructionWithCount initExpr
+
+        loopStartInstr <- gets instructionCount
+
+        condResult <- generateInstructionWithCount condExpr
+        modify $ \c -> c { instructionCount = instructionCount c + 1 }
+
+        bodyResults <- mapM generateInstructionWithCount bodyStmts
+
+        incrResult <- generateInstructionWithCount incrExpr
+
+        modify $ \c -> c { instructionCount = instructionCount c + 1 }
+
+        case (initResult, condResult, sequence bodyResults, incrResult) of
+            (Right initCode, Right condCode, Right bodyCodes, Right incrCode) -> do
+                let body = concat bodyCodes
+
+                endInstr <- gets instructionCount
+
+                let jmpIfFalseBytes = BL.unpack $ runPut $ putWord32be (fromIntegral endInstr)
+                let jmpBackBytes = BL.unpack $ runPut $ putWord32be (fromIntegral loopStartInstr)
+
+                return $ Right $ initCode
+                    ++ condCode
+                    ++ (opcodeToByte OpJmpIfFalse : jmpIfFalseBytes)
+                    ++ body
+                    ++ incrCode
+                    ++ (opcodeToByte OpJmp : jmpBackBytes)
+
+            (Left err, _, _, _) -> return $ Left err
+            (_, Left err, _, _) -> return $ Left err
+            (_, _, Left err, _) -> return $ Left err
+            (_, _, _, Left err) -> return $ Left err
+
+    modify $ \c -> c { instructionCount = startInstr }
+    return code
 genFor _ = Nothing
 
 genBlock :: AST -> Maybe CodeGen
 genBlock (IABlock stmts) = Just $ do
-    results <- mapM generateInstruction stmts
+    startInstr <- gets instructionCount
+    results <- mapM generateInstructionWithCount stmts
+    modify $ \c -> c { instructionCount = startInstr }
     case sequence results of
         Left err -> return $ Left err
         Right codes -> return $ Right $ concat codes
 genBlock _ = Nothing
 
+
+-- ==========================
+-- Structure du programme
+-- ==========================
+
 genMain :: AST -> Maybe CodeGen
 genMain (IAMain _ stmts) = Just $ do
-    results <- mapM generateInstruction stmts
+    startInstr <- gets instructionCount
+    results <- mapM generateInstructionWithCount stmts
+    modify $ \c -> c { instructionCount = startInstr }
     case sequence results of
         Left err -> return $ Left err
         Right codes -> return $ Right $ concat codes
 genMain _ = Nothing
 
 genFunctionDef :: AST -> Maybe CodeGen
-genFunctionDef (IAFunctionDef name args _retType body) = Just $ do
+genFunctionDef (IAFunctionDef name args retType body) = Just $ do
     ctx <- get
+    let startInstr = instructionCount ctx
 
     let funcTableIdx = nextFuncIndex ctx
 
-    put ctx { funcMap = Map.insert name funcTableIdx (funcMap ctx)
-            , nextFuncIndex = nextFuncIndex ctx + 1
-            , instructionCount = 3
-            }
-
     let oldParams = currentFuncParams ctx
+    let oldVarTypes = variableTypes ctx
+    let oldRetType = currentReturnType ctx
+
     let paramNames = map fst args
     let paramsList = zip paramNames [0..]
 
-    ctx' <- get
-    put ctx' { currentFuncParams = paramsList }
+    let paramTypes = map (second (fromMaybe AnyT)) args
+    let newVarTypes = foldl (\m (n, t) -> Map.insert n t m) oldVarTypes paramTypes
+    let actualRetType = fromMaybe AnyT retType
+
+    let argTypes = map snd paramTypes
+    let newSignatures = Map.insert name (argTypes, actualRetType) (funcSignatures ctx)
+
+    put ctx { funcMap = Map.insert name funcTableIdx (funcMap ctx)
+            , nextFuncIndex = nextFuncIndex ctx + 1
+            , instructionCount = startInstr + 3
+            , currentFuncParams = paramsList
+            , variableTypes = newVarTypes
+            , currentReturnType = actualRetType
+            , funcSignatures = newSignatures
+            }
 
     results <- mapM generateInstructionWithCount body
 
     case sequence results of
         Left err -> do
-            ctx'' <- get
-            put ctx'' { currentFuncParams = oldParams }
+            ctxError <- get
+            put ctxError { currentFuncParams = oldParams, variableTypes = oldVarTypes, currentReturnType = oldRetType, instructionCount = startInstr }
             return $ Left err
         Right bodyCodes -> do
-            ctx'' <- get
-            put ctx'' { currentFuncParams = oldParams }
+            ctxEnd <- get
+            put ctxEnd { currentFuncParams = oldParams, variableTypes = oldVarTypes, currentReturnType = oldRetType, instructionCount = startInstr }
 
             let bodyCode = concat bodyCodes
             let hasReturn = not (null bodyCode) && last bodyCode == opcodeToByte OpReturn
-            let finalBody = if hasReturn then bodyCode else bodyCode ++ [opcodeToByte OpReturn]
 
-            let currentOffset = 3
+            if not hasReturn && actualRetType /= AnyT && actualRetType /= VoidT
+                then return $ Left $ "Function '" ++ name ++ "' declared to return " ++ show actualRetType ++ " but path ends without return statement"
+                else do
+                    let finalBody = if hasReturn then bodyCode else bodyCode ++ [opcodeToByte OpReturn]
 
-            let funcEntry = FunctionEntry
-                    { funcIndex = funcTableIdx
-                    , funcAddress = currentOffset
-                    , funcArgCount = length args
-                    }
+                    let currentOffset = startInstr + 3
 
-            nameIdx <- addConstant (ConstSymbol name)
-            let funcIndexBytes = BL.unpack $ runPut $ putWord32be (fromIntegral funcTableIdx)
-            let defineBytes = BL.unpack $ runPut $ putWord32be (fromIntegral nameIdx)
+                    let funcEntry = FunctionEntry
+                            { funcIndex = funcTableIdx
+                            , funcAddress = currentOffset
+                            , funcArgCount = length args
+                            }
 
-            let bodyInstrCount = countInstructions finalBody
-            let jmpTarget = fromIntegral (3 + bodyInstrCount) :: Word32
-            let jmpBytes = BL.unpack $ runPut $ putWord32be jmpTarget
+                    nameIdx <- addConstant (ConstSymbol name)
+                    let funcIndexBytes = BL.unpack $ runPut $ putWord32be (fromIntegral funcTableIdx)
+                    let defineBytes = BL.unpack $ runPut $ putWord32be (fromIntegral nameIdx)
 
-            ctx''' <- get
-            put ctx''' { funcTable = funcTable ctx''' ++ [funcEntry] }
+                    let bodyInstrCount = countInstructions finalBody
+                    let jmpTarget = fromIntegral (startInstr + 3 + bodyInstrCount) :: Word32
+                    let jmpBytes = BL.unpack $ runPut $ putWord32be jmpTarget
 
-            return $ Right $ opcodeToByte OpClosure : funcIndexBytes
-                          ++ (opcodeToByte OpDefine : defineBytes)
-                          ++ (opcodeToByte OpJmp : jmpBytes)
-                          ++ finalBody
+                    ctxFinal <- get
+                    put ctxFinal { funcTable = funcTable ctxFinal ++ [funcEntry] }
+
+                    return $ Right $ opcodeToByte OpClosure : funcIndexBytes
+                                  ++ (opcodeToByte OpDefine : defineBytes)
+                                  ++ (opcodeToByte OpJmp : jmpBytes)
+                                  ++ finalBody
 genFunctionDef _ = Nothing
 
 genProgram :: AST -> Maybe CodeGen
 genProgram (IAProgram stmts) = Just $ do
-    results <- mapM generateInstruction stmts
+    results <- mapM generateInstructionWithCount stmts
     case sequence results of
         Left err -> return $ Left err
         Right codes -> return $ Right $ concat codes ++ [opcodeToByte OpHalt]
 genProgram _ = Nothing
+
 
 -- ==========================
 -- Dispatcher principal
@@ -418,6 +789,7 @@ generateInstruction ast =
             genNumber ast
         <|> genFloat ast
         <|> genBoolean ast
+        <|> genChar ast
         <|> genString ast
         <|> genSymbol ast
         <|> genUnit ast
@@ -427,10 +799,20 @@ generateInstruction ast =
         <|> genDeclare ast
         <|> genAssign ast
         <|> genCallAfficher ast
+        <|> genCallEntree ast
         <|> genCallNot ast
+        <|> genCallTableau ast
+        <|> genCallDictionnaire ast
+        <|> genCallStructure ast
+        <|> genCallRecuperer ast
+        <|> genCallModifier ast
+        <|> genCallOuvrir ast
+        <|> genCallLire ast
+        <|> genCallEcrire ast
+        <|> genCallFermer ast
         <|> genCallListOps ast
-        <|> genTailCall ast
         <|> genCall ast
+        <|> genTailCall ast
         <|> genReturn ast
         <|> genIf ast
         <|> genWhile ast

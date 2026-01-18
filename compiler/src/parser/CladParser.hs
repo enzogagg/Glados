@@ -29,7 +29,12 @@ parseBaseType =
   <|> (keyword "flottant" >> return FloatT)
   <|> (keyword "pileouface" >> return BoolT)
   <|> (keyword "phrase" >> return StringT)
+  <|> (keyword "caractere" >> return CharT)
   <|> (keyword "neant" >> return VoidT)
+  <|> (keyword "fichier" >> return FileT)
+  <|> (keyword "tableau" >> return (ArrayT AnyT))
+  <|> (keyword "dictionnaire" >> return (MapT AnyT AnyT))
+  <|> (keyword "structure" >> return StructT)
 
 parseTupleType :: Parser CladType
 parseTupleType = do
@@ -71,15 +76,20 @@ chainl1' p op = do
 -- Analyseur de base pour les éléments qui ne nécessitent pas de priorité (littéraux, identifiants, appels)
 parseTerm :: Parser AST
 parseTerm =
-        parseFloat
+        parseUnit
+    <|> parseFloat
     <|> parseNumber
     <|> parseBoolean
+    <|> parseChar
     <|> parseString
     <|> try parseUnaryNot
     <|> try parseCall
     <|> (IASymbol <$> parseIdentifier)
     <|> parseListCreation
     <|> parseTupleOrParenthesized
+
+parseUnit :: Parser AST
+parseUnit = keyword "neant" >> return IAUnit
 
 parseTupleOrParenthesized :: Parser AST
 parseTupleOrParenthesized = do
