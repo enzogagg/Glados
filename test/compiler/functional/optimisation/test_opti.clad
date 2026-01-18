@@ -1,0 +1,5 @@
+principal
+    variable entier x = (2 + 3) * 4  # Sera transformé en 20 directement
+    si (vrai et faux)                # Sera transformé en 'si (faux)'
+    fin
+fin

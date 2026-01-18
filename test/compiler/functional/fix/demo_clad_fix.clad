@@ -1,0 +1,73 @@
+# ==========================================
+# Programme de démonstration CLaD
+# Test des fonctionnalités du compilateur
+# ==========================================
+
+# fonction calculer_bonus(entier score, pileouface est_expert) : entier
+#     si (score > 100 et est_expert == vrai)
+#         retourner 50
+#     sinon si (score > 100 ou est_expert == vrai)
+#         retourner 20
+#     sinon
+#         retourner 0
+#     fin
+# fin
+#
+# fonction afficher_entete() : neant
+#     afficher("---------------------------")
+#     afficher("   BIENVENUE DANS CLAD     ")
+#     afficher("---------------------------")
+# fin
+
+principal
+    # Affichage de l'entête
+    # afficher_entete()
+
+    # Test des variables et entrées utilisateur
+    afficher("Entrez votre nom :")
+    variable phrase nom = lire()
+    afficher("Bonjour " + nom)
+
+    variable entier score = 0
+    variable entier limite = 5
+    variable pileouface fini = faux
+
+    # Test de la boucle 'pour'
+    afficher("Décompte initial :")
+    pour (variable entier i = 3 ; i > 0 ; i = i - 1)
+        afficher(i)
+    fin
+
+    # Test de la boucle 'tantque' avec logique complexe
+    afficher("Début de la session de jeu...")
+    tantque (score < 150 et !fini)
+        afficher("Score actuel :")
+        afficher(score)
+
+        score = score + 40
+
+        si (score >= 120)
+            afficher("Presque fini...")
+        fin
+
+        si (score > 200)
+            fini = vrai
+        fin
+    fin
+
+    # Utilisation d'une fonction personnalisée
+    # variable entier bonus = calculer_bonus(score, vrai)
+    variable entier bonus = 1
+
+    afficher("Calcul du bonus final...")
+    afficher(bonus)
+
+    # Résultat final
+    variable entier score_final = score + bonus
+    afficher("Score total de " + nom + " :")
+    afficher(score_final)
+
+    # Test de condition complexe avec 'ou' et '!'
+
+    retourner 0
+fin

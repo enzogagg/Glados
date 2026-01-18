@@ -1,0 +1,15 @@
+# Exemple d'optimisation massive pour visualisation
+# Ce fichier démontre la puissance du pipeline :
+# Propagateur -> Folder -> Eliminator
+
+principal
+    variable entier pipi = 0
+    tantque(pipi < 16)
+        si (pipi < 5)
+            afficher("pipi")
+        sinon
+            afficher("nono")
+        fin
+        pipi = pipi + 1
+    fin
+fin
