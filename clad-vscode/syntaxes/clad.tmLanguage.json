@@ -1,0 +1,107 @@
+{
+  "scopeName": "source.clad",
+  "name": "CLaD",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#keywords" },
+    { "include": "#control" },
+    { "include": "#types" },
+    { "include": "#nativefuncs" },
+    { "include": "#functions" }
+  ],
+
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.clad",
+          "begin": "\\$\\$\\$",
+          "end": "\\$\\$\\$"
+        },
+        {
+          "name": "comment.line.clad",
+          "match": "#.*$"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.clad",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            { "name": "constant.character.escape.clad", "match": "\\\\." }
+          ]
+        }
+      ]
+    },
+
+    "numbers": {
+      "patterns": [
+        { "name": "constant.numeric.integer.clad", "match": "\\b\\d+\\b" },
+        { "name": "constant.numeric.float.clad", "match": "\\b\\d+\\.\\d+\\b" }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.definition.clad",
+          "match": "\\b(fonction|principal)\\b"
+        },
+        {
+          "name": "keyword.control.declaration.clad",
+          "match": "\\b(constante|variable)\\b"
+        }
+      ]
+    },
+    "control": {
+      "patterns": [
+        {
+          "name": "keyword.control.flow.clad",
+          "match": "\\b(si|sinon|sinon si|tantque|pour|retourner)\\b"
+        },
+        {
+          "name": "keyword.control.flow.end.clad",
+          "match": "\\bfin\\b"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "name": "storage.type.clad",
+          "match": "\\b(entier|flottant|phrase|pileouface|liste|neant)\\b"
+        }
+      ]
+    },
+
+    "nativefuncs": {
+      "patterns": [
+        {
+          "name": "support.function.list.clad",
+          "match": "\\b(tete|reste|est_vide|fusion|ajouter|inserer|taille|supprimer|nieme|contient|vider)\\b"
+        },
+        {
+          "name": "support.function.file.clad",
+          "match": "\\b(ouvert|fermer|ecrire|lire)\\b"
+        },
+        {
+          "name": "support.function.io.clad",
+          "match": "\\b(afficher)\\b"
+        }
+      ]
+    },
+
+    "functions": {
+      "patterns": [
+        {
+          "name": "entity.name.function.clad",
+          "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\s*(?=\\()"
+        }
+      ]
+    }
+  }
+}

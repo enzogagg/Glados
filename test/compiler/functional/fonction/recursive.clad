@@ -1,0 +1,21 @@
+# ==========================================
+# Programme de démonstration CLaD
+# Test des fonctionnalités du compilateur
+# Recursive
+# ==========================================
+
+fonction recursive(entier a) : entier
+    a = a + 1
+    afficher(a)
+    si (a == 5)
+        retourner a
+    sinon
+        retourner recursive(a)
+    fin
+fin
+
+principal
+    afficher(0)
+    variable entier score = recursive(0)
+    retourner score
+fin

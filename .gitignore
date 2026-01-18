@@ -16,9 +16,12 @@ stack.yaml.lock
 # executable
 glados-*
 
-# LISP files
+# Bin files
 example/*
 *.cbc
+*.class
+*.class.j
+*.jar
 
 # *.other file
 *.pdf

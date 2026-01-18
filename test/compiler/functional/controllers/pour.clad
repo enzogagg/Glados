@@ -1,0 +1,15 @@
+# ==========================================
+# Programme de démonstration CLaD
+# Test des fonctionnalités du compilateur
+# Pour
+# ==========================================
+
+principal
+    variable entier score = 0
+
+    pour (variable entier i = 0; i < 5; i = i + 1)
+        afficher(score)
+        score = score + 1
+    fin
+    retourner score
+fin

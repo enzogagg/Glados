@@ -1,0 +1,14 @@
+# ==========================================
+# Programme de démonstration CLaD
+# Test des fonctionnalités du compilateur
+# Tuples
+# ==========================================
+
+principal
+    variable (entier, phrase, entier) monTuple = (0, "test", 1)
+
+    si (extraire(monTuple, 0) == 0)
+        retourner 0
+    fin
+    retourner 1
+fin

@@ -1,0 +1,14 @@
+# ==========================================
+# Programme de démonstration CLaD
+# Test des fonctionnalités du compilateur
+# Liste
+# ==========================================
+
+principal
+    variable liste<entier> listeNbr = [0, 1, 2, 3]
+
+    si (extraire(listeNbr, 0) == 0)
+        retourner 0
+    fin
+    retourner 1
+fin

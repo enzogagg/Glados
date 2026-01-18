@@ -1,0 +1,39 @@
+{
+  "name": "clad-vscode",
+  "displayName": "CLaD Syntax",
+  "description": "Colourful and complete syntax highlighting for the CLaD language",
+  "version": "1.0.0",
+  "publisher": "yayamgt",
+  "engines": { "vscode": "^1.60.0" },
+  "categories": ["Languages", "Themes"],
+  "contributes": {
+    "languages": [
+      {
+        "id": "clad",
+        "aliases": ["CLaD", "clad"],
+        "extensions": [".clad"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "clad",
+        "scopeName": "source.clad",
+        "path": "./syntaxes/clad.tmLanguage.json"
+      }
+    ],
+    "themes": [
+      {
+        "label": "CLaD Theme",
+        "uiTheme": "vs-dark",
+        "path": "./themes/clad-color-theme.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "clad",
+        "path": "./snippets/clad.json"
+      }
+    ]
+  }
+}

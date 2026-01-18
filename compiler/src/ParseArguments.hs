@@ -21,6 +21,7 @@ import System.IO()
 import Text.Megaparsec (errorBundlePretty)
 import ParseToAST (parseAST)
 import AstToBin (parseBin)
+import AstToClass (parseClass)
 import Resolver (resolveIncludes)
 import Visualizer (astToDot)
 import ConstantFolding (foldConstants)
@@ -32,7 +33,7 @@ import ConstantPropagator (propagateConstants)
 import Data.List (isSuffixOf)
 import Data.Maybe (fromMaybe)
 
-data RunMode = Compile | Visualize deriving (Show, Eq)
+data RunMode = Compile | Visualize | CompileJava deriving (Show, Eq)
 
 data CompilerArgs = CompilerArgs
   { inputFile :: String
@@ -65,7 +66,6 @@ useContent content cArgs =
                         Right () -> do
                             let optimizedAst = eliminateDeadCode
                                                 . foldConstants
-                                                . propagateConstants
                                                 $ finalAst
 
                             case runMode cArgs of
@@ -75,24 +75,37 @@ useContent content cArgs =
                                     return (Right ())
                                 Compile ->
                                     parseBin optimizedAst (outputFile cArgs)
+                                CompileJava ->
+                                    parseClass optimizedAst (outputFile cArgs)
 
 parseArgs :: [String] -> IO (Either String CompilerArgs)
 parseArgs args = return $ parseArgsInternal args Nothing Compile
   where
     parseArgsInternal :: [String] -> Maybe String -> RunMode -> Either String CompilerArgs
-
     parseArgsInternal ("-o":outName:rest) _ mode = parseArgsInternal rest (Just outName) mode
 
     parseArgsInternal ("--visualize":rest) out _ = parseArgsInternal rest out Visualize
+    parseArgsInternal ("--java":rest) out _      = parseArgsInternal rest out CompileJava
 
     parseArgsInternal [file] out mode =
         if getCladExtension file
-            then Right $ CompilerArgs file (ensureCbc (fromMaybe "a.out.cbc" out)) mode
+            then Right $ CompilerArgs file (ensureExtension (fromMaybe "a.out" out) mode) mode
             else Left "Erreur : Extension de fichier invalide (attendu .clad)"
 
-    parseArgsInternal _ _ _ = Left "USAGE\n    ./glados-compiler [-o <out.cbc>] [--visualize] <file.clad>"
+    parseArgsInternal _ _ _ = Left "USAGE\n    ./glados-compiler [-o <output>] [--visualize] [--java] <file.clad>"
 
-    ensureCbc name = if ".cbc" `isSuffixOf` name then name else name ++ ".cbc"
+    ensureExtension name mode =
+        let base = if name == "a.out" then "a.out" else dropExtension name
+            ext = case mode of
+                    CompileJava -> ".class"
+                    Visualize   -> ".dot"
+                    _           -> ".cbc"
+        in if ext `isSuffixOf` name then name else base ++ ext
+
+    dropExtension name =
+        if '.' `elem` name
+        then reverse $ drop 1 $ dropWhile (/= '.') (reverse name)
+        else name
 
 getCladExtension :: String -> Bool
 getCladExtension file =
