@@ -43,15 +43,19 @@ inferType :: AST -> State BytecodeContext CladType
 inferType (IANumber _) = return IntT
 inferType (IAFloatLiteral _) = return FloatT
 inferType (IABoolean _) = return BoolT
+inferType (IAChar _) = return CharT
 inferType (IAString _) = return StringT
 inferType (IASymbol s) = do
     ctx <- get
     case Map.lookup s (variableTypes ctx) of
         Just t -> return t
         Nothing -> return AnyT
-inferType (IACall "vector" _) = return (ArrayT AnyT)
-inferType (IACall "dico" _) = return (MapT AnyT AnyT)
-inferType (IACall "struct" _) = return StructT
+inferType (IACall "tableau" _) = return (ArrayT AnyT)
+inferType (IACall "dictionnaire" _) = return (MapT AnyT AnyT)
+inferType (IACall "structure" _) = return StructT
+inferType (IACall "ouvrir" _) = return FileT
+inferType (IACall "entree" _) = return StringT
+inferType (IACall "afficher" _) = return VoidT
 inferType (IATuple _) = return (TupleT [])
 inferType (IACall fname _) = do
     ctx <- get
@@ -91,6 +95,13 @@ genFloat _ = Nothing
 genBoolean :: AST -> Maybe CodeGen
 genBoolean (IABoolean b) = Just $ return $ Right [opcodeToByte OpPushBool, if b then 0x01 else 0x00]
 genBoolean _ = Nothing
+
+genChar :: AST -> Maybe CodeGen
+genChar (IAChar c) = Just $ do
+    idx <- addConstant (ConstChar c)
+    let idxBytes = BL.unpack $ runPut $ putWord32be (fromIntegral idx)
+    return $ Right $ opcodeToByte OpPushConst : idxBytes
+genChar _ = Nothing
 
 genString :: AST -> Maybe CodeGen
 genString (IAString s) = Just $ do
@@ -222,29 +233,29 @@ genCallAfficher (IACall "afficher" args) = Just $ do
         Right codes -> return $ Right $ concat codes ++ [opcodeToByte OpPrint]
 genCallAfficher _ = Nothing
 
-genCallEcouter :: AST -> Maybe CodeGen
-genCallEcouter (IACall "ecouter" []) = Just $ return $ Right [opcodeToByte OpInput]
-genCallEcouter _ = Nothing
+genCallEntree :: AST -> Maybe CodeGen
+genCallEntree (IACall "entree" []) = Just $ return $ Right [opcodeToByte OpInput]
+genCallEntree _ = Nothing
 
 
 -- ==========================
 -- Operations sur les structures de données
 -- ==========================
 
-genCallVector :: AST -> Maybe CodeGen
-genCallVector (IACall "vector" args) = Just $ do
+genCallTableau :: AST -> Maybe CodeGen
+genCallTableau (IACall "tableau" args) = Just $ do
     results <- mapM generateInstruction args
     case sequence results of
         Left err -> return $ Left err
         Right codes -> do
             let vectorCode = opcodeToByte OpMakeArray : BL.unpack (runPut $ putWord32be (fromIntegral $ length args))
             return $ Right $ concat codes ++ vectorCode
-genCallVector _ = Nothing
+genCallTableau _ = Nothing
 
-genCallDico :: AST -> Maybe CodeGen
-genCallDico (IACall "dico" args) = Just $ do
+genCallDictionnaire :: AST -> Maybe CodeGen
+genCallDictionnaire (IACall "dictionnaire" args) = Just $ do
     if odd (length args)
-        then return $ Left "Function 'dico' expects an even number of arguments (pairs key-value)"
+        then return $ Left "Function 'dictionnaire' expects an even number of arguments (pairs key-value)"
         else do
             results <- mapM generateInstruction (reverse args)
             case sequence results of
@@ -253,12 +264,12 @@ genCallDico (IACall "dico" args) = Just $ do
                     let numPairs = length args `div` 2
                     let mapCode = opcodeToByte OpMakeMap : BL.unpack (runPut $ putWord32be (fromIntegral numPairs))
                     return $ Right $ concat codes ++ mapCode
-genCallDico _ = Nothing
+genCallDictionnaire _ = Nothing
 
-genCallStruct :: AST -> Maybe CodeGen
-genCallStruct (IACall "struct" args) = Just $ do
+genCallStructure :: AST -> Maybe CodeGen
+genCallStructure (IACall "structure" args) = Just $ do
      if odd (length args)
-        then return $ Left "Function 'struct' expects an even number of arguments (pairs key-value)"
+        then return $ Left "Function 'structure' expects an even number of arguments (pairs key-value)"
         else do
             results <- mapM generateInstruction (reverse args)
             case sequence results of
@@ -267,15 +278,15 @@ genCallStruct (IACall "struct" args) = Just $ do
                     let count = length args `div` 2
                     let structCode = opcodeToByte OpMakeStruct : BL.unpack (runPut $ putWord32be (fromIntegral count))
                     return $ Right $ concat codes ++ structCode
-genCallStruct _ = Nothing
+genCallStructure _ = Nothing
 
 
 -- ==========================
 -- Operations d'accès (Get/Set)
 -- ==========================
 
-genCallGet :: AST -> Maybe CodeGen
-genCallGet (IACall "get" args) = Just $ case args of
+genCallRecuperer :: AST -> Maybe CodeGen
+genCallRecuperer (IACall "recuperer" args) = Just $ case args of
     [obj, idx] -> do
         objType <- inferType obj
         case objType of
@@ -285,23 +296,23 @@ genCallGet (IACall "get" args) = Just $ case args of
 
             TupleT _ -> case idx of
                 IANumber n -> genImmediateGet OpTupleGet (fromIntegral n) obj
-                _ -> return $ Left "Tuple get requires integer constant index"
+                _ -> return $ Left "Tuple recuperer requires integer constant index"
 
             StructT -> case idx of
                 IAString s -> genSymbolGet OpStructGet s obj
-                _ -> return $ Left "Struct get requires string constant key"
+                _ -> return $ Left "Struct recuperer requires string constant key"
 
             AnyT -> case idx of
                 IANumber _ -> genStackGet OpArrayGet obj idx
                 IAString _ -> genStackGet OpMapGet obj idx
                 _ -> genStackGet OpArrayGet obj idx
 
-            _ -> return $ Left $ "Type " ++ show objType ++ " does not support 'get'"
-    _ -> return $ Left "Function 'get' expects 2 arguments (object, index/key)"
-genCallGet _ = Nothing
+            _ -> return $ Left $ "Type " ++ show objType ++ " does not support 'recuperer'"
+    _ -> return $ Left "Function 'recuperer' expects 2 arguments (object, index/key)"
+genCallRecuperer _ = Nothing
 
-genCallSet :: AST -> Maybe CodeGen
-genCallSet (IACall "set" args) = Just $ case args of
+genCallModifier :: AST -> Maybe CodeGen
+genCallModifier (IACall "modifier" args) = Just $ case args of
     [obj, idx, val] -> do
         objType <- inferType obj
         case objType of
@@ -310,16 +321,16 @@ genCallSet (IACall "set" args) = Just $ case args of
 
             StructT -> case idx of
                 IAString s -> genSymbolSet OpStructSet s obj val
-                _ -> return $ Left "Struct set requires string constant key"
+                _ -> return $ Left "Struct modifier requires string constant key"
 
             AnyT -> case idx of
                 IANumber _ -> genStackSet OpArraySet obj idx val
                 IAString _ -> genStackSet OpMapSet obj idx val
                 _ -> genStackSet OpArraySet obj idx val
 
-            _ -> return $ Left $ "Type " ++ show objType ++ " does not support 'set'"
-    _ -> return $ Left "Function 'set' expects 3 arguments (object, index/key, value)"
-genCallSet _ = Nothing
+            _ -> return $ Left $ "Type " ++ show objType ++ " does not support 'modifier'"
+    _ -> return $ Left "Function 'modifier' expects 3 arguments (object, index/key, value)"
+genCallModifier _ = Nothing
 
 genStackGet :: Opcode -> AST -> AST -> State BytecodeContext (Either String [Word8])
 genStackGet op obj idx = do
@@ -425,34 +436,52 @@ genCallFermer _ = Nothing
 genCallListOps :: AST -> Maybe CodeGen
 genCallListOps (IACall name args) =
     case name of
-        "cons" -> checkArgs 2 OpCons
-        "head" -> checkArgs 1 OpHead
-        "tail" -> checkArgs 1 OpTail
-        "len" -> checkArgs 1 OpLen
-        "is_empty" -> checkArgs 1 OpIsEmpty
-        "nth" -> checkArgs 2 OpNth
-        "append" -> checkArgs 2 OpAppend
-        "insert" -> checkArgs 3 OpInsert
-        "remove" -> checkArgs 2 OpRemove
-        "contains" -> checkArgs 2 OpContains
-        "reverse" -> checkArgs 1 OpReverse
+        "fusion" -> checkArgs 2 OpCons
+        "tete" -> checkArgs 1 OpHead
+        "reste" -> checkArgs 1 OpTail
+        "taille" -> checkArgs 1 OpLen
+        "est_vide" -> checkArgs 1 OpIsEmpty
+        "nieme" -> checkArgs 2 OpNth
+        "concatener" -> checkArgs 2 OpAppend
+        "insere" -> checkArgs 3 OpInsert
+        "supprimer" -> checkArgs 2 OpRemove
+        "contient" -> checkArgs 2 OpContains
+        "inverser" -> checkArgs 1 OpReverse
+        "ajouter" -> Just genAjouter
+        "vider" -> Just genVider
         _ -> Nothing
     where
         checkArgs count op =
             if length args == count
             then Just $ do
-                let argsToGen = case name of
-                        "contains" -> reverse args
-                        "insert" -> reverse args
-                        "nth" -> reverse args
-                        "remove" -> reverse args
-                        _ -> args
-
-                results <- mapM generateInstruction argsToGen
+                results <- mapM generateInstruction args
                 case sequence results of
                     Left err -> return $ Left err
                     Right codes -> return $ Right $ concat codes ++ [opcodeToByte op]
             else Just $ return $ Left $ "Function '" ++ name ++ "' expects " ++ show count ++ " arguments"
+
+        genAjouter = case args of
+            [lArg, eArg] -> do
+                lRes <- generateInstruction lArg
+                eRes <- generateInstruction eArg
+                case (lRes, eRes) of
+                    (Right lc, Right ec) -> do
+                        let list1Code = opcodeToByte OpList : BL.unpack (runPut $ putWord32be 1)
+                        return $ Right $ lc ++ ec ++ list1Code ++ [opcodeToByte OpAppend]
+                    (Left e, _) -> return $ Left e
+                    (_, Left e) -> return $ Left e
+            _ -> return $ Left "Function 'ajouter' expects 2 arguments (list, element)"
+
+        genVider = case args of
+            [lArg] -> do
+                lRes <- generateInstruction lArg
+                case lRes of
+                    Right lc -> do
+                        let list0Code = opcodeToByte OpList : BL.unpack (runPut $ putWord32be 0)
+                        return $ Right $ lc ++ [opcodeToByte OpPop] ++ list0Code
+                    Left e -> return $ Left e
+            _ -> return $ Left "Function 'vider' expects 1 argument (list)"
+
 genCallListOps _ = Nothing
 
 
@@ -492,6 +521,10 @@ genCall (IACall fname args) = Just $ do
                         return $ Right $ concat codes ++ (opcodeToByte OpCall : funcBytes ++ [argCountByte])
                     Nothing -> return $ Left $ "Function not found: " ++ fname
 genCall _ = Nothing
+
+genTailCall :: AST -> Maybe CodeGen
+genTailCall (IATailCall fname args) = genCall (IACall fname args)
+genTailCall _ = Nothing
 
 genReturn :: AST -> Maybe CodeGen
 genReturn (IAReturn expr) = Just $ do
@@ -756,6 +789,7 @@ generateInstruction ast =
             genNumber ast
         <|> genFloat ast
         <|> genBoolean ast
+        <|> genChar ast
         <|> genString ast
         <|> genSymbol ast
         <|> genUnit ast
@@ -765,19 +799,20 @@ generateInstruction ast =
         <|> genDeclare ast
         <|> genAssign ast
         <|> genCallAfficher ast
-        <|> genCallEcouter ast
+        <|> genCallEntree ast
         <|> genCallNot ast
-        <|> genCallVector ast
-        <|> genCallDico ast
-        <|> genCallStruct ast
-        <|> genCallGet ast
-        <|> genCallSet ast
+        <|> genCallTableau ast
+        <|> genCallDictionnaire ast
+        <|> genCallStructure ast
+        <|> genCallRecuperer ast
+        <|> genCallModifier ast
         <|> genCallOuvrir ast
         <|> genCallLire ast
         <|> genCallEcrire ast
         <|> genCallFermer ast
         <|> genCallListOps ast
         <|> genCall ast
+        <|> genTailCall ast
         <|> genReturn ast
         <|> genIf ast
         <|> genWhile ast
