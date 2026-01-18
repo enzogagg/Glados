@@ -9,7 +9,7 @@ spec :: Spec
 spec = describe "Function Management Operations" $ do
     
     let sampleFunc = FunctionMeta { funcId = 1, funcArgCount = 2, funcAddress = 100 }
-    let stateWithFunc = (newVMState [] [] [] []) { functions = [sampleFunc], ip = 10, stack = [IntVal 1, IntVal 2] }
+    let stateWithFunc = (newVMState [] [] [] []) { functions = [sampleFunc], ip = 10, stack = [IntVal 2, IntVal 1] }
 
     describe "opCall" $ do
         it "jumps to function address and saves context" $ do
