@@ -18,7 +18,9 @@
 #     afficher("   BIENVENUE DANS CLAD     ")
 #     afficher("---------------------------")
 # fin
-
+ $$$
+Commentaire
+ $$$
 principal
     # Affichage de l'entête
     # afficher_entete()
@@ -31,6 +33,8 @@ principal
     variable entier score = 0
     variable entier limite = 5
     variable pileouface fini = faux
+    variable liste<entier> scores_joueurs = [10, 20, 30, 40, 50]
+    ajouter(scores_joueurs, 60)
 
     # Test de la boucle 'pour'
     afficher("Décompte initial :")
@@ -52,7 +56,16 @@ principal
 
         si (score > 200)
             fini = vrai
+        sinon si (score > 100)
+            afficher("Vous avez atteint un score élevé!")
+        sinon
+            afficher("Continuez à jouer...")
         fin
+    fin
+
+    pour (variable entier s = 0; s < longueur(scores_joueurs); s = s + 1)
+        afficher("Score du joueur :")
+        afficher(s)
     fin
 
     # Utilisation d'une fonction personnalisée

@@ -1,0 +1,53 @@
+{
+  "fonction": {
+    "prefix": "fun",
+    "body": [
+      "fonction ${1:name}(${2:params})",
+      "\t$0",
+      "fin"
+    ],
+    "description": "Créer une fonction CLaD"
+  },
+  "si": {
+    "prefix": "si",
+    "body": [
+      "si (${1:condition})",
+      "\t$0",
+      "fin"
+    ],
+    "description": "Bloc si ... fin"
+  },
+  "si sinon": {
+    "prefix": "sis",
+    "body": [
+      "si (${1:condition})",
+      "\t${2:# code si vrai}",
+      "sinon",
+      "\t$0",
+      "fin"
+    ],
+    "description": "Bloc si ... sinon ... fin"
+  },
+  "si complet": {
+    "prefix": "sic",
+    "body": [
+      "si (${1:condition})",
+      "\t${2:# code si}",
+      "sinon si (${3:condition2})",
+      "\t${4:# code sinon si}",
+      "sinon",
+      "\t$0",
+      "fin"
+    ],
+    "description": "Bloc si ... sinon si ... sinon ... fin"
+  },
+  "pour": {
+    "prefix": "pour",
+    "body": [
+      "pour ${1:i} de ${2:0} à ${3:10}",
+      "\t$0",
+      "fin"
+    ],
+    "description": "Boucle pour ... fin"
+  }
+}

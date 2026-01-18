@@ -1,0 +1,104 @@
+{
+  "name": "CLaD Theme",
+  "type": "dark",
+  "tokenColors": [
+    {
+      "scope": [
+        "comment",
+        "comment.block",
+        "comment.block.clad",
+        "comment.block.clad.content",
+        "comment.line",
+        "comment.line.clad"
+      ],
+      "settings": {
+        "foreground": "#6A9955",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "scope": "string",
+      "settings": { "foreground": "#CE9178" }
+    },
+    {
+      "scope": "constant.numeric",
+      "settings": { "foreground": "#B5CEA8" }
+    },
+    {
+      "scope": "keyword.control.clad",
+      "settings": { "foreground": "#C586C0", "fontStyle": "bold" }
+    },
+    {
+      "scope": "support.function.clad",
+      "settings": { "foreground": "#4EC9B0" }
+    },
+    {
+      "name": "CLaD Builtin IO (Afficher)",
+      "scope": "support.function.io.clad",
+      "settings": {
+        "foreground": "#DCDCAA"
+      }
+    },
+    {
+      "name": "CLaD Builtin Lists",
+      "scope": "support.function.list.clad",
+      "settings": {
+        "foreground": "#4EC9B0"
+      }
+    },
+    {
+      "name": "CLaD Builtin Files",
+      "scope": "support.function.file.clad",
+      "settings": {
+        "foreground": "#CE9178"
+      }
+    },
+    {
+      "scope": "entity.name.function.clad",
+      "settings": { "foreground": "#DCDCAA" }
+    },
+    {
+      "scope": "variable.other.clad",
+      "settings": { "foreground": "#9CDCFE" }
+    },
+    {
+      "name": "Définitions (Fonction/Principal)",
+      "scope": "keyword.control.definition.clad",
+      "settings": {
+        "foreground": "#C586C0",
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "name": "Structures (Si/Tantque/Pour)",
+      "scope": "keyword.control.flow.clad",
+      "settings": {
+        "foreground": "#D19A66",
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "name": "Fin de bloc",
+      "scope": "keyword.control.flow.end.clad",
+      "settings": {
+        "foreground": "#ABB2BF",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "CLaD Variable/Constante (Bleu Foncé)",
+      "scope": "keyword.control.declaration.clad",
+      "settings": {
+        "foreground": "#1E90FF",
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "name": "CLaD Types (Bleu Clair)",
+      "scope": "storage.type.clad",
+      "settings": {
+        "foreground": "#4FC1FF"
+      }
+    }
+  ]
+}
