@@ -51,7 +51,7 @@ filterMainReturn code = unlines $ map (\l -> if "ireturn" `elem` words l then " 
 
 genFunctionBody :: [String] -> [AST] -> JvmGen
 genFunctionBody params body = do
-    mapM_ (\p -> reserveVar p "entier") params
+    mapM_ (`reserveVar` "entier") params
     fmap concat (mapM genInstr body)
 
 genInstr :: AST -> JvmGen
