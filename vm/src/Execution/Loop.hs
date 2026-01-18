@@ -114,7 +114,6 @@ execLoop state
         ReadFile -> nextStepIO (opReadFile state)
         WriteFile -> nextStepIO (opWriteFile state)
         CloseFile -> nextStepIO (opCloseFile state)
-        _ -> nextStep (Left "Error: Unknown instruction")
     where
         nextStep :: Either String VMState -> IO (Maybe Int)
         nextStep (Left err)
