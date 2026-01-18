@@ -29,11 +29,45 @@ spec = describe "ParseToAST" $ do
             let result = parse parseProgramAST "" "\"hello\""
             result `shouldBe` Right (IAProgram [IAString "hello"])
 
+        it "parses characters" $ do
+            let result = parse parseProgramAST "" "'c'"
+            result `shouldBe` Right (IAProgram [IAChar 'c'])
+
         it "parses booleans (vrai/faux)" $ do
             let result = parse parseProgramAST "" "vrai"
             result `shouldBe` Right (IAProgram [IABoolean True])
             let result' = parse parseProgramAST "" "faux"
             result' `shouldBe` Right (IAProgram [IABoolean False])
+
+        it "parses lists" $ do
+            let result = parse parseProgramAST "" "[1, 2, 3]"
+            result `shouldBe` Right (IAProgram [IAList [IANumber 1, IANumber 2, IANumber 3]])
+            let resultEmpty = parse parseProgramAST "" "[]"
+            resultEmpty `shouldBe` Right (IAProgram [IAList []])
+
+        it "parses tuples" $ do
+            let result = parse parseProgramAST "" "(1, vrai)"
+            result `shouldBe` Right (IAProgram [IATuple [IANumber 1, IABoolean True]])
+
+        it "parses unit (neant)" $ do
+            let result = parse parseProgramAST "" "neant"
+            result `shouldBe` Right (IAProgram [IAUnit])
+
+        it "parses symbols" $ do
+            let result = parse parseProgramAST "" "my_variable"
+            result `shouldBe` Right (IAProgram [IASymbol "my_variable"])
+
+        it "parses array creation (tableau)" $ do
+            let result = parse parseProgramAST "" "tableau(1, 2, 3)"
+            result `shouldBe` Right (IAProgram [IACall "tableau" [IANumber 1, IANumber 2, IANumber 3]])
+
+        it "parses map creation (dictionnaire)" $ do
+            let result = parse parseProgramAST "" "dictionnaire(\"key\", 1)"
+            result `shouldBe` Right (IAProgram [IACall "dictionnaire" [IAString "key", IANumber 1]])
+
+        it "parses struct creation (structure)" $ do
+            let result = parse parseProgramAST "" "structure(\"field\", 42)"
+            result `shouldBe` Right (IAProgram [IACall "structure" [IAString "field", IANumber 42]])
 
     -- ====================================================================
     -- Tests de la Précédence des Opérateurs Infixés (IAInfix)

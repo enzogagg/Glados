@@ -76,7 +76,8 @@ chainl1' p op = do
 -- Analyseur de base pour les éléments qui ne nécessitent pas de priorité (littéraux, identifiants, appels)
 parseTerm :: Parser AST
 parseTerm =
-        parseFloat
+        parseUnit
+    <|> parseFloat
     <|> parseNumber
     <|> parseBoolean
     <|> parseChar
@@ -86,6 +87,9 @@ parseTerm =
     <|> (IASymbol <$> parseIdentifier)
     <|> parseListCreation
     <|> parseTupleOrParenthesized
+
+parseUnit :: Parser AST
+parseUnit = keyword "neant" >> return IAUnit
 
 parseTupleOrParenthesized :: Parser AST
 parseTupleOrParenthesized = do
